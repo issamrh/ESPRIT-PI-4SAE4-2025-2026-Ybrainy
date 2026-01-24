@@ -1,0 +1,84 @@
+HTTrack3.49-2+htsswf+htsjava launched on Thu, 22 Jan 2026 02:55:27 at https://www.ciklum.com +*.png +*.gif +*.jpg +*.jpeg +*.css +*.js -ad.doubleclick.net/* -mime:application/foobar
+(winhttrack -qwC2%Ps2u1%s%uN0%I0p3DaK0H0%kf2A25000%f#f -F "Mozilla/4.5 (compatible; HTTrack 3.0x; Windows 98)" -%F "<!-- Mirrored from %s%s by HTTrack Website Copier/3.x [XR&CO'2014], %s -->" -%l "en, *" https://www.ciklum.com -O1 "D:\template\front lowel\front lllowel" +*.png +*.gif +*.jpg +*.jpeg +*.css +*.js -ad.doubleclick.net/* -mime:application/foobar )
+
+Information, Warnings and Errors reported for this mirror:
+note:	the hts-log.txt file, and hts-cache folder, may contain sensitive information,
+	such as username/password authentication for websites mirrored in this project
+	do not share these files/folders if you want these information to remain private
+
+02:56:08	Error: 	"Bad Request" (400) at link https://www.googletagmanager.com/gtm.js?id= (from https://www.ciklum.com/)
+02:57:33	Error: 	"Bad Request" (400) at link https://www.ciklum.com/wp-admin/admin-ajax.php (from https://www.ciklum.com/)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/santander-4/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/santander-4/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/santander.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/tui_group/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/tui_group/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/TUI_Group.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/pg-3/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/pg-3/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/pg.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/panasonic/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/panasonic/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/Panasonic.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/akamai-logo/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/akamai-logo/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/akamai-Logo.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/canaery/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/canaery/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/Canaery.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/createpay_logo_cmyk_black-scaled/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/createpay_logo_cmyk_black-scaled/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/CreatePay_Logo_CMYK_Black-scaled-1.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/duracell/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/duracell/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/Duracell.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/etoro/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/etoro/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/etoro-scaled.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/inspired-education/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/inspired-education/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/Inspired-Education.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/jll/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/jll/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/JLL.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/just-eat-2/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/just-eat-2/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/just-eat.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/peek-cloppenburg/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/peek-cloppenburg/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/Peek-Cloppenburg-scaled.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/saab/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/saab/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/Saab.png)
+03:10:37	Warning: 	Moved Permanently for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/stena/
+03:10:37	Warning: 	Warning moved treated for https://www.ciklum.com/services/ai-agents-autonomous-orchestration/attachment/stena/ (real one is https://www.ciklum.com/wp-content/uploads/2025/10/Stena.png)
+03:11:51	Warning: 	Moved Permanently for https://www.ciklum.com/about/
+03:11:51	Warning: 	File has moved from https://www.ciklum.com/about/ to https://www.ciklum.com/about-ciklum/
+03:11:55	Error: 	"Not Found" (404) at link https://www.ciklum.com/wp-content/themes/ciklum/assets/fonts/icomoon.eot?ay2qbl (from https://www.ciklum.com/wp-content/themes/ciklum/assets/css/main.css)
+03:11:55	Error: 	"Not Found" (404) at link https://www.ciklum.com/wp-content/themes/ciklum/assets/fonts/icomoon.ttf?ay2qbl (from https://www.ciklum.com/wp-content/themes/ciklum/assets/css/main.css)
+03:11:55	Error: 	"Not Found" (404) at link https://www.ciklum.com/wp-content/themes/ciklum/assets/fonts/icomoon.woff?ay2qbl (from https://www.ciklum.com/wp-content/themes/ciklum/assets/css/main.css)
+03:11:55	Error: 	"Not Found" (404) at link https://www.ciklum.com/wp-content/themes/ciklum/assets/fonts/icomoon.svg?ay2qbl (from https://www.ciklum.com/wp-content/themes/ciklum/assets/css/main.css)
+03:12:27	Warning: 	Moved Permanently for https://www.ciklum.com/bfsi/
+03:12:27	Warning: 	File has moved from https://www.ciklum.com/bfsi/ to https://www.ciklum.com/industries/bfsi/
+03:12:27	Warning: 	Moved Permanently for https://www.ciklum.com/retail-consumer-industry/
+03:12:27	Warning: 	File has moved from https://www.ciklum.com/retail-consumer-industry/ to https://www.ciklum.com/industries/retail-consumer-industry/
+03:12:27	Warning: 	Moved Permanently for https://www.ciklum.com/healthcare/
+03:12:27	Warning: 	File has moved from https://www.ciklum.com/healthcare/ to https://www.ciklum.com/industries/healthcare/
+03:12:27	Warning: 	Moved Permanently for https://www.ciklum.com/hi-tech/
+03:12:27	Warning: 	File has moved from https://www.ciklum.com/hi-tech/ to https://www.ciklum.com/industries/hi-tech/
+03:12:27	Warning: 	Moved Permanently for https://www.ciklum.com/automotive-manufacturing/
+03:12:27	Warning: 	File has moved from https://www.ciklum.com/automotive-manufacturing/ to https://www.ciklum.com/industries/automotive-manufacturing/
+03:12:27	Warning: 	Moved Permanently for https://www.ciklum.com/travel-hospitality/
+03:12:27	Warning: 	File has moved from https://www.ciklum.com/travel-hospitality/ to https://www.ciklum.com/industries/travel-hospitality/
+03:15:32	Warning: 	Moved Permanently for https://www.ciklum.com/cloud-services/
+03:15:32	Warning: 	File has moved from https://www.ciklum.com/cloud-services/ to https://www.ciklum.com/services/cloud-services/
+03:15:32	Warning: 	Moved Permanently for https://www.ciklum.com/data-ai-services/
+03:15:32	Warning: 	File has moved from https://www.ciklum.com/data-ai-services/ to https://www.ciklum.com/services/data-ai-services/
+03:15:36	Warning: 	Moved Permanently for https://www.ciklum.com/edge-tech-services/
+03:15:36	Warning: 	File has moved from https://www.ciklum.com/edge-tech-services/ to https://www.ciklum.com/services/edge-tech-services/
+03:15:44	Warning: 	Moved Permanently for https://www.ciklum.com/cloud-platforms/
+03:15:44	Warning: 	File has moved from https://www.ciklum.com/cloud-platforms/ to https://www.ciklum.com/services/cloud-platforms/
+03:20:01	Warning: 	Moved Permanently for https://www.ciklum.com/industries/fintech/
+03:20:01	Warning: 	File has moved from https://www.ciklum.com/industries/fintech/ to https://www.ciklum.com/blog/fintech-innovations-software-solutions-for-fraud-prevention-in-finance/
+03:22:49	Warning: 	Moved Permanently for https://www.ciklum.com/our-expertise/data-analytics-solutions/
+03:22:49	Warning: 	File has moved from https://www.ciklum.com/our-expertise/data-analytics-solutions/ to /services/data-analytics/
+03:22:58	Warning: 	Moved Permanently for https://www.ciklum.com/blog/top-10-genai-trends-to-watch-in-technology-in-2025-and-beyond/
+03:22:58	Warning: 	File has moved from https://www.ciklum.com/blog/top-10-genai-trends-to-watch-in-technology-in-2025-and-beyond/ to /blog/genai-trends-2026/
+03:23:19	Warning: 	Link https://www.ciklum.com/industries/ not scanned (follow robots meta tag)
+03:26:53	Error: 	"Not Found" (404) at link https://www.ciklum.com/solutions/cloud-platforms/salesforce/?_gl=1*1v8nqka*_up*MQ..*_ga*MTEyODQ0OTE2MC4xNzMxMDQ3ODA3*_ga_GYVVWLD1KY*MTczMTA0NzgwNi4xLjAuMTczMTA0Nzg5Mi4wLjAuMTEyNDcyNTQ1NA.. (from https://www.ciklum.com/blog/unlocking-the-potential-of-financial-services-cloud-a-complete-guide/)
+03:27:40	Error: 	"Error when decompressing" (-1) at link https://www.ciklum.com/blog/an-algorithm-to-transcribe-ancient-kuzushiji-into-сontemporary-japanese-characters/ (from https://www.ciklum.com/category/data/data-science-analytics/page/2/)
+03:27:53	Warning: 	Moved Permanently for https://www.ciklum.com/solutions/intelligent-automation/
+03:27:53	Warning: 	File has moved from https://www.ciklum.com/solutions/intelligent-automation/ to https://www.ciklum.com/services/agentic-automation-services/
+03:27:57	Warning: 	Moved Permanently for https://www.ciklum.com/data-analytics/
+03:27:57	Warning: 	File has moved from https://www.ciklum.com/data-analytics/ to https://www.ciklum.com/services/data-analytics/
+03:27:58	Warning: 	Moved Permanently for https://www.ciklum.com/our-expertise/robotic-process-automation/
+03:27:58	Warning: 	File has moved from https://www.ciklum.com/our-expertise/robotic-process-automation/ to /services/low-code-applications-services/
+
+HTTrack Website Copier/3.49-2 mirror complete in 32 minutes 35 seconds : 3526 links scanned, 3485 files written (1020580425 bytes overall) [965562872 bytes received at 493894 bytes/sec], 66035767 bytes transferred using HTTP compression in 604 files, ratio 13%, 53.4 requests per connection
+(8 errors, 65 warnings, 0 messages)
