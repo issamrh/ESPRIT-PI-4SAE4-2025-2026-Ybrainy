@@ -10,18 +10,15 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/images/**", "/vendor/**",
-                                "/icons/**")
-                        .permitAll()
-                        .anyRequest().authenticated())
-                .formLogin(form -> form.permitAll())
-                .logout(logout -> logout.permitAll())
-                .csrf(csrf -> csrf.disable()); // Disable CSRF for development
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http
+                                .authorizeHttpRequests(auth -> auth
+                                                .anyRequest().permitAll())
+                                .csrf(csrf -> csrf.disable())
+                                .headers(headers -> headers.frameOptions(frame -> frame.disable())); // Enable frames
+                                                                                                     // for H2 console
 
-        return http.build();
-    }
+                return http.build();
+        }
 }
