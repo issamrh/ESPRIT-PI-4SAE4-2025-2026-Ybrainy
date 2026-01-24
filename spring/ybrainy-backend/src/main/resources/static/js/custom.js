@@ -675,7 +675,7 @@ var Akademi = function () {
 			handleDzFullScreen();
 			handlePageOnScroll();
 			handleLightgallery1();
-			handleSupport();
+			//handleSupport();
 		},
 
 
