@@ -1,0 +1,30 @@
+# Dependency directories
+**/node_modules/
+
+# Build artifacts
+**/target/
+angular/angular-app/dist/
+angular/angular-app/.angular/
+
+# IDEs and editors
+**/.idea/
+**/.vscode/
+*.swp
+*.swo
+*.DS_Store
+.classpath
+.project
+.settings/
+.factorypath
+
+# Logs
+*.log
+**/logs/
+
+# Sensitive info
+application-dev.properties
+application-prod.properties
+*.env
+
+# Others
+.mvn/wrapper/maven-wrapper.jar
