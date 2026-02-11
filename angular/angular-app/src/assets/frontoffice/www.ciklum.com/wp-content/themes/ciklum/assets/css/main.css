@@ -9245,6 +9245,11 @@ h4.wp-block-heading span {
   vertical-align: middle;
   width: 200px;
 }
+.logo img {
+  max-height: 55px;
+  width: auto;
+  object-fit: contain;
+}
 .header-container {
   padding: 12px;
   display: -webkit-flex;

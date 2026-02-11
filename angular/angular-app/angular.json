@@ -32,22 +32,36 @@
               }
             ],
             "styles": [
+              "src/assets/frontoffice/cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.css",
+              "src/assets/frontoffice/cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.2.0/magnific-popup.css",
+              "src/assets/frontoffice/unpkg.com/lenis@1.3.11/dist/lenis.css",
+              "src/assets/frontoffice/www.ciklum.com/wp-content/themes/ciklum/assets/css/main.css",
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [
+              "src/assets/frontoffice/code.jquery.com/jquery-3.6.0.min.js",
+              "src/assets/frontoffice/www.ciklum.com/wp-includes/js/jquery/jquery-migrate.min.js",
+              "src/assets/frontoffice/unpkg.com/lenis@1.1.4/dist/lenis.min.js",
+              "src/assets/frontoffice/cdnjs.cloudflare.com/ajax/libs/Swiper/11.0.5/swiper-bundle.min.js",
+              "src/assets/frontoffice/cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js",
+              "src/assets/frontoffice/cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js",
+              "src/assets/frontoffice/cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/SplitText.min.js",
+              "src/assets/frontoffice/cdnjs.cloudflare.com/ajax/libs/bodymovin/5.13.0/lottie.min.js",
+              "src/assets/frontoffice/cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.2.0/jquery.magnific-popup.js"
+            ]
           },
           "configurations": {
             "production": {
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
+                  "maximumWarning": "2MB",
+                  "maximumError": "5MB"
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2kB",
-                  "maximumError": "4kB"
+                  "maximumWarning": "100kB",
+                  "maximumError": "300kB"
                 }
               ],
               "outputHashing": "all"
