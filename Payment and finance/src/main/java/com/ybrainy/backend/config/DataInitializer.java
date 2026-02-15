@@ -1,21 +1,10 @@
 package com.ybrainy.backend.config;
 
-import com.ybrainy.backend.entity.Course;
-import com.ybrainy.backend.entity.Lesson;
-import com.ybrainy.backend.entity.Meet;
-import com.ybrainy.backend.entity.Report;
-import com.ybrainy.backend.entity.CvSubmission;
-import com.ybrainy.backend.entity.Certification;
-import com.ybrainy.backend.entity.Quiz;
-import com.ybrainy.backend.entity.Question;
-import com.ybrainy.backend.repository.CourseRepository;
-import com.ybrainy.backend.repository.LessonRepository;
-import com.ybrainy.backend.repository.MeetRepository;
-import com.ybrainy.backend.repository.ReportRepository;
-import com.ybrainy.backend.repository.CvSubmissionRepository;
-import com.ybrainy.backend.repository.CertificationRepository;
-import com.ybrainy.backend.repository.QuizRepository;
-import com.ybrainy.backend.repository.QuestionRepository;
+import com.ybrainy.backend.entity.*;
+import com.ybrainy.backend.entity.enums.CategoryStatus;
+import com.ybrainy.backend.entity.enums.PackLevel;
+import com.ybrainy.backend.entity.enums.PackStatus;
+import com.ybrainy.backend.repository.*;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -36,6 +25,8 @@ public class DataInitializer implements CommandLineRunner {
     private final CertificationRepository certRepo;
     private final QuizRepository quizRepo;
     private final QuestionRepository questionRepo;
+    private final PackCategoryRepository packCategoryRepo;
+    private final PackRepository packRepo;
 
     /* ── Free sample video URLs (all public / royalty-free) ── */
     private static final String VID_BIG_BUCK   = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
@@ -51,7 +42,8 @@ public class DataInitializer implements CommandLineRunner {
 
     public DataInitializer(CourseRepository courseRepo, LessonRepository lessonRepo, MeetRepository meetRepo,
                            ReportRepository reportRepo, CvSubmissionRepository cvRepo,
-                           CertificationRepository certRepo, QuizRepository quizRepo, QuestionRepository questionRepo) {
+                           CertificationRepository certRepo, QuizRepository quizRepo, QuestionRepository questionRepo,
+                           PackCategoryRepository packCategoryRepo, PackRepository packRepo) {
         this.courseRepo = courseRepo;
         this.lessonRepo = lessonRepo;
         this.meetRepo = meetRepo;
@@ -60,6 +52,8 @@ public class DataInitializer implements CommandLineRunner {
         this.certRepo = certRepo;
         this.quizRepo = quizRepo;
         this.questionRepo = questionRepo;
+        this.packCategoryRepo = packCategoryRepo;
+        this.packRepo = packRepo;
     }
 
     @Override
@@ -676,6 +670,92 @@ public class DataInitializer implements CommandLineRunner {
                 .questionText("Which tool is most commonly used for collaborative UI design?")
                 .optionA("Photoshop").optionB("Microsoft Word").optionC("Figma").optionD("Excel")
                 .correctAnswer("C").questionType("multiple_choice").build());
+
+        /* ═══════════════════════════════════════════════════════
+         *  PACK CATEGORIES & PACKS
+         * ═══════════════════════════════════════════════════════ */
+        if (packCategoryRepo.count() == 0) {
+            PackCategory catWebDev = packCategoryRepo.save(PackCategory.builder()
+                    .name("Web Development").description("Full-stack and frontend web development courses and bundles.")
+                    .icon("bi-globe").status(CategoryStatus.ACTIVE).build());
+
+            PackCategory catDataScience = packCategoryRepo.save(PackCategory.builder()
+                    .name("Data Science").description("Data analysis, machine learning and AI course bundles.")
+                    .icon("bi-bar-chart-line").status(CategoryStatus.ACTIVE).build());
+
+            PackCategory catBusiness = packCategoryRepo.save(PackCategory.builder()
+                    .name("Business").description("Business strategy, management and entrepreneurship packs.")
+                    .icon("bi-briefcase").status(CategoryStatus.ACTIVE).build());
+
+            PackCategory catMarketing = packCategoryRepo.save(PackCategory.builder()
+                    .name("Marketing").description("Digital marketing, SEO, social media and growth hacking.")
+                    .icon("bi-megaphone").status(CategoryStatus.ACTIVE).build());
+
+            PackCategory catMobile = packCategoryRepo.save(PackCategory.builder()
+                    .name("Mobile Development").description("iOS, Android and cross-platform mobile development.")
+                    .icon("bi-phone").status(CategoryStatus.ACTIVE).build());
+
+            PackCategory catCyber = packCategoryRepo.save(PackCategory.builder()
+                    .name("Cybersecurity").description("Network security, ethical hacking and penetration testing.")
+                    .icon("bi-shield-lock").status(CategoryStatus.INACTIVE).build());
+
+            // --- Web Development Packs ---
+            packRepo.save(Pack.builder().title("Full-Stack Web Developer Bundle")
+                    .description("Master HTML, CSS, JavaScript, React, Node.js and PostgreSQL. Build 5 real-world projects.")
+                    .originalPrice(299.99).salePrice(199.99).level(PackLevel.INTERMEDIATE).durationHours(120)
+                    .certificateName("Full-Stack Web Developer Certificate").status(PackStatus.ACTIVE).category(catWebDev).build());
+
+            packRepo.save(Pack.builder().title("Frontend Essentials Pack")
+                    .description("Learn HTML5, CSS3, JavaScript ES6+, and responsive design from scratch.")
+                    .originalPrice(149.99).salePrice(99.99).level(PackLevel.BEGINNER).durationHours(60)
+                    .certificateName("Frontend Developer Certificate").status(PackStatus.ACTIVE).category(catWebDev).build());
+
+            packRepo.save(Pack.builder().title("Advanced React & Next.js")
+                    .description("Deep dive into React hooks, context, Next.js SSR/SSG, and deployment.")
+                    .originalPrice(199.99).salePrice(149.99).level(PackLevel.ADVANCED).durationHours(80)
+                    .certificateName(null).status(PackStatus.DRAFT).category(catWebDev).build());
+
+            // --- Data Science Packs ---
+            packRepo.save(Pack.builder().title("Data Science with Python")
+                    .description("From Pandas to Machine Learning — analyze data, build models and visualize insights.")
+                    .originalPrice(349.99).salePrice(249.99).level(PackLevel.INTERMEDIATE).durationHours(100)
+                    .certificateName("Data Science Professional Certificate").status(PackStatus.ACTIVE).category(catDataScience).build());
+
+            packRepo.save(Pack.builder().title("Machine Learning Masterclass")
+                    .description("Supervised & unsupervised learning, neural networks, NLP and computer vision with Python.")
+                    .originalPrice(399.99).salePrice(299.99).level(PackLevel.ADVANCED).durationHours(140)
+                    .certificateName("ML Engineer Certificate").status(PackStatus.ACTIVE).category(catDataScience).build());
+
+            // --- Business Packs ---
+            packRepo.save(Pack.builder().title("Business Strategy Fundamentals")
+                    .description("Learn strategic planning, SWOT analysis, competitive advantage and business model canvas.")
+                    .originalPrice(199.99).salePrice(129.99).level(PackLevel.BEGINNER).durationHours(40)
+                    .certificateName("Business Strategy Certificate").status(PackStatus.ACTIVE).category(catBusiness).build());
+
+            packRepo.save(Pack.builder().title("Project Management Professional")
+                    .description("Agile, Scrum, Kanban and waterfall methodologies. Prepare for PMP certification.")
+                    .originalPrice(249.99).salePrice(179.99).level(PackLevel.INTERMEDIATE).durationHours(60)
+                    .certificateName("PMP Preparation Certificate").status(PackStatus.ACTIVE).category(catBusiness).build());
+
+            // --- Marketing Packs ---
+            packRepo.save(Pack.builder().title("Digital Marketing Complete Guide")
+                    .description("SEO, Google Ads, Facebook Ads, email marketing, content strategy and analytics.")
+                    .originalPrice(249.99).salePrice(169.99).level(PackLevel.BEGINNER).durationHours(50)
+                    .certificateName("Digital Marketing Certificate").status(PackStatus.ACTIVE).category(catMarketing).build());
+
+            // --- Mobile Development Packs ---
+            packRepo.save(Pack.builder().title("Flutter Mobile Development")
+                    .description("Build beautiful, natively compiled mobile apps for iOS and Android from a single codebase.")
+                    .originalPrice(279.99).salePrice(199.99).level(PackLevel.INTERMEDIATE).durationHours(90)
+                    .certificateName("Flutter Developer Certificate").status(PackStatus.ACTIVE).category(catMobile).build());
+
+            packRepo.save(Pack.builder().title("React Native Bootcamp")
+                    .description("Cross-platform mobile development with React Native, Expo and Firebase.")
+                    .originalPrice(259.99).salePrice(189.99).level(PackLevel.INTERMEDIATE).durationHours(70)
+                    .certificateName(null).status(PackStatus.ARCHIVED).category(catMobile).build());
+
+            System.out.println("✅ Pack data loaded: 6 categories, 10 packs");
+        }
 
         System.out.println("✅ Sample data loaded: 5 courses, 14 lessons, 5 meets, 11 reports, 8 CVs, 6 certifications, 5 quizzes, 22 questions");
     }
