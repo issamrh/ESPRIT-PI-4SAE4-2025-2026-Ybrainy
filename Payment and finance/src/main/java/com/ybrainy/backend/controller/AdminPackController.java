@@ -20,7 +20,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/packs")
-@CrossOrigin("*")
 @RequiredArgsConstructor
 public class AdminPackController {
 

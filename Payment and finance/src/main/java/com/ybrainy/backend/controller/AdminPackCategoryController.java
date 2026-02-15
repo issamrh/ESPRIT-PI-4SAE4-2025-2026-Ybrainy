@@ -14,7 +14,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/categories")
-@CrossOrigin("*")
 @RequiredArgsConstructor
 public class AdminPackCategoryController {
 

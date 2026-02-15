@@ -4,13 +4,14 @@ import com.ybrainy.backend.dto.packcategory.PackCategoryResponseDTO;
 import com.ybrainy.backend.service.PackCategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/categories")
-@CrossOrigin("*")
 @RequiredArgsConstructor
 public class PublicPackCategoryController {
 

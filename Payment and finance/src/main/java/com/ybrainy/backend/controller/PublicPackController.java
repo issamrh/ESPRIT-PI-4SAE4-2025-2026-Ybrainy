@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/packs")
-@CrossOrigin("*")
 @RequiredArgsConstructor
 public class PublicPackController {
 
