@@ -2,6 +2,7 @@ package com.ybrainy.backend.entity;
 
 
 import com.ybrainy.backend.entity.enums.ExpenseCategory;
+import com.ybrainy.backend.entity.enums.ExpenseStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

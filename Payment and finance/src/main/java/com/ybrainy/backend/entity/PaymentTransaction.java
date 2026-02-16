@@ -1,6 +1,7 @@
 package com.ybrainy.backend.entity;
 
 
+import com.ybrainy.backend.entity.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
