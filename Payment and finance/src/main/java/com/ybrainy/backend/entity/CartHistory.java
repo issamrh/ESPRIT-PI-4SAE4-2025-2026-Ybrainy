@@ -1,4 +1,5 @@
-package com.ybrainy.cartservice.entity;
+package com.ybrainy.backend.entity;
+
 
 import jakarta.persistence.*;
 import lombok.*;

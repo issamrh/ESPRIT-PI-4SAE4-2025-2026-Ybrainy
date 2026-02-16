@@ -1,5 +1,7 @@
-package com.ybrainy.financeservice.entity;
+package com.ybrainy.backend.entity;
 
+
+import com.ybrainy.backend.entity.enums.ExpenseCategory;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

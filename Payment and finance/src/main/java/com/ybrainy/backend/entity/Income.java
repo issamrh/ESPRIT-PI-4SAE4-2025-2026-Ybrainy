@@ -1,4 +1,4 @@
-package com.ybrainy.financeservice.entity;
+package com.ybrainy.backend.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

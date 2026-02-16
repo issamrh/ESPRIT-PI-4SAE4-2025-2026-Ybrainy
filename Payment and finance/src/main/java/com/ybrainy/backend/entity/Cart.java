@@ -1,5 +1,7 @@
-package com.ybrainy.cartservice.entity;
+package com.ybrainy.backend.entity;
 
+
+import com.ybrainy.backend.entity.enums.CartStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
