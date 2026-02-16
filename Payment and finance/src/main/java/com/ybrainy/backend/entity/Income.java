@@ -9,7 +9,11 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "income")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Income {
 
     @Id
@@ -17,10 +21,13 @@ public class Income {
     private Long id;
 
     @Column(nullable = false)
-    private String sourceType; // PACK_PURCHASE
+    private String sourceType; // PACK_PURCHASE or MANUAL
 
-    @Column(nullable = false)
-    private Long referenceId; // PaymentOrder ID
+    @Column(nullable = true)
+    private Long referenceId; // PaymentOrder ID (optional for manual)
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     @Column(nullable = false)
     private Double amount;
