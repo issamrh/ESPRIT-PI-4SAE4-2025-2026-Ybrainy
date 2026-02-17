@@ -8,6 +8,7 @@ import com.ybrainy.backend.exception.ResourceNotFoundException;
 import com.ybrainy.backend.mapper.CartMapper;
 import com.ybrainy.backend.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class CartService {
 
     private final CartRepository cartRepository;
@@ -27,32 +29,40 @@ public class CartService {
     private final CartMapper cartMapper;
 
     public CartResponseDTO getActiveCart(Long userId) {
+        log.info("Fetching active cart for user: {}", userId);
         Cart cart = getOrCreateActiveCart(userId);
         return cartMapper.toCartResponseDTO(cart);
     }
 
     public CartResponseDTO addItemToCart(Long userId, AddToCartDTO dto) {
+        log.info("Adding pack {} to cart for user {}", dto.getPackId(), userId);
         Cart cart = getOrCreateActiveCart(userId);
+
         Pack pack = packRepository.findById(dto.getPackId())
-                .orElseThrow(() -> new ResourceNotFoundException("Pack not found"));
+                .orElseThrow(() -> {
+                    log.error("Pack not found: {}", dto.getPackId());
+                    return new ResourceNotFoundException("Pack not found");
+                });
 
         Optional<CartItem> existingItem = cart.getItems().stream()
-                .filter(item -> item.getPackId().equals(dto.getPackId()))
+                .filter(item -> item.getPack().getId().equals(dto.getPackId()))
                 .findFirst();
 
         if (existingItem.isPresent()) {
             CartItem item = existingItem.get();
             item.setQuantity(item.getQuantity() + dto.getQuantity());
             item.setSubtotal(item.getQuantity() * item.getPriceAtPurchase());
+            log.info("Updated quantity for pack {} in cart", dto.getPackId());
         } else {
             CartItem newItem = CartItem.builder()
                     .cart(cart)
-                    .packId(pack.getId())
+                    .pack(pack)
                     .priceAtPurchase(pack.getSalePrice())
                     .quantity(dto.getQuantity())
                     .subtotal(pack.getSalePrice() * dto.getQuantity())
                     .build();
             cart.getItems().add(newItem);
+            log.info("Added new pack {} to cart", dto.getPackId());
         }
 
         updateCartTotal(cart);
@@ -61,6 +71,7 @@ public class CartService {
     }
 
     public CartResponseDTO removeItemFromCart(Long userId, Long itemId) {
+        log.info("Removing item {} from cart for user {}", itemId, userId);
         Cart cart = getOrCreateActiveCart(userId);
         cart.getItems().removeIf(item -> item.getId().equals(itemId));
         updateCartTotal(cart);
@@ -69,6 +80,7 @@ public class CartService {
     }
 
     public CartResponseDTO clearCart(Long userId) {
+        log.info("Clearing cart for user {}", userId);
         Cart cart = getOrCreateActiveCart(userId);
         cart.getItems().clear();
         cart.setTotalAmount(0.0);
@@ -77,8 +89,10 @@ public class CartService {
     }
 
     public CartResponseDTO checkout(Long userId) {
+        log.info("Processing checkout for user {}", userId);
         Cart cart = getOrCreateActiveCart(userId);
         if (cart.getItems().isEmpty()) {
+            log.warn("Attempted checkout with empty cart for user {}", userId);
             throw new IllegalStateException("Cannot checkout an empty cart");
         }
 
@@ -92,14 +106,14 @@ public class CartService {
                 .build();
         cartHistoryRepository.save(history);
 
-        // In a real app, you'd create a new cart after checkout
-        // For this implementation, we'll just return the checked out cart
+        log.info("Checkout successful for user: {}", userId);
         return cartMapper.toCartResponseDTO(cartRepository.save(cart));
     }
 
     private Cart getOrCreateActiveCart(Long userId) {
         return cartRepository.findByUserIdAndStatus(userId, CartStatus.ACTIVE)
                 .orElseGet(() -> {
+                    log.info("Creating new ACTIVE cart for user: {}", userId);
                     Cart newCart = Cart.builder()
                             .userId(userId)
                             .status(CartStatus.ACTIVE)

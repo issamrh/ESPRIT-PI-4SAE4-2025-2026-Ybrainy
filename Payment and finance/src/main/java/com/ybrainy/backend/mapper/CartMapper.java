@@ -10,19 +10,11 @@ import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @Mapper(componentModel = "spring")
-public abstract class CartMapper {
+public interface CartMapper {
 
-    @Autowired
-    protected PackRepository packRepository;
+    CartResponseDTO toCartResponseDTO(Cart cart);
 
-    public abstract CartResponseDTO toCartResponseDTO(Cart cart);
-
-    @Mapping(target = "packTitle", expression = "java(getPackTitle(item.getPackId()))")
-    public abstract CartItemResponseDTO toCartItemResponseDTO(CartItem item);
-
-    protected String getPackTitle(Long packId) {
-        return packRepository.findById(packId)
-                .map(p -> p.getTitle())
-                .orElse("Unknown Pack");
-    }
+    @Mapping(target = "packId", source = "pack.id")
+    @Mapping(target = "packTitle", source = "pack.title")
+    CartItemResponseDTO toCartItemResponseDTO(CartItem item);
 }
