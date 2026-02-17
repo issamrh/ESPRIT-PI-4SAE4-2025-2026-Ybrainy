@@ -16,8 +16,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-02-17T02:07:25+0100",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.8 (Oracle Corporation)"
+    date = "2026-02-17T03:06:36+0100",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.45.0.v20260128-0750, environment: Java 21.0.9 (Eclipse Adoptium)"
 )
 @Component
 public class FinanceMapperImpl implements FinanceMapper {
@@ -30,14 +30,14 @@ public class FinanceMapperImpl implements FinanceMapper {
 
         Income.IncomeBuilder income = Income.builder();
 
-        income.sourceType( dto.getSourceType() );
-        income.referenceId( dto.getReferenceId() );
-        income.description( dto.getDescription() );
         income.amount( dto.getAmount() );
         income.currency( dto.getCurrency() );
+        income.description( dto.getDescription() );
         if ( dto.getPaymentMethod() != null ) {
             income.paymentMethod( Enum.valueOf( PaymentMethod.class, dto.getPaymentMethod() ) );
         }
+        income.referenceId( dto.getReferenceId() );
+        income.sourceType( dto.getSourceType() );
 
         income.receivedDate( java.time.LocalDateTime.now() );
 
@@ -50,17 +50,17 @@ public class FinanceMapperImpl implements FinanceMapper {
             return;
         }
 
-        entity.setSourceType( dto.getSourceType() );
-        entity.setReferenceId( dto.getReferenceId() );
-        entity.setDescription( dto.getDescription() );
         entity.setAmount( dto.getAmount() );
         entity.setCurrency( dto.getCurrency() );
+        entity.setDescription( dto.getDescription() );
         if ( dto.getPaymentMethod() != null ) {
             entity.setPaymentMethod( Enum.valueOf( PaymentMethod.class, dto.getPaymentMethod() ) );
         }
         else {
             entity.setPaymentMethod( null );
         }
+        entity.setReferenceId( dto.getReferenceId() );
+        entity.setSourceType( dto.getSourceType() );
     }
 
     @Override
@@ -71,17 +71,17 @@ public class FinanceMapperImpl implements FinanceMapper {
 
         IncomeResponseDTO incomeResponseDTO = new IncomeResponseDTO();
 
-        incomeResponseDTO.setId( entity.getId() );
-        incomeResponseDTO.setSourceType( entity.getSourceType() );
-        incomeResponseDTO.setReferenceId( entity.getReferenceId() );
-        incomeResponseDTO.setDescription( entity.getDescription() );
         incomeResponseDTO.setAmount( entity.getAmount() );
+        incomeResponseDTO.setCreatedAt( entity.getCreatedAt() );
         incomeResponseDTO.setCurrency( entity.getCurrency() );
+        incomeResponseDTO.setDescription( entity.getDescription() );
+        incomeResponseDTO.setId( entity.getId() );
         if ( entity.getPaymentMethod() != null ) {
             incomeResponseDTO.setPaymentMethod( entity.getPaymentMethod().name() );
         }
         incomeResponseDTO.setReceivedDate( entity.getReceivedDate() );
-        incomeResponseDTO.setCreatedAt( entity.getCreatedAt() );
+        incomeResponseDTO.setReferenceId( entity.getReferenceId() );
+        incomeResponseDTO.setSourceType( entity.getSourceType() );
 
         return incomeResponseDTO;
     }
@@ -94,17 +94,17 @@ public class FinanceMapperImpl implements FinanceMapper {
 
         Expense.ExpenseBuilder expense = Expense.builder();
 
-        expense.title( dto.getTitle() );
-        expense.description( dto.getDescription() );
+        expense.amount( dto.getAmount() );
         if ( dto.getCategory() != null ) {
             expense.category( Enum.valueOf( ExpenseCategory.class, dto.getCategory() ) );
         }
-        expense.amount( dto.getAmount() );
         expense.currency( dto.getCurrency() );
+        expense.description( dto.getDescription() );
         expense.expenseDate( dto.getExpenseDate() );
         if ( dto.getStatus() != null ) {
             expense.status( Enum.valueOf( ExpenseStatus.class, dto.getStatus() ) );
         }
+        expense.title( dto.getTitle() );
 
         return expense.build();
     }
@@ -115,16 +115,15 @@ public class FinanceMapperImpl implements FinanceMapper {
             return;
         }
 
-        entity.setTitle( dto.getTitle() );
-        entity.setDescription( dto.getDescription() );
+        entity.setAmount( dto.getAmount() );
         if ( dto.getCategory() != null ) {
             entity.setCategory( Enum.valueOf( ExpenseCategory.class, dto.getCategory() ) );
         }
         else {
             entity.setCategory( null );
         }
-        entity.setAmount( dto.getAmount() );
         entity.setCurrency( dto.getCurrency() );
+        entity.setDescription( dto.getDescription() );
         entity.setExpenseDate( dto.getExpenseDate() );
         if ( dto.getStatus() != null ) {
             entity.setStatus( Enum.valueOf( ExpenseStatus.class, dto.getStatus() ) );
@@ -132,6 +131,7 @@ public class FinanceMapperImpl implements FinanceMapper {
         else {
             entity.setStatus( null );
         }
+        entity.setTitle( dto.getTitle() );
     }
 
     @Override
@@ -142,19 +142,19 @@ public class FinanceMapperImpl implements FinanceMapper {
 
         ExpenseResponseDTO expenseResponseDTO = new ExpenseResponseDTO();
 
-        expenseResponseDTO.setId( entity.getId() );
-        expenseResponseDTO.setTitle( entity.getTitle() );
-        expenseResponseDTO.setDescription( entity.getDescription() );
         expenseResponseDTO.setAmount( entity.getAmount() );
-        expenseResponseDTO.setCurrency( entity.getCurrency() );
         if ( entity.getCategory() != null ) {
             expenseResponseDTO.setCategory( entity.getCategory().name() );
         }
+        expenseResponseDTO.setCreatedAt( entity.getCreatedAt() );
+        expenseResponseDTO.setCurrency( entity.getCurrency() );
+        expenseResponseDTO.setDescription( entity.getDescription() );
+        expenseResponseDTO.setExpenseDate( entity.getExpenseDate() );
+        expenseResponseDTO.setId( entity.getId() );
         if ( entity.getStatus() != null ) {
             expenseResponseDTO.setStatus( entity.getStatus().name() );
         }
-        expenseResponseDTO.setExpenseDate( entity.getExpenseDate() );
-        expenseResponseDTO.setCreatedAt( entity.getCreatedAt() );
+        expenseResponseDTO.setTitle( entity.getTitle() );
 
         return expenseResponseDTO;
     }

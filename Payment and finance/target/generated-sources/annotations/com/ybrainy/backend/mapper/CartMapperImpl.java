@@ -1,8 +1,10 @@
 package com.ybrainy.backend.mapper;
 
+import com.ybrainy.backend.dto.cart.CartHistoryResponseDTO;
 import com.ybrainy.backend.dto.cart.CartItemResponseDTO;
 import com.ybrainy.backend.dto.cart.CartResponseDTO;
 import com.ybrainy.backend.entity.Cart;
+import com.ybrainy.backend.entity.CartHistory;
 import com.ybrainy.backend.entity.CartItem;
 import com.ybrainy.backend.entity.Pack;
 import java.util.ArrayList;
@@ -12,8 +14,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-02-17T02:07:26+0100",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.8 (Oracle Corporation)"
+    date = "2026-02-17T03:06:37+0100",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.45.0.v20260128-0750, environment: Java 21.0.9 (Eclipse Adoptium)"
 )
 @Component
 public class CartMapperImpl implements CartMapper {
@@ -27,10 +29,10 @@ public class CartMapperImpl implements CartMapper {
         CartResponseDTO cartResponseDTO = new CartResponseDTO();
 
         cartResponseDTO.setId( cart.getId() );
-        cartResponseDTO.setUserId( cart.getUserId() );
+        cartResponseDTO.setItems( cartItemListToCartItemResponseDTOList( cart.getItems() ) );
         cartResponseDTO.setStatus( cart.getStatus() );
         cartResponseDTO.setTotalAmount( cart.getTotalAmount() );
-        cartResponseDTO.setItems( cartItemListToCartItemResponseDTOList( cart.getItems() ) );
+        cartResponseDTO.setUserId( cart.getUserId() );
 
         return cartResponseDTO;
     }
@@ -51,6 +53,28 @@ public class CartMapperImpl implements CartMapper {
         cartItemResponseDTO.setSubtotal( item.getSubtotal() );
 
         return cartItemResponseDTO;
+    }
+
+    @Override
+    public CartHistoryResponseDTO toCartHistoryResponseDTO(CartHistory history) {
+        if ( history == null ) {
+            return null;
+        }
+
+        CartHistoryResponseDTO cartHistoryResponseDTO = new CartHistoryResponseDTO();
+
+        cartHistoryResponseDTO.setAction( history.getAction() );
+        cartHistoryResponseDTO.setCartId( history.getCartId() );
+        cartHistoryResponseDTO.setCartItemId( history.getCartItemId() );
+        cartHistoryResponseDTO.setCartStatus( history.getCartStatus() );
+        cartHistoryResponseDTO.setCreatedAt( history.getCreatedAt() );
+        cartHistoryResponseDTO.setDescription( history.getDescription() );
+        cartHistoryResponseDTO.setId( history.getId() );
+        cartHistoryResponseDTO.setPackTitle( history.getPackTitle() );
+        cartHistoryResponseDTO.setQuantity( history.getQuantity() );
+        cartHistoryResponseDTO.setTotalAmount( history.getTotalAmount() );
+
+        return cartHistoryResponseDTO;
     }
 
     protected List<CartItemResponseDTO> cartItemListToCartItemResponseDTOList(List<CartItem> list) {

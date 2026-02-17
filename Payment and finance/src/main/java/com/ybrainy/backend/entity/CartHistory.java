@@ -23,8 +23,12 @@ public class CartHistory {
 
     private Long userId;
 
+    private Long cartId;
+
+    private Long cartItemId;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private CartAction action;
 
     private String packTitle;
@@ -35,7 +39,10 @@ public class CartHistory {
     private Double totalAmount;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = true)
     private CartStatus cartStatus;
+
+    private String description;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

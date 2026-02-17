@@ -1,6 +1,7 @@
 package com.ybrainy.backend.controller;
 
 import com.ybrainy.backend.dto.cart.AddToCartDTO;
+import com.ybrainy.backend.dto.cart.CartHistoryResponseDTO;
 import com.ybrainy.backend.dto.cart.CartResponseDTO;
 import com.ybrainy.backend.service.CartService;
 import jakarta.validation.Valid;
@@ -8,9 +9,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/cart")
 @RequiredArgsConstructor
+@CrossOrigin(originPatterns = "*") // Fix for allowCredentials issue
 public class CartController {
 
     private final CartService cartService;
@@ -41,5 +45,10 @@ public class CartController {
     @PostMapping("/checkout")
     public ResponseEntity<CartResponseDTO> checkout() {
         return ResponseEntity.ok(cartService.checkout(TEMP_USER_ID));
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<CartHistoryResponseDTO>> getHistory() {
+        return ResponseEntity.ok(cartService.getCartHistory(TEMP_USER_ID));
     }
 }

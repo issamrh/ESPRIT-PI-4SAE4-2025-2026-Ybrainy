@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-02-17T02:07:25+0100",
-    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 17.0.8 (Oracle Corporation)"
+    date = "2026-02-17T03:06:37+0100",
+    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.45.0.v20260128-0750, environment: Java 21.0.9 (Eclipse Adoptium)"
 )
 @Component
 public class PackMapperImpl implements PackMapper {
@@ -24,13 +24,13 @@ public class PackMapperImpl implements PackMapper {
 
         Pack.PackBuilder pack = Pack.builder();
 
-        pack.title( dto.getTitle() );
+        pack.certificateName( dto.getCertificateName() );
         pack.description( dto.getDescription() );
+        pack.durationHours( dto.getDurationHours() );
+        pack.level( dto.getLevel() );
         pack.originalPrice( dto.getOriginalPrice() );
         pack.salePrice( dto.getSalePrice() );
-        pack.level( dto.getLevel() );
-        pack.durationHours( dto.getDurationHours() );
-        pack.certificateName( dto.getCertificateName() );
+        pack.title( dto.getTitle() );
 
         return pack.build();
     }
@@ -41,13 +41,13 @@ public class PackMapperImpl implements PackMapper {
             return;
         }
 
-        entity.setTitle( dto.getTitle() );
+        entity.setCertificateName( dto.getCertificateName() );
         entity.setDescription( dto.getDescription() );
+        entity.setDurationHours( dto.getDurationHours() );
+        entity.setLevel( dto.getLevel() );
         entity.setOriginalPrice( dto.getOriginalPrice() );
         entity.setSalePrice( dto.getSalePrice() );
-        entity.setLevel( dto.getLevel() );
-        entity.setDurationHours( dto.getDurationHours() );
-        entity.setCertificateName( dto.getCertificateName() );
+        entity.setTitle( dto.getTitle() );
     }
 
     @Override
@@ -60,16 +60,16 @@ public class PackMapperImpl implements PackMapper {
 
         packResponseDTO.categoryId( entityCategoryId( entity ) );
         packResponseDTO.categoryName( entityCategoryName( entity ) );
-        packResponseDTO.id( entity.getId() );
-        packResponseDTO.title( entity.getTitle() );
+        packResponseDTO.certificateName( entity.getCertificateName() );
+        packResponseDTO.createdAt( entity.getCreatedAt() );
         packResponseDTO.description( entity.getDescription() );
+        packResponseDTO.durationHours( entity.getDurationHours() );
+        packResponseDTO.id( entity.getId() );
+        packResponseDTO.level( entity.getLevel() );
         packResponseDTO.originalPrice( entity.getOriginalPrice() );
         packResponseDTO.salePrice( entity.getSalePrice() );
-        packResponseDTO.level( entity.getLevel() );
-        packResponseDTO.durationHours( entity.getDurationHours() );
-        packResponseDTO.certificateName( entity.getCertificateName() );
         packResponseDTO.status( entity.getStatus() );
-        packResponseDTO.createdAt( entity.getCreatedAt() );
+        packResponseDTO.title( entity.getTitle() );
         packResponseDTO.updatedAt( entity.getUpdatedAt() );
 
         return packResponseDTO.build();
