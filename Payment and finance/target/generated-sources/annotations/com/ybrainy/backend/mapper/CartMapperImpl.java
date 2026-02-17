@@ -14,8 +14,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-02-17T03:06:37+0100",
-    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.45.0.v20260128-0750, environment: Java 21.0.9 (Eclipse Adoptium)"
+    date = "2026-02-17T21:02:49+0100",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 23.0.2 (Oracle Corporation)"
 )
 @Component
 public class CartMapperImpl implements CartMapper {
@@ -29,10 +29,10 @@ public class CartMapperImpl implements CartMapper {
         CartResponseDTO cartResponseDTO = new CartResponseDTO();
 
         cartResponseDTO.setId( cart.getId() );
-        cartResponseDTO.setItems( cartItemListToCartItemResponseDTOList( cart.getItems() ) );
+        cartResponseDTO.setUserId( cart.getUserId() );
         cartResponseDTO.setStatus( cart.getStatus() );
         cartResponseDTO.setTotalAmount( cart.getTotalAmount() );
-        cartResponseDTO.setUserId( cart.getUserId() );
+        cartResponseDTO.setItems( cartItemListToCartItemResponseDTOList( cart.getItems() ) );
 
         return cartResponseDTO;
     }
@@ -63,16 +63,16 @@ public class CartMapperImpl implements CartMapper {
 
         CartHistoryResponseDTO cartHistoryResponseDTO = new CartHistoryResponseDTO();
 
-        cartHistoryResponseDTO.setAction( history.getAction() );
+        cartHistoryResponseDTO.setId( history.getId() );
         cartHistoryResponseDTO.setCartId( history.getCartId() );
         cartHistoryResponseDTO.setCartItemId( history.getCartItemId() );
-        cartHistoryResponseDTO.setCartStatus( history.getCartStatus() );
-        cartHistoryResponseDTO.setCreatedAt( history.getCreatedAt() );
-        cartHistoryResponseDTO.setDescription( history.getDescription() );
-        cartHistoryResponseDTO.setId( history.getId() );
+        cartHistoryResponseDTO.setAction( history.getAction() );
         cartHistoryResponseDTO.setPackTitle( history.getPackTitle() );
         cartHistoryResponseDTO.setQuantity( history.getQuantity() );
         cartHistoryResponseDTO.setTotalAmount( history.getTotalAmount() );
+        cartHistoryResponseDTO.setCartStatus( history.getCartStatus() );
+        cartHistoryResponseDTO.setDescription( history.getDescription() );
+        cartHistoryResponseDTO.setCreatedAt( history.getCreatedAt() );
 
         return cartHistoryResponseDTO;
     }

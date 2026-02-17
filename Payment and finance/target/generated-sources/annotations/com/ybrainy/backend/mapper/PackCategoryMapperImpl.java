@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2026-02-17T03:06:36+0100",
-    comments = "version: 1.5.5.Final, compiler: Eclipse JDT (IDE) 3.45.0.v20260128-0750, environment: Java 21.0.9 (Eclipse Adoptium)"
+    date = "2026-02-17T21:02:49+0100",
+    comments = "version: 1.5.5.Final, compiler: javac, environment: Java 23.0.2 (Oracle Corporation)"
 )
 @Component
 public class PackCategoryMapperImpl implements PackCategoryMapper {
@@ -23,9 +23,9 @@ public class PackCategoryMapperImpl implements PackCategoryMapper {
 
         PackCategory.PackCategoryBuilder packCategory = PackCategory.builder();
 
+        packCategory.name( dto.getName() );
         packCategory.description( dto.getDescription() );
         packCategory.icon( dto.getIcon() );
-        packCategory.name( dto.getName() );
 
         return packCategory.build();
     }
@@ -36,9 +36,9 @@ public class PackCategoryMapperImpl implements PackCategoryMapper {
             return;
         }
 
+        entity.setName( dto.getName() );
         entity.setDescription( dto.getDescription() );
         entity.setIcon( dto.getIcon() );
-        entity.setName( dto.getName() );
     }
 
     @Override
@@ -49,12 +49,12 @@ public class PackCategoryMapperImpl implements PackCategoryMapper {
 
         PackCategoryResponseDTO.PackCategoryResponseDTOBuilder packCategoryResponseDTO = PackCategoryResponseDTO.builder();
 
-        packCategoryResponseDTO.createdAt( entity.getCreatedAt() );
-        packCategoryResponseDTO.description( entity.getDescription() );
-        packCategoryResponseDTO.icon( entity.getIcon() );
         packCategoryResponseDTO.id( entity.getId() );
         packCategoryResponseDTO.name( entity.getName() );
+        packCategoryResponseDTO.description( entity.getDescription() );
+        packCategoryResponseDTO.icon( entity.getIcon() );
         packCategoryResponseDTO.status( entity.getStatus() );
+        packCategoryResponseDTO.createdAt( entity.getCreatedAt() );
         packCategoryResponseDTO.updatedAt( entity.getUpdatedAt() );
 
         packCategoryResponseDTO.packCount( entity.getPacks() != null ? entity.getPacks().size() : 0 );

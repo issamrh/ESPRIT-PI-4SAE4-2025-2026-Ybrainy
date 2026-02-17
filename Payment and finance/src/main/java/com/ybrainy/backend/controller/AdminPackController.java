@@ -25,14 +25,19 @@ public class AdminPackController {
 
     private final PackService packService;
 
-    @PostMapping
-    public ResponseEntity<PackResponseDTO> create(@Valid @RequestBody CreatePackDTO dto) {
-        return new ResponseEntity<>(packService.create(dto), HttpStatus.CREATED);
+    @PostMapping(consumes = { "multipart/form-data" })
+    public ResponseEntity<PackResponseDTO> create(
+            @RequestPart("pack") @Valid CreatePackDTO dto,
+            @RequestPart(value = "file", required = false) org.springframework.web.multipart.MultipartFile file) {
+        return new ResponseEntity<>(packService.create(dto, file), HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<PackResponseDTO> update(@PathVariable Long id, @Valid @RequestBody UpdatePackDTO dto) {
-        return ResponseEntity.ok(packService.update(id, dto));
+    @PutMapping(value = "/{id}", consumes = { "multipart/form-data" })
+    public ResponseEntity<PackResponseDTO> update(
+            @PathVariable Long id,
+            @RequestPart("pack") @Valid UpdatePackDTO dto,
+            @RequestPart(value = "file", required = false) org.springframework.web.multipart.MultipartFile file) {
+        return ResponseEntity.ok(packService.update(id, dto, file));
     }
 
     @DeleteMapping("/{id}")
@@ -68,4 +73,3 @@ public class AdminPackController {
         return ResponseEntity.ok(packService.getById(id));
     }
 }
-

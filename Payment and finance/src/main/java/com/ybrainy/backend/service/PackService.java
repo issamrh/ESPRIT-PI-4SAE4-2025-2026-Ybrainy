@@ -30,9 +30,10 @@ public class PackService {
     private final PackRepository packRepository;
     private final PackCategoryRepository categoryRepository;
     private final PackMapper packMapper;
+    private final FileStorageService fileStorageService;
 
     /* ─── Admin: Create ─── */
-    public PackResponseDTO create(CreatePackDTO dto) {
+    public PackResponseDTO create(CreatePackDTO dto, org.springframework.web.multipart.MultipartFile file) {
         // Business rule: salePrice ≤ originalPrice
         validatePrices(dto.getOriginalPrice(), dto.getSalePrice());
 
@@ -43,12 +44,26 @@ public class PackService {
         entity.setCategory(category);
         entity.setStatus(PackStatus.DRAFT);
 
+        if (file != null && !file.isEmpty()) {
+            try {
+                String fileName = fileStorageService.save(file, "packs");
+                entity.setImage(fileName);
+            } catch (java.io.IOException e) {
+                throw new RuntimeException("Failed to store image", e);
+            }
+        }
+
         Pack saved = packRepository.save(entity);
         return packMapper.toResponseDTO(saved);
     }
 
+    // Overload for backward compatibility/testing if needed
+    public PackResponseDTO create(CreatePackDTO dto) {
+        return create(dto, null);
+    }
+
     /* ─── Admin: Update ─── */
-    public PackResponseDTO update(Long id, UpdatePackDTO dto) {
+    public PackResponseDTO update(Long id, UpdatePackDTO dto, org.springframework.web.multipart.MultipartFile file) {
         Pack entity = packRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pack not found with id: " + id));
 
@@ -61,8 +76,21 @@ public class PackService {
         packMapper.updateEntity(dto, entity);
         entity.setCategory(category);
 
+        if (file != null && !file.isEmpty()) {
+            try {
+                String fileName = fileStorageService.save(file, "packs");
+                entity.setImage(fileName);
+            } catch (java.io.IOException e) {
+                throw new RuntimeException("Failed to store image", e);
+            }
+        }
+
         Pack updated = packRepository.save(entity);
         return packMapper.toResponseDTO(updated);
+    }
+
+    public PackResponseDTO update(Long id, UpdatePackDTO dto) {
+        return update(id, dto, null);
     }
 
     /* ─── Admin: Delete ─── */
@@ -79,7 +107,8 @@ public class PackService {
 
         // Business rule: If Category = INACTIVE → its Packs cannot be ACTIVE
         if (newStatus == PackStatus.ACTIVE && entity.getCategory().getStatus() == CategoryStatus.INACTIVE) {
-            throw new BusinessRuleException("Cannot activate pack because its category '" + entity.getCategory().getName() + "' is INACTIVE");
+            throw new BusinessRuleException(
+                    "Cannot activate pack because its category '" + entity.getCategory().getName() + "' is INACTIVE");
         }
 
         entity.setStatus(newStatus);
@@ -97,7 +126,8 @@ public class PackService {
 
     /* ─── Admin: Get All with Pagination & Filters ─── */
     @Transactional(readOnly = true)
-    public Page<PackResponseDTO> getAllFiltered(Long categoryId, PackLevel level, PackStatus status, Pageable pageable) {
+    public Page<PackResponseDTO> getAllFiltered(Long categoryId, PackLevel level, PackStatus status,
+            Pageable pageable) {
         return packRepository.findWithFilters(categoryId, level, status, pageable)
                 .map(packMapper::toResponseDTO);
     }
@@ -135,8 +165,8 @@ public class PackService {
     /* ─── Price Validation ─── */
     private void validatePrices(Double originalPrice, Double salePrice) {
         if (salePrice > originalPrice) {
-            throw new BusinessRuleException("Sale price (" + salePrice + ") cannot be greater than original price (" + originalPrice + ")");
+            throw new BusinessRuleException(
+                    "Sale price (" + salePrice + ") cannot be greater than original price (" + originalPrice + ")");
         }
     }
 }
-

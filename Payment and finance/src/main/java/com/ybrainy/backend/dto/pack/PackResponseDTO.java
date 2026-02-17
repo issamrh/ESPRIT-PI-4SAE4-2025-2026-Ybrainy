@@ -6,7 +6,11 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class PackResponseDTO {
 
     private Long id;
@@ -17,10 +21,10 @@ public class PackResponseDTO {
     private PackLevel level;
     private Integer durationHours;
     private String certificateName;
+    private String image;
     private PackStatus status;
     private Long categoryId;
     private String categoryName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
-

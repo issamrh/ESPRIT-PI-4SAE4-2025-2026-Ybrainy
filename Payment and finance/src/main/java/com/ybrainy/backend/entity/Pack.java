@@ -11,7 +11,11 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "packs")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Pack {
 
     @Id
@@ -39,6 +43,8 @@ public class Pack {
 
     private String certificateName;
 
+    private String image;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
@@ -55,4 +61,3 @@ public class Pack {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 }
-
