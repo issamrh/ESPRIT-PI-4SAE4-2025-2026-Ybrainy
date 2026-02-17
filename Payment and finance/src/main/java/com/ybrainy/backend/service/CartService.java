@@ -3,6 +3,7 @@ package com.ybrainy.backend.service;
 import com.ybrainy.backend.dto.cart.AddToCartDTO;
 import com.ybrainy.backend.dto.cart.CartResponseDTO;
 import com.ybrainy.backend.entity.*;
+import com.ybrainy.backend.entity.enums.CartAction;
 import com.ybrainy.backend.entity.enums.CartStatus;
 import com.ybrainy.backend.exception.ResourceNotFoundException;
 import com.ybrainy.backend.mapper.CartMapper;
@@ -48,6 +49,7 @@ public class CartService {
                 .filter(item -> item.getPack().getId().equals(dto.getPackId()))
                 .findFirst();
 
+        int quantity = dto.getQuantity();
         if (existingItem.isPresent()) {
             CartItem item = existingItem.get();
             item.setQuantity(item.getQuantity() + dto.getQuantity());
@@ -67,16 +69,33 @@ public class CartService {
 
         updateCartTotal(cart);
         Cart saved = cartRepository.save(cart);
+
+        // Log to history
+        logAction(userId, CartAction.ADD_ITEM, pack.getTitle(), quantity, saved.getTotalAmount(), saved.getStatus());
+
         return cartMapper.toCartResponseDTO(saved);
     }
 
     public CartResponseDTO removeItemFromCart(Long userId, Long itemId) {
         log.info("Removing item {} from cart for user {}", itemId, userId);
         Cart cart = getOrCreateActiveCart(userId);
-        cart.getItems().removeIf(item -> item.getId().equals(itemId));
-        updateCartTotal(cart);
-        Cart saved = cartRepository.save(cart);
-        return cartMapper.toCartResponseDTO(saved);
+
+        Optional<CartItem> itemToRemove = cart.getItems().stream()
+                .filter(item -> item.getId().equals(itemId))
+                .findFirst();
+
+        if (itemToRemove.isPresent()) {
+            CartItem item = itemToRemove.get();
+            String title = item.getPack().getTitle();
+            int qty = item.getQuantity();
+            cart.getItems().remove(item);
+            updateCartTotal(cart);
+            Cart saved = cartRepository.save(cart);
+            logAction(userId, CartAction.REMOVE_ITEM, title, qty, saved.getTotalAmount(), saved.getStatus());
+            return cartMapper.toCartResponseDTO(saved);
+        }
+
+        return cartMapper.toCartResponseDTO(cart);
     }
 
     public CartResponseDTO clearCart(Long userId) {
@@ -85,6 +104,7 @@ public class CartService {
         cart.getItems().clear();
         cart.setTotalAmount(0.0);
         Cart saved = cartRepository.save(cart);
+        logAction(userId, CartAction.CLEAR_CART, null, null, 0.0, saved.getStatus());
         return cartMapper.toCartResponseDTO(saved);
     }
 
@@ -97,17 +117,25 @@ public class CartService {
         }
 
         cart.setStatus(CartStatus.CHECKED_OUT);
+        Cart saved = cartRepository.save(cart);
 
-        CartHistory history = CartHistory.builder()
-                .userId(userId)
-                .cartId(cart.getId())
-                .totalAmount(cart.getTotalAmount())
-                .status(CartStatus.CHECKED_OUT)
-                .build();
-        cartHistoryRepository.save(history);
+        logAction(userId, CartAction.CHECKOUT, null, null, saved.getTotalAmount(), saved.getStatus());
 
         log.info("Checkout successful for user: {}", userId);
-        return cartMapper.toCartResponseDTO(cartRepository.save(cart));
+        return cartMapper.toCartResponseDTO(saved);
+    }
+
+    private void logAction(Long userId, CartAction action, String packTitle, Integer quantity, Double total,
+            CartStatus status) {
+        CartHistory history = CartHistory.builder()
+                .userId(userId)
+                .action(action)
+                .packTitle(packTitle)
+                .quantity(quantity)
+                .totalAmount(total)
+                .cartStatus(status)
+                .build();
+        cartHistoryRepository.save(history);
     }
 
     private Cart getOrCreateActiveCart(Long userId) {

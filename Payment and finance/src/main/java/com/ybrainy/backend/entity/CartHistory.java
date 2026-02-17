@@ -1,6 +1,6 @@
 package com.ybrainy.backend.entity;
 
-
+import com.ybrainy.backend.entity.enums.CartAction;
 import com.ybrainy.backend.entity.enums.CartStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +10,11 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "cart_history")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CartHistory {
 
     @Id
@@ -19,13 +23,19 @@ public class CartHistory {
 
     private Long userId;
 
-    private Long cartId;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private CartAction action;
+
+    private String packTitle;
+
+    private Integer quantity;
 
     @Column(nullable = false)
     private Double totalAmount;
 
     @Enumerated(EnumType.STRING)
-    private CartStatus status;
+    private CartStatus cartStatus;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
