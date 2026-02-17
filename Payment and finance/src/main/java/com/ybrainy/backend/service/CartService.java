@@ -38,6 +38,9 @@ public class CartService {
     public CartResponseDTO addItemToCart(Long userId, AddToCartDTO dto) {
         log.info("Adding pack {} to cart for user {}", dto.getPackId(), userId);
         Cart cart = getOrCreateActiveCart(userId);
+        if (cart.getItems() == null) {
+            cart.setItems(new ArrayList<>());
+        }
 
         Pack pack = packRepository.findById(dto.getPackId())
                 .orElseThrow(() -> {

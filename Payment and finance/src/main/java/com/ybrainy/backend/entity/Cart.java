@@ -1,6 +1,5 @@
 package com.ybrainy.backend.entity;
 
-
 import com.ybrainy.backend.entity.enums.CartStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,7 +11,11 @@ import java.util.List;
 
 @Entity
 @Table(name = "carts")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Cart {
 
     @Id
@@ -30,7 +33,8 @@ public class Cart {
     private Double totalAmount;
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CartItem> items;
+    @Builder.Default
+    private List<CartItem> items = new java.util.ArrayList<>();
 
     @CreationTimestamp
     @Column(updatable = false)
