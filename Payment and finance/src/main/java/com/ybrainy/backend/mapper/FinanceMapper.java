@@ -8,7 +8,6 @@ import org.mapstruct.*;
 @Mapper(componentModel = "spring")
 public interface FinanceMapper {
 
-    /* ─── Income Mappings ─── */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "receivedDate", expression = "java(java.time.LocalDateTime.now())")
@@ -21,7 +20,7 @@ public interface FinanceMapper {
 
     IncomeResponseDTO toIncomeResponseDTO(Income entity);
 
-    /* ─── Expense Mappings ─── */
+
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     Expense toExpenseEntity(CreateExpenseDTO dto);

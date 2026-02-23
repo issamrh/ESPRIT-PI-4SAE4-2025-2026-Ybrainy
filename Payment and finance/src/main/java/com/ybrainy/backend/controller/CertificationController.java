@@ -12,7 +12,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/certifications")
-@CrossOrigin("*")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:8092"}, allowCredentials = "true")
 public class CertificationController {
 
     private final CertificationRepository certRepo;

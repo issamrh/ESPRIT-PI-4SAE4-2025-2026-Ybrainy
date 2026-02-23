@@ -32,9 +32,9 @@ public class PackService {
     private final PackMapper packMapper;
     private final FileStorageService fileStorageService;
 
-    /* ─── Admin: Create ─── */
+
     public PackResponseDTO create(CreatePackDTO dto, org.springframework.web.multipart.MultipartFile file) {
-        // Business rule: salePrice ≤ originalPrice
+
         validatePrices(dto.getOriginalPrice(), dto.getSalePrice());
 
         PackCategory category = categoryRepository.findById(dto.getCategoryId())
@@ -57,17 +57,17 @@ public class PackService {
         return packMapper.toResponseDTO(saved);
     }
 
-    // Overload for backward compatibility/testing if needed
+
     public PackResponseDTO create(CreatePackDTO dto) {
         return create(dto, null);
     }
 
-    /* ─── Admin: Update ─── */
+
     public PackResponseDTO update(Long id, UpdatePackDTO dto, org.springframework.web.multipart.MultipartFile file) {
         Pack entity = packRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pack not found with id: " + id));
 
-        // Business rule: salePrice ≤ originalPrice
+
         validatePrices(dto.getOriginalPrice(), dto.getSalePrice());
 
         PackCategory category = categoryRepository.findById(dto.getCategoryId())
@@ -93,19 +93,19 @@ public class PackService {
         return update(id, dto, null);
     }
 
-    /* ─── Admin: Delete ─── */
+
     public void delete(Long id) {
         Pack entity = packRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pack not found with id: " + id));
         packRepository.delete(entity);
     }
 
-    /* ─── Admin: Change Status ─── */
+
     public PackResponseDTO changeStatus(Long id, PackStatus newStatus) {
         Pack entity = packRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pack not found with id: " + id));
 
-        // Business rule: If Category = INACTIVE → its Packs cannot be ACTIVE
+
         if (newStatus == PackStatus.ACTIVE && entity.getCategory().getStatus() == CategoryStatus.INACTIVE) {
             throw new BusinessRuleException(
                     "Cannot activate pack because its category '" + entity.getCategory().getName() + "' is INACTIVE");
@@ -116,7 +116,7 @@ public class PackService {
         return packMapper.toResponseDTO(updated);
     }
 
-    /* ─── Admin: Get By Id ─── */
+
     @Transactional(readOnly = true)
     public PackResponseDTO getById(Long id) {
         Pack entity = packRepository.findById(id)
@@ -124,7 +124,7 @@ public class PackService {
         return packMapper.toResponseDTO(entity);
     }
 
-    /* ─── Admin: Get All with Pagination & Filters ─── */
+
     @Transactional(readOnly = true)
     public Page<PackResponseDTO> getAllFiltered(Long categoryId, PackLevel level, PackStatus status,
             Pageable pageable) {
@@ -132,7 +132,7 @@ public class PackService {
                 .map(packMapper::toResponseDTO);
     }
 
-    /* ─── Frontoffice: Get Active Packs ─── */
+
     @Transactional(readOnly = true)
     public List<PackResponseDTO> getActivePacks() {
         return packRepository.findByStatus(PackStatus.ACTIVE).stream()
@@ -140,10 +140,10 @@ public class PackService {
                 .collect(Collectors.toList());
     }
 
-    /* ─── Frontoffice: Get Active Packs by Category ─── */
+
     @Transactional(readOnly = true)
     public List<PackResponseDTO> getActivePacksByCategory(Long categoryId) {
-        // Verify category exists
+
         categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + categoryId));
         return packRepository.findByCategoryIdAndStatus(categoryId, PackStatus.ACTIVE).stream()
@@ -151,7 +151,7 @@ public class PackService {
                 .collect(Collectors.toList());
     }
 
-    /* ─── Frontoffice: Get Single Pack (only if ACTIVE) ─── */
+
     @Transactional(readOnly = true)
     public PackResponseDTO getActivePackById(Long id) {
         Pack entity = packRepository.findById(id)
@@ -162,7 +162,7 @@ public class PackService {
         return packMapper.toResponseDTO(entity);
     }
 
-    /* ─── Price Validation ─── */
+
     private void validatePrices(Double originalPrice, Double salePrice) {
         if (salePrice > originalPrice) {
             throw new BusinessRuleException(

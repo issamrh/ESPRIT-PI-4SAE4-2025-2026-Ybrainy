@@ -11,7 +11,7 @@ import lombok.Setter;
 public class CreateIncomeDTO {
 
     @NotBlank(message = "Source type is required")
-    private String sourceType; // MANUAL or PACK_PURCHASE
+    private String sourceType;
 
     private Long referenceId;
 

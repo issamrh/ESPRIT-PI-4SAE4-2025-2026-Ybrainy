@@ -13,7 +13,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/courses")
-@CrossOrigin("*")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:8092"}, allowCredentials = "true")
 public class CourseController {
 
     private final CourseRepository courseRepo;
