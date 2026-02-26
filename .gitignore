@@ -28,3 +28,5 @@ application-prod.properties
 
 # Others
 .mvn/wrapper/maven-wrapper.jar
+Course/tp-foyer/uploads/
+Course/uploads/
