@@ -24,6 +24,13 @@ class Settings:
     # GROQ Model to use
     GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
+    # MySQL Database (XAMPP)
+    DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
+    DB_PORT = int(os.getenv("DB_PORT", "3306"))
+    DB_USER = os.getenv("DB_USER", "root")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+    DB_NAME = os.getenv("DB_NAME", "elearning_platform")
+
     @staticmethod
     def validate():
         """Check if all required credentials are set."""
