@@ -3,7 +3,11 @@ package com.ybrainy.backend.controller;
 import com.ybrainy.backend.dto.cart.AddToCartDTO;
 import com.ybrainy.backend.dto.cart.CartHistoryResponseDTO;
 import com.ybrainy.backend.dto.cart.CartResponseDTO;
+import com.ybrainy.backend.dto.cart.StripeCheckoutConfirmRequestDTO;
+import com.ybrainy.backend.dto.cart.StripeCheckoutSessionResponseDTO;
+import com.ybrainy.backend.exception.BusinessRuleException;
 import com.ybrainy.backend.service.CartService;
+import com.ybrainy.backend.service.StripeCheckoutService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +22,7 @@ import java.util.List;
 public class CartController {
 
     private final CartService cartService;
+    private final StripeCheckoutService stripeCheckoutService;
 
     // TODO: Get real userId from SecurityContext
     private static final Long TEMP_USER_ID = 1L;
@@ -44,6 +49,28 @@ public class CartController {
 
     @PostMapping("/checkout")
     public ResponseEntity<CartResponseDTO> checkout() {
+        return ResponseEntity.ok(cartService.checkout(TEMP_USER_ID));
+    }
+
+    @PostMapping("/checkout/stripe-session")
+    public ResponseEntity<StripeCheckoutSessionResponseDTO> createStripeCheckoutSession() {
+        return ResponseEntity.ok(cartService.createStripeCheckoutSession(TEMP_USER_ID));
+    }
+
+    @PostMapping("/checkout/stripe-confirm")
+    public ResponseEntity<CartResponseDTO> confirmStripeCheckout(
+            @Valid @RequestBody StripeCheckoutConfirmRequestDTO request) {
+
+        boolean paid = stripeCheckoutService.isCheckoutSessionPaid(request.getSessionId());
+        if (!paid) {
+            throw new BusinessRuleException("Stripe payment is not completed.");
+        }
+
+        CartResponseDTO activeCart = cartService.getActiveCart(TEMP_USER_ID);
+        if (activeCart.getItems() == null || activeCart.getItems().isEmpty()) {
+            return ResponseEntity.ok(activeCart);
+        }
+
         return ResponseEntity.ok(cartService.checkout(TEMP_USER_ID));
     }
 

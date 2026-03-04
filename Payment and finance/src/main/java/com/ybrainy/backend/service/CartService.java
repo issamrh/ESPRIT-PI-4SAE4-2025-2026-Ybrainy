@@ -3,9 +3,11 @@ package com.ybrainy.backend.service;
 import com.ybrainy.backend.dto.cart.AddToCartDTO;
 import com.ybrainy.backend.dto.cart.CartHistoryResponseDTO;
 import com.ybrainy.backend.dto.cart.CartResponseDTO;
+import com.ybrainy.backend.dto.cart.StripeCheckoutSessionResponseDTO;
 import com.ybrainy.backend.entity.*;
 import com.ybrainy.backend.entity.enums.CartAction;
 import com.ybrainy.backend.entity.enums.CartStatus;
+import com.ybrainy.backend.exception.BusinessRuleException;
 import com.ybrainy.backend.exception.ResourceNotFoundException;
 import com.ybrainy.backend.mapper.CartMapper;
 import com.ybrainy.backend.repository.*;
@@ -29,6 +31,7 @@ public class CartService {
     private final CartHistoryRepository cartHistoryRepository;
     private final PackRepository packRepository;
     private final CartMapper cartMapper;
+    private final StripeCheckoutService stripeCheckoutService;
 
     public CartResponseDTO getActiveCart(Long userId) {
         log.info("Fetching active cart for user: {}", userId);
@@ -133,7 +136,7 @@ public class CartService {
         Cart cart = getOrCreateActiveCart(userId);
         if (cart.getItems().isEmpty()) {
             log.warn("Attempted checkout with empty cart for user {}", userId);
-            throw new IllegalStateException("Cannot checkout an empty cart");
+            throw new BusinessRuleException("Cannot checkout an empty cart");
         }
 
         cart.setStatus(CartStatus.CHECKED_OUT);
@@ -144,6 +147,15 @@ public class CartService {
 
         log.info("Checkout successful for user: {}", userId);
         return cartMapper.toCartResponseDTO(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public StripeCheckoutSessionResponseDTO createStripeCheckoutSession(Long userId) {
+        CartResponseDTO cart = getActiveCart(userId);
+        if (cart.getItems() == null || cart.getItems().isEmpty()) {
+            throw new BusinessRuleException("Cannot checkout an empty cart");
+        }
+        return stripeCheckoutService.createCheckoutSession(cart, userId);
     }
 
     private void logAction(Long userId, Long cartId, Long cartItemId, CartAction action, String packTitle,
