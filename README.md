@@ -2,7 +2,6 @@ yBrainy Forum Management System
 
 <div align="center">
   <img src="https://img.shields.io/badge/Esprit-School_of_Engineering-blue?style=for-the-badge" alt="Esprit"/>
-  <img src="https://img.shields.io/badge/Project-PIDEV_3A-orange?style=for-the-badge" alt="PIDEV"/>
   <img src="https://img.shields.io/badge/Year-2025--2026-green?style=for-the-badge" alt="Year"/>
 </div>
 
