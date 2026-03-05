@@ -7,6 +7,8 @@ import com.ybrainy.backend.dto.cart.StripeCheckoutConfirmRequestDTO;
 import com.ybrainy.backend.dto.cart.StripeCheckoutSessionResponseDTO;
 import com.ybrainy.backend.exception.BusinessRuleException;
 import com.ybrainy.backend.service.CartService;
+import com.ybrainy.backend.service.CheckoutEmailService;
+import com.ybrainy.backend.service.StaticAuthService;
 import com.ybrainy.backend.service.StripeCheckoutService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +25,8 @@ public class CartController {
 
     private final CartService cartService;
     private final StripeCheckoutService stripeCheckoutService;
+    private final CheckoutEmailService checkoutEmailService;
+    private final StaticAuthService staticAuthService;
 
     // TODO: Get real userId from SecurityContext
     private static final Long TEMP_USER_ID = 1L;
@@ -59,6 +63,7 @@ public class CartController {
 
     @PostMapping("/checkout/stripe-confirm")
     public ResponseEntity<CartResponseDTO> confirmStripeCheckout(
+            @RequestHeader(name = "Authorization", required = false) String authorization,
             @Valid @RequestBody StripeCheckoutConfirmRequestDTO request) {
 
         boolean paid = stripeCheckoutService.isCheckoutSessionPaid(request.getSessionId());
@@ -71,7 +76,10 @@ public class CartController {
             return ResponseEntity.ok(activeCart);
         }
 
-        return ResponseEntity.ok(cartService.checkout(TEMP_USER_ID));
+        CartResponseDTO checkedOutCart = cartService.checkout(TEMP_USER_ID);
+        String recipientEmail = staticAuthService.resolveEmailFromBearerOrDefault(authorization);
+        checkoutEmailService.sendCheckoutReceipt(recipientEmail, checkedOutCart);
+        return ResponseEntity.ok(checkedOutCart);
     }
 
     @GetMapping("/history")

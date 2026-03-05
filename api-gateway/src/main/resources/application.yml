@@ -11,6 +11,10 @@ spring:
           enabled: true
           lower-case-service-id: true
       routes:
+        - id: scraper-service
+          uri: lb://scraper-service
+          predicates:
+            - Path=/api/scraper/**
         - id: ybrainy-backend
           uri: lb://ybrainy-backend
           predicates:

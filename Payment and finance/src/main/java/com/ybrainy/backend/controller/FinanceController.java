@@ -1,6 +1,7 @@
 package com.ybrainy.backend.controller;
 
 import com.ybrainy.backend.dto.finance.*;
+import com.ybrainy.backend.service.FinanceScraperService;
 import com.ybrainy.backend.service.FinanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import java.util.List;
 public class FinanceController {
 
     private final FinanceService financeService;
+    private final FinanceScraperService financeScraperService;
 
     /* ─── Income Endpoints ─── */
     @PostMapping("/incomes")
@@ -61,5 +63,19 @@ public class FinanceController {
     @GetMapping("/expenses")
     public ResponseEntity<List<ExpenseResponseDTO>> getAllExpenses() {
         return ResponseEntity.ok(financeService.getAllExpenses());
+    }
+
+    @GetMapping("/scraper/status")
+    public ResponseEntity<FinanceScraperService.ScraperRunStatus> getScraperStatus() {
+        return ResponseEntity.ok(financeScraperService.getStatus());
+    }
+
+    @PostMapping("/scraper/run")
+    public ResponseEntity<FinanceScraperService.ScraperRunStatus> runScraper() {
+        FinanceScraperService.ScraperRunStatus status = financeScraperService.startScraper();
+        if ("already_running".equals(status.state())) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(status);
+        }
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(status);
     }
 }
