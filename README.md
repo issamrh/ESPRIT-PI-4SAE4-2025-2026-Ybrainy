@@ -7,12 +7,6 @@ The system includes a modern Angular frontoffice/backoffice, a Spring Boot micro
 🚀 Key Features
 📚 E-Learning System
 
-Course packs catalog
-
-Lessons and course structure
-
-Certification management
-
 Pack categories and administration
 
 🧑‍💼 Backoffice Dashboard
