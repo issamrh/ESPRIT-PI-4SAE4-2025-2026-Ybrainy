@@ -18,5 +18,8 @@ public class BanAppealResponseDto {
     private LocalDateTime submittedDate;
     private LocalDateTime resolvedDate;
     private String reviewedBy;
+    private boolean viewed;
+    private LocalDateTime viewedAt;
+    private String viewedBy;
     private Long userId;
 }

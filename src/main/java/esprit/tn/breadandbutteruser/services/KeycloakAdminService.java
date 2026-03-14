@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -14,6 +15,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
@@ -116,14 +118,14 @@ public class KeycloakAdminService {
                 "emailVerified", true
         );
 
-        webClient.post()
+        ResponseEntity<Void> response = webClient.post()
                 .uri(url)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(payload)
                 .exchangeToMono(resp -> {
                     if (resp.statusCode().is2xxSuccessful()) {
-                        return resp.releaseBody();
+                        return resp.toBodilessEntity();
                     }
                     return resp.bodyToMono(String.class)
                             .defaultIfEmpty("")
@@ -135,6 +137,12 @@ public class KeycloakAdminService {
                 })
                 .block();
 
+        Optional<String> createdUserId = extractUserIdFromLocation(response != null ? response.getHeaders().getLocation() : null);
+        if (createdUserId.isPresent()) {
+            return createdUserId.get();
+        }
+
+        // Fallback for deployments that omit Location or where proxies rewrite response headers.
         // Realms with "Email as username" enabled can normalize the stored username to the email value.
         return findUserIdByUsername(token, username)
                 .or(() -> findUserIdByEmail(token, email))
@@ -268,6 +276,29 @@ public class KeycloakAdminService {
                 .block();
 
         return users != null ? users : List.of();
+    }
+
+    public Optional<Boolean> isUserEnabled(String keycloakUserId) {
+        if (!StringUtils.hasText(keycloakUserId)) {
+            return Optional.empty();
+        }
+        try {
+            Map<String, Object> representation = getUserRepresentation(keycloakUserId, getServiceAccountAccessToken());
+            if (representation == null) {
+                return Optional.empty();
+            }
+            Object enabled = representation.get("enabled");
+            if (enabled instanceof Boolean bool) {
+                return Optional.of(bool);
+            }
+            if (enabled != null) {
+                return Optional.of(Boolean.parseBoolean(String.valueOf(enabled)));
+            }
+            return Optional.empty();
+        } catch (RuntimeException ex) {
+            log.warn("Failed to read Keycloak enabled flag for user {}: {}", keycloakUserId, ex.getMessage());
+            return Optional.empty();
+        }
     }
 
     public void setEnabled(String keycloakUserId, boolean enabled) {
@@ -495,6 +526,26 @@ public class KeycloakAdminService {
 
     private String userUrl(String keycloakUserId) {
         return usersBaseUrl() + "/" + keycloakUserId;
+    }
+
+    private Optional<String> extractUserIdFromLocation(URI location) {
+        if (location == null) {
+            return Optional.empty();
+        }
+
+        String path = location.getPath();
+        if (!StringUtils.hasText(path)) {
+            return Optional.empty();
+        }
+
+        String normalizedPath = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+        int lastSlash = normalizedPath.lastIndexOf('/');
+        if (lastSlash < 0 || lastSlash == normalizedPath.length() - 1) {
+            return Optional.empty();
+        }
+
+        String userId = normalizedPath.substring(lastSlash + 1).trim();
+        return StringUtils.hasText(userId) ? Optional.of(userId) : Optional.empty();
     }
 
     private long parseLong(Object value, long defaultValue) {
@@ -773,6 +824,11 @@ public class KeycloakAdminService {
             }
             if (normalizedBody.contains("invalid_client")) {
                 return INVALID_CLIENT_CONFIG_MESSAGE;
+            }
+            if (normalizedBody.contains("account is disabled")
+                    || normalizedBody.contains("account disabled")
+                    || normalizedBody.contains("user_disabled")) {
+                return "Account is currently restricted. Submit a ban appeal to request review.";
             }
             if (normalizedBody.contains("invalid_grant")) {
                 return INVALID_CREDENTIALS_MESSAGE;

@@ -21,9 +21,9 @@ const AUTH_STORAGE_KEY = 'bb_keycloak_tokens_v1';
 const USER_SESSION_STORAGE_KEY = 'bb_user_session_v1';
 
 const keycloak = new Keycloak({
-  url: 'http://localhost:9190',
-  realm: 'microservices',
-  clientId: 'angular-client',
+  url: environment.keycloakUrl?.trim() || 'http://localhost:9190',
+  realm: environment.keycloakRealm?.trim() || 'microservices',
+  clientId: environment.keycloakClientId?.trim() || 'angular-client',
 });
 
 const GOOGLE_IDP_HINT = environment.googleIdpHint?.trim() || 'google';

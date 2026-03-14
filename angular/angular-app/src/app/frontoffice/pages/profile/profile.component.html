@@ -367,7 +367,9 @@
                 <div class="form-error-item">{{ passwordValidationError }}</div>
               </div>
               <div class="form-actions">
-                <button type="submit" class="btn btn-secondary" [disabled]="passwordForm.invalid">Update Password</button>
+                <button type="submit" class="btn btn-secondary" [disabled]="passwordForm.invalid || changingPassword">
+                  {{ changingPassword ? 'Updating...' : 'Update Password' }}
+                </button>
               </div>
             </form>
           </section>

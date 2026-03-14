@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -74,6 +75,12 @@ public class UserController {
     }
 
     public record AvatarUploadResponse(String url, String fileName, long sizeBytes) {}
+    public record ChangePasswordRequest(
+            @NotBlank(message = "New password is required")
+            String newPassword,
+            @NotBlank(message = "Password confirmation is required")
+            String confirmPassword
+    ) {}
 
     @PostMapping(value = "/uploads/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload avatar image", description = "Uploads a profile image file and returns a public URL")
@@ -91,11 +98,20 @@ public class UserController {
     @GetMapping("/admin/overview")
     @Operation(summary = "Admin user overview", description = "List local users with moderation and verification summary")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<List<AdminUserOverviewDto>> getAdminUserOverview(
+    public ResponseEntity<?> getAdminUserOverview(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false, defaultValue = "all") String filter) {
-        log.info("REST request to get admin user overview (search={}, filter={})", search, filter);
-        return ResponseEntity.ok(userService.getAdminUserOverview(search, filter));
+            @RequestParam(required = false, defaultValue = "all") String filter,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        log.info("REST request to get admin user overview (search={}, filter={}, page={}, size={})",
+                search, filter, page, size);
+        if (page == null && size == null) {
+            return ResponseEntity.ok(userService.getAdminUserOverview(search, filter));
+        }
+
+        int resolvedPage = page != null ? page : 0;
+        int resolvedSize = size != null ? size : 20;
+        return ResponseEntity.ok(userService.getAdminUserOverviewPage(search, filter, resolvedPage, resolvedSize));
     }
 
     @GetMapping("/{id}/activities")
@@ -137,7 +153,7 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete user", description = "Deletes a user by their ID")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or @authz.isSelfUserId(authentication, #id)")
     public ResponseEntity<Void> deleteUser(
             @Parameter(description = "User ID") @PathVariable Long id) {
         log.info("REST request to delete user with ID: {}", id);
@@ -172,5 +188,19 @@ public class UserController {
             @Parameter(description = "User ID") @PathVariable Long id) {
         log.info("REST request to remove face biometric for user ID {}", id);
         return ResponseEntity.ok(userService.removeFaceBiometric(id));
+    }
+
+    @PutMapping("/{id}/password")
+    @Operation(summary = "Change account password", description = "Changes the user password in Keycloak")
+    @PreAuthorize("hasRole('ADMIN') or @authz.isSelfUserId(authentication, #id)")
+    public ResponseEntity<Void> changePassword(
+            @Parameter(description = "User ID") @PathVariable Long id,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        if (request == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        log.info("REST request to change password for user ID {}", id);
+        userService.changePassword(id, request.newPassword(), request.confirmPassword());
+        return ResponseEntity.noContent().build();
     }
 }

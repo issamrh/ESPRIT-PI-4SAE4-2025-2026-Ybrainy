@@ -12,7 +12,7 @@ public class AppMailProperties {
     private String fromAddress;
     private String fromName = "ybrainy";
     private String appName = "ybrainy";
-    private String logoClasspath = "mail/assets/logo-full.png";
+    private String logoClasspath = "mail/assets/logo-white.png";
     private ForgotPassword forgotPassword = new ForgotPassword();
 
     @Data

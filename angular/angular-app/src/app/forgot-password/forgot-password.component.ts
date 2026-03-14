@@ -10,6 +10,7 @@ import {
 } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
+import { finalize } from 'rxjs';
 import { environment } from '../../environments/environment';
 
 interface ForgotPasswordResponse {
@@ -46,6 +47,18 @@ export class ForgotPasswordComponent {
   private readonly http = inject(HttpClient);
 
   private readonly authBaseUrl = `${environment.apiBaseUrl}/api/auth`;
+  private readonly brandLogoCandidates = [
+    'assets/login/akademi.dexignlab.com/xhtml/images/logo-white.png',
+    'assets/login/akademi.dexignlab.com/xhtml/images/qsdqs.png',
+  ];
+  private readonly illustrationCandidates = [
+    'assets/backoffice/social-image.png',
+    'assets/login/akademi.dexignlab.com/xhtml/images/1.jpg',
+  ];
+  private brandLogoIndex = 0;
+  private illustrationIndex = 0;
+  brandLogoSrc = this.brandLogoCandidates[this.brandLogoIndex];
+  illustrationSrc = this.illustrationCandidates[this.illustrationIndex];
 
   readonly requestForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -67,6 +80,8 @@ export class ForgotPasswordComponent {
   resetSuccessMessage = '';
   requestedEmail = '';
   devFallbackCode = '';
+  showBrandLogo = true;
+  showIllustration = true;
 
   get isCodeStep(): boolean {
     return !!this.requestedEmail;
@@ -84,32 +99,32 @@ export class ForgotPasswordComponent {
     const payload = this.requestForm.getRawValue();
     const email = payload.email.trim();
 
-    this.http.post<ForgotPasswordResponse>(`${this.authBaseUrl}/forgot-password`, { email }).subscribe({
-      next: (response) => {
-        const fallbackCode = String(response?.devFallbackCode ?? '').trim();
-        this.requestedEmail = email;
-        this.devFallbackCode = fallbackCode;
-        this.successMessage = fallbackCode
-          ? 'Email is unavailable locally, but a verification code was generated below so you can continue now.'
-          : 'Verification code sent. Enter the code from your email and set a new password.';
-        this.resetSuccessMessage = '';
-        this.resetForm.reset();
-        if (fallbackCode) {
-          this.resetForm.patchValue({ code: fallbackCode });
-        }
-      },
-      error: (err) => {
-        const raw = String(err?.error?.message ?? err?.message ?? 'Request failed');
-        if (/authenticat|smtp|mail/i.test(raw)) {
-          this.errorMessage = 'Email service is temporarily unavailable. Please try again later.';
-        } else {
-          this.errorMessage = raw;
-        }
-      },
-      complete: () => {
-        this.submittingRequest = false;
-      },
-    });
+    this.http
+      .post<ForgotPasswordResponse>(`${this.authBaseUrl}/forgot-password`, { email })
+      .pipe(finalize(() => (this.submittingRequest = false)))
+      .subscribe({
+        next: (response) => {
+          const fallbackCode = String(response?.devFallbackCode ?? '').trim();
+          this.requestedEmail = email;
+          this.devFallbackCode = fallbackCode;
+          this.successMessage = fallbackCode
+            ? 'Email is unavailable locally, but a verification code was generated below so you can continue now.'
+            : 'Verification code sent. Enter the code from your email and set a new password.';
+          this.resetSuccessMessage = '';
+          this.resetForm.reset();
+          if (fallbackCode) {
+            this.resetForm.patchValue({ code: fallbackCode });
+          }
+        },
+        error: (err) => {
+          const raw = String(err?.error?.message ?? err?.message ?? 'Request failed');
+          if (/authenticat|smtp|mail/i.test(raw)) {
+            this.errorMessage = 'Email service is temporarily unavailable. Please try again later.';
+          } else {
+            this.errorMessage = raw;
+          }
+        },
+      });
   }
 
   onSubmitReset(): void {
@@ -136,6 +151,7 @@ export class ForgotPasswordComponent {
         newPassword: payload.newPassword,
         confirmPassword: payload.confirmPassword,
       })
+      .pipe(finalize(() => (this.submittingReset = false)))
       .subscribe({
         next: () => {
           this.resetSuccessMessage = 'Password reset successful. You can sign in now.';
@@ -147,9 +163,6 @@ export class ForgotPasswordComponent {
         error: (err) => {
           const raw = String(err?.error?.message ?? err?.message ?? 'Password reset failed');
           this.errorMessage = raw;
-        },
-        complete: () => {
-          this.submittingReset = false;
         },
       });
   }
@@ -165,6 +178,24 @@ export class ForgotPasswordComponent {
     this.devFallbackCode = '';
     this.resetForm.reset();
     this.clearMessages();
+  }
+
+  onBrandLogoError(): void {
+    this.brandLogoIndex += 1;
+    if (this.brandLogoIndex >= this.brandLogoCandidates.length) {
+      this.showBrandLogo = false;
+      return;
+    }
+    this.brandLogoSrc = this.brandLogoCandidates[this.brandLogoIndex];
+  }
+
+  onIllustrationError(): void {
+    this.illustrationIndex += 1;
+    if (this.illustrationIndex >= this.illustrationCandidates.length) {
+      this.showIllustration = false;
+      return;
+    }
+    this.illustrationSrc = this.illustrationCandidates[this.illustrationIndex];
   }
 
   private clearMessages(): void {

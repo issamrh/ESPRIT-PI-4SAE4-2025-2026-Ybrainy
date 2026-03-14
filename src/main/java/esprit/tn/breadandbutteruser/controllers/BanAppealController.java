@@ -5,6 +5,9 @@ import esprit.tn.breadandbutteruser.dto.BanAppealResponseDto;
 import esprit.tn.breadandbutteruser.services.AuthorizationHelper;
 import esprit.tn.breadandbutteruser.services.BanAppealService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +25,23 @@ public class BanAppealController {
 
     private final BanAppealService banAppealService;
     private final AuthorizationHelper authorizationHelper;
+
+    public record PublicBanAppealRequest(
+            @NotBlank(message = "Email is required")
+            @Email(message = "Email should be valid")
+            String email,
+            @NotBlank(message = "Description is required")
+            @Size(min = 10, max = 1000, message = "Description must be between 10 and 1000 characters")
+            String description
+    ) {}
+
+    @PostMapping("/public")
+    public ResponseEntity<BanAppealResponseDto> submitPublic(@Valid @RequestBody PublicBanAppealRequest request) {
+        return new ResponseEntity<>(
+                banAppealService.submitForEmail(request.email(), request.description()),
+                HttpStatus.CREATED
+        );
+    }
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
@@ -57,6 +77,18 @@ public class BanAppealController {
         return ResponseEntity.ok(banAppealService.getByStatus(status));
     }
 
+    @GetMapping("/viewed")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<BanAppealResponseDto>> getViewed() {
+        return ResponseEntity.ok(banAppealService.getByViewed(true));
+    }
+
+    @GetMapping("/unviewed")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<BanAppealResponseDto>> getUnviewed() {
+        return ResponseEntity.ok(banAppealService.getByViewed(false));
+    }
+
     @PostMapping("/{id}/approve")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BanAppealResponseDto> approve(@PathVariable Long id,
@@ -69,6 +101,19 @@ public class BanAppealController {
     public ResponseEntity<BanAppealResponseDto> reject(@PathVariable Long id,
                                                        @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(banAppealService.reject(id, authorizationHelper.actorName(jwt)));
+    }
+
+    @PostMapping("/{id}/viewed")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BanAppealResponseDto> markViewed(@PathVariable Long id,
+                                                           @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(banAppealService.markViewed(id, authorizationHelper.actorName(jwt)));
+    }
+
+    @PostMapping("/{id}/unviewed")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BanAppealResponseDto> markUnviewed(@PathVariable Long id) {
+        return ResponseEntity.ok(banAppealService.markUnviewed(id));
     }
 
     @DeleteMapping("/{id}")

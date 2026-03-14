@@ -1,26 +1,40 @@
-<div class="admin-users-shell">
+﻿<div class="admin-users-shell">
   <div class="admin-layout">
-    <aside class="admin-sidebar" aria-label="Backoffice navigation">
-      <a routerLink="/dashboard" class="admin-brand">
-        <span class="admin-brand-icon">YB</span>
-        <span class="admin-brand-copy">
-          <strong>YBrainy</strong>
-          <small>Admin Panel</small>
-        </span>
-      </a>
-
-      <div class="admin-nav-group">
-        <div class="admin-nav-title">Workspace</div>
-        <a routerLink="/dashboard" class="admin-nav-link">Template Dashboard</a>
-        <a routerLink="/dashboard/users" class="admin-nav-link active">User Moderation</a>
-        <a routerLink="/dashboard/profile" class="admin-nav-link">My Profile</a>
+    <aside class="dashboard-sidebar-shell" aria-label="Backoffice navigation">
+      <div class="nav-header">
+        <a routerLink="/dashboard" class="brand-logo" aria-label="Back to dashboard">
+          <img src="src\main\resources\mail\assets\logo-full.png" alt="YBrainy" class="logo-abbr" />
+          <div class="brand-title">
+            <h3>YBrainy</h3>
+          </div>
+        </a>
       </div>
 
-      <button type="button" class="admin-logout-btn" (click)="logoutAdmin()">Log Out</button>
-
-      <p class="admin-side-note">
-        Moderation tools only: warnings, bans, verification and privacy-limited activity.
-      </p>
+      <div class="dlabnav">
+        <div class="dlabnav-scroll">
+          <ul class="metismenu">
+            <li class="mm-active">
+              <a class="has-arrow" href="javascript:void(0);" aria-expanded="true">
+                <span class="sidebar-group-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                    <circle cx="9" cy="8" r="3"></circle>
+                    <circle cx="16.5" cy="9" r="2.5"></circle>
+                    <path d="M3 18c0-3.1 2.7-5.5 6-5.5s6 2.4 6 5.5v1H3z"></path>
+                    <path d="M13 19c.2-2.3 2.2-4.1 4.7-4.1 2.3 0 4.3 1.6 4.3 4.1v0H13z"></path>
+                  </svg>
+                </span>
+                <span class="nav-text">User Management</span>
+              </a>
+              <ul aria-expanded="true" class="mm-show">
+                <li><a routerLink="/dashboard/users" class="mm-active">User Moderation</a></li>
+                <li><a routerLink="/dashboard/profile">My Profile</a></li>
+                <li><a routerLink="/dashboard">Template Dashboard</a></li>
+                <li><button type="button" class="sidebar-logout" (click)="logoutAdmin()">Logout</button></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
     </aside>
 
     <div class="admin-main">
@@ -68,6 +82,160 @@
       <div *ngIf="error" class="banner error">{{ error }}</div>
       <div *ngIf="successMessage" class="banner success">{{ successMessage }}</div>
 
+      <section class="summary-grid">
+        <article class="summary-card attention">
+          <span class="summary-label">Pending Verification</span>
+          <span class="summary-value">{{ pendingVerificationCount() }}</span>
+        </article>
+        <article class="summary-card danger">
+          <span class="summary-label">Banned Users</span>
+          <span class="summary-value">{{ bannedCount() }}</span>
+        </article>
+        <article class="summary-card warning">
+          <span class="summary-label">Warned Users</span>
+          <span class="summary-value">{{ warnedCount() }}</span>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">Active (30d)</span>
+          <span class="summary-value">{{ activeRecentlyCount() }}</span>
+        </article>
+        <article class="summary-card">
+          <span class="summary-label">Visible Users</span>
+          <span class="summary-value">{{ totalUsers }}</span>
+        </article>
+        <article class="summary-card attention">
+          <span class="summary-label">Pending Appeals</span>
+          <span class="summary-value">{{ pendingAppealCount() }}</span>
+        </article>
+        <article class="summary-card warning">
+          <span class="summary-label">Unviewed Appeals</span>
+          <span class="summary-value">{{ unviewedAppealCount() }}</span>
+        </article>
+      </section>
+
+      <section class="card appeal-queue-card">
+        <div class="card-head">
+          <h3>Ban Appeal Inbox</h3>
+          <div class="appeal-queue-head-actions">
+            <button type="button" class="btn soft small" (click)="refreshAppealQueue()" [disabled]="loadingAppealQueue">
+              {{ loadingAppealQueue ? 'Refreshing...' : 'Refresh' }}
+            </button>
+            <span class="muted" *ngIf="loadingAppealQueue">Loading appeals...</span>
+            <span class="muted" *ngIf="!loadingAppealQueue">{{ appealQueue.length }} total</span>
+          </div>
+        </div>
+
+        <div class="appeal-queue-filters" aria-label="Ban appeal queue filters">
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="appealQueueFilter === 'unviewed'"
+            (click)="setAppealQueueFilter('unviewed')">
+            Unviewed ({{ unviewedAppealCount() }})
+          </button>
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="appealQueueFilter === 'pending'"
+            (click)="setAppealQueueFilter('pending')">
+            Pending ({{ pendingAppealCount() }})
+          </button>
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="appealQueueFilter === 'resolved'"
+            (click)="setAppealQueueFilter('resolved')">
+            Resolved ({{ resolvedAppealCount() }})
+          </button>
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="appealQueueFilter === 'all'"
+            (click)="setAppealQueueFilter('all')">
+            All
+          </button>
+        </div>
+
+        <div *ngIf="queueError" class="banner error">{{ queueError }}</div>
+
+        <div *ngIf="appealQueueItems().length === 0" class="empty slim">
+          No appeals in this queue view.
+        </div>
+
+        <div class="appeal-queue-list" *ngIf="appealQueueItems().length > 0">
+          @for (appeal of appealQueueItems(); track appeal.appealId) {
+            <article class="appeal-queue-row">
+              <div class="appeal-main">
+                <div class="appeal-topline">
+                  <span
+                    class="pill"
+                    [class.warn]="isAppealPending(appeal)"
+                    [class.ok]="(appeal.appealStatus || '').toUpperCase() === 'APPROVED'"
+                    [class.danger]="(appeal.appealStatus || '').toUpperCase() === 'REJECTED'"
+                  >
+                    {{ appeal.appealStatus || 'PENDING' }}
+                  </span>
+                  <span class="pill" [class.ok]="appeal.viewed" [class.warn]="!appeal.viewed">
+                    {{ appeal.viewed ? 'Viewed' : 'Unviewed' }}
+                  </span>
+                  <span class="muted">#{{ appeal.appealId }}</span>
+                  <span class="muted">{{ appealUserLabel(appeal) }}</span>
+                </div>
+                <p class="appeal-description">{{ appeal.description }}</p>
+                <p class="appeal-meta">
+                  Submitted {{ appeal.submittedDate ? (appeal.submittedDate | date:'medium') : 'Unknown date' }}
+                  <span *ngIf="appeal.viewedBy"> · Viewed by {{ appeal.viewedBy }}</span>
+                  <span *ngIf="appeal.viewedAt"> · {{ appeal.viewedAt | date:'short' }}</span>
+                  <span *ngIf="appeal.reviewedBy"> · Reviewed by {{ appeal.reviewedBy }}</span>
+                </p>
+              </div>
+
+              <div class="appeal-actions">
+                <button
+                  type="button"
+                  class="btn soft small"
+                  (click)="focusAppealUser(appeal)"
+                  [disabled]="isProcessingAppeal(appeal)">
+                  Open User
+                </button>
+                <button
+                  type="button"
+                  class="btn soft small"
+                  *ngIf="!appeal.viewed"
+                  (click)="markAppealViewed(appeal)"
+                  [disabled]="isProcessingAppeal(appeal)">
+                  {{ isProcessingAppeal(appeal) ? 'Working...' : 'Mark Viewed' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn soft small"
+                  *ngIf="appeal.viewed"
+                  (click)="markAppealUnviewed(appeal)"
+                  [disabled]="isProcessingAppeal(appeal)">
+                  {{ isProcessingAppeal(appeal) ? 'Working...' : 'Mark Unviewed' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn primary small"
+                  *ngIf="isAppealPending(appeal)"
+                  (click)="approveAppeal(appeal)"
+                  [disabled]="isProcessingAppeal(appeal)">
+                  {{ isProcessingAppeal(appeal) ? 'Working...' : 'Approve' }}
+                </button>
+                <button
+                  type="button"
+                  class="btn danger small"
+                  *ngIf="isAppealPending(appeal)"
+                  (click)="rejectAppeal(appeal)"
+                  [disabled]="isProcessingAppeal(appeal)">
+                  {{ isProcessingAppeal(appeal) ? 'Working...' : 'Reject' }}
+                </button>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+
       <section class="workspace">
     <aside class="user-list-pane">
       <div class="pane-header">
@@ -80,7 +248,7 @@
       </div>
 
       <div class="user-list">
-        @for (user of users; track user.userId) {
+        @for (user of pagedUsers(); track user.userId) {
           <button
             type="button"
             class="user-row"
@@ -104,12 +272,46 @@
                   {{ user.verificationApproved ? 'Verified' : 'Needs verification' }}
                 </span>
                 <span class="pill danger" *ngIf="user.banned">Banned</span>
-                <span class="pill" [class.warn]="(user.warningCount ?? 0) > 0">Warnings: {{ user.warningCount }}</span>
+                <span class="pill" [class.warn]="user.warningCount > 0">Warnings: {{ user.warningCount }}</span>
                 <span class="pill">{{ getStatusLabel(user.status) }}</span>
               </div>
             </div>
           </button>
         }
+      </div>
+
+      <div class="user-pagination" *ngIf="users.length > 0">
+        <div class="pagination-meta">
+          Showing {{ userPageStartIndex() }}-{{ userPageEndIndex() }} of {{ totalUsers }}
+        </div>
+        <div class="pagination-controls">
+          <label class="page-size-control">
+            <span>Rows</span>
+            <select [value]="userPageSize" (change)="setUserPageSize(+$any($event.target).value)">
+              @for (size of userPageSizeOptions; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+          </label>
+
+          <div class="pagination-actions">
+            <button
+              type="button"
+              class="btn soft small"
+              (click)="goToPreviousUserPage()"
+              [disabled]="loadingList || !canGoToPreviousUserPage()">
+              Previous
+            </button>
+            <span class="pagination-page">Page {{ userPage }} / {{ userTotalPages() }}</span>
+            <button
+              type="button"
+              class="btn soft small"
+              (click)="goToNextUserPage()"
+              [disabled]="loadingList || !canGoToNextUserPage()">
+              Next
+            </button>
+          </div>
+        </div>
       </div>
     </aside>
 
@@ -162,11 +364,11 @@
               </div>
               <div class="kv">
                 <span class="kv-key">First Name</span>
-                <span class="kv-val">{{ user.firstName || '—' }}</span>
+                <span class="kv-val">{{ user.firstName || 'â€”' }}</span>
               </div>
               <div class="kv">
                 <span class="kv-key">Last Name</span>
-                <span class="kv-val">{{ user.lastName || '—' }}</span>
+                <span class="kv-val">{{ user.lastName || 'â€”' }}</span>
               </div>
               <div class="kv wide">
                 <span class="kv-key">Email</span>
@@ -174,43 +376,43 @@
               </div>
               <div class="kv">
                 <span class="kv-key">Age</span>
-                <span class="kv-val">{{ user.age ?? '—' }}</span>
+                <span class="kv-val">{{ user.age ?? 'â€”' }}</span>
               </div>
               <div class="kv">
                 <span class="kv-key">Sex</span>
-                <span class="kv-val">{{ user.sex || '—' }}</span>
+                <span class="kv-val">{{ user.sex || 'â€”' }}</span>
               </div>
               <div class="kv">
                 <span class="kv-key">Date of Birth</span>
-                <span class="kv-val">{{ user.dateOfBirth ? (user.dateOfBirth | date:'mediumDate') : '—' }}</span>
+                <span class="kv-val">{{ user.dateOfBirth ? (user.dateOfBirth | date:'mediumDate') : 'â€”' }}</span>
               </div>
               <div class="kv">
                 <span class="kv-key">City</span>
-                <span class="kv-val">{{ user.city || '—' }}</span>
+                <span class="kv-val">{{ user.city || 'â€”' }}</span>
               </div>
               <div class="kv">
                 <span class="kv-key">Country</span>
-                <span class="kv-val">{{ user.country || '—' }}</span>
+                <span class="kv-val">{{ user.country || 'â€”' }}</span>
               </div>
               <div class="kv wide">
                 <span class="kv-key">Address</span>
-                <span class="kv-val break">{{ user.address || '—' }}</span>
+                <span class="kv-val break">{{ user.address || 'â€”' }}</span>
               </div>
               <div class="kv wide" *ngIf="isEnterpriseUser(user)">
                 <span class="kv-key">Company</span>
-                <span class="kv-val">{{ user.companyName || '—' }}</span>
+                <span class="kv-val">{{ user.companyName || 'â€”' }}</span>
               </div>
               <div class="kv">
                 <span class="kv-key">Joined</span>
-                <span class="kv-val">{{ user.accountCreatedAt ? (user.accountCreatedAt | date:'medium') : '—' }}</span>
+                <span class="kv-val">{{ user.accountCreatedAt ? (user.accountCreatedAt | date:'medium') : 'â€”' }}</span>
               </div>
               <div class="kv">
                 <span class="kv-key">Last Login</span>
-                <span class="kv-val">{{ user.lastLogin ? (user.lastLogin | date:'medium') : '—' }}</span>
+                <span class="kv-val">{{ user.lastLogin ? (user.lastLogin | date:'medium') : 'â€”' }}</span>
               </div>
               <div class="kv wide">
                 <span class="kv-key">Last Profile Update</span>
-                <span class="kv-val">{{ user.lastProfileUpdate ? (user.lastProfileUpdate | date:'medium') : '—' }}</span>
+                <span class="kv-val">{{ user.lastProfileUpdate ? (user.lastProfileUpdate | date:'medium') : 'â€”' }}</span>
               </div>
             </div>
           </section>
@@ -343,6 +545,86 @@
 
           <section class="card">
             <div class="card-head">
+              <h3>Ban Appeals</h3>
+              <span class="muted">{{ appeals.length }} total</span>
+            </div>
+
+            <div *ngIf="appeals.length === 0" class="empty slim">
+              No appeals submitted for this user.
+            </div>
+
+            <div class="appeal-list" *ngIf="appeals.length > 0">
+              @for (appeal of appeals; track appeal.appealId) {
+                <article class="appeal-row">
+                  <div class="appeal-main">
+                    <div class="appeal-topline">
+                      <span
+                        class="pill"
+                        [class.warn]="isAppealPending(appeal)"
+                        [class.ok]="(appeal.appealStatus || '').toUpperCase() === 'APPROVED'"
+                        [class.danger]="(appeal.appealStatus || '').toUpperCase() === 'REJECTED'"
+                      >
+                        {{ appeal.appealStatus || 'PENDING' }}
+                      </span>
+                      <span class="pill" [class.ok]="appeal.viewed" [class.warn]="!appeal.viewed">
+                        {{ appeal.viewed ? 'Viewed' : 'Unviewed' }}
+                      </span>
+                      <span class="muted">#{{ appeal.appealId }}</span>
+                    </div>
+                    <p class="appeal-description">{{ appeal.description }}</p>
+                    <p class="appeal-meta">
+                      Submitted {{ appeal.submittedDate ? (appeal.submittedDate | date:'medium') : 'Unknown date' }}
+                      <span *ngIf="appeal.viewedBy"> · Viewed by {{ appeal.viewedBy }}</span>
+                      <span *ngIf="appeal.viewedAt"> · {{ appeal.viewedAt | date:'short' }}</span>
+                      <span *ngIf="appeal.reviewedBy"> · Reviewed by {{ appeal.reviewedBy }}</span>
+                      <span *ngIf="appeal.resolvedDate"> · Resolved {{ appeal.resolvedDate | date:'medium' }}</span>
+                    </p>
+                  </div>
+                  <div class="appeal-actions">
+                    <button
+                      type="button"
+                      class="btn soft small"
+                      *ngIf="!appeal.viewed"
+                      (click)="markAppealViewed(appeal)"
+                      [disabled]="isProcessingAppeal(appeal)"
+                    >
+                      {{ isProcessingAppeal(appeal) ? 'Working...' : 'Mark Viewed' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn soft small"
+                      *ngIf="appeal.viewed"
+                      (click)="markAppealUnviewed(appeal)"
+                      [disabled]="isProcessingAppeal(appeal)"
+                    >
+                      {{ isProcessingAppeal(appeal) ? 'Working...' : 'Mark Unviewed' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn primary small"
+                      *ngIf="isAppealPending(appeal)"
+                      (click)="approveAppeal(appeal)"
+                      [disabled]="isProcessingAppeal(appeal)"
+                    >
+                      {{ isProcessingAppeal(appeal) ? 'Working...' : 'Approve' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn danger small"
+                      *ngIf="isAppealPending(appeal)"
+                      (click)="rejectAppeal(appeal)"
+                      [disabled]="isProcessingAppeal(appeal)"
+                    >
+                      {{ isProcessingAppeal(appeal) ? 'Working...' : 'Reject' }}
+                    </button>
+                  </div>
+                </article>
+              }
+            </div>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
               <h3>Recent Activity (Privacy-Limited)</h3>
               <span class="muted">Event type, route, timestamps, duration only</span>
             </div>
@@ -375,3 +657,11 @@
     </div>
   </div>
 </div>
+
+
+
+
+
+
+
+

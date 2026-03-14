@@ -145,6 +145,34 @@
             </svg>
             {{ errorMessage }}
           </div>
+
+          <div class="ban-appeal-card" *ngIf="showBanAppealForm">
+            <div class="ban-appeal-title">Account restricted</div>
+            <p class="ban-appeal-copy">
+              If you believe this restriction is a mistake, submit an appeal for admin review.
+            </p>
+            <label class="ban-appeal-label" for="banAppealDescription">Appeal description</label>
+            <textarea
+              id="banAppealDescription"
+              class="ban-appeal-textarea"
+              [(ngModel)]="banAppealDescription"
+              name="banAppealDescription"
+              [ngModelOptions]="{ standalone: true }"
+              rows="4"
+              maxlength="1000"
+              placeholder="Explain why your account should be reviewed."
+              [disabled]="banAppealSubmitting"
+            ></textarea>
+            <button
+              type="button"
+              class="btn-submit ban-appeal-btn"
+              (click)="submitBanAppeal()"
+              [disabled]="banAppealSubmitting"
+            >
+              {{ banAppealSubmitting ? 'Submitting Appeal...' : 'Submit Ban Appeal' }}
+            </button>
+            <div class="ban-appeal-message" *ngIf="banAppealMessage">{{ banAppealMessage }}</div>
+          </div>
         </form>
 
         <p class="signup-prompt">

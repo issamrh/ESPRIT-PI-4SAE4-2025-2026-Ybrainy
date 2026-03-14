@@ -452,6 +452,68 @@
   gap: 8px;
 }
 
+.ban-appeal-card {
+  margin-top: 12px;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  background: #fffbeb;
+  padding: 12px;
+}
+
+.ban-appeal-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.ban-appeal-copy {
+  margin: 6px 0 10px;
+  color: #78350f;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.ban-appeal-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #78350f;
+  margin-bottom: 6px;
+}
+
+.ban-appeal-textarea {
+  width: 100%;
+  border: 1px solid #fcd34d;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #111827;
+  resize: vertical;
+  min-height: 88px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.ban-appeal-textarea:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+.ban-appeal-btn {
+  margin-top: 10px;
+  min-height: 42px;
+  font-size: 13px;
+}
+
+.ban-appeal-message {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #334155;
+}
+
 /* ── Signup Prompt ───────────────────────────── */
 .signup-prompt {
   text-align: center;

@@ -113,6 +113,13 @@ export class UserService {
     );
   }
 
+  changePassword(userId: number, newPassword: string, confirmPassword: string): Observable<void> {
+    return this.http.put<void>(`${this.usersApiBase}/${userId}/password`, {
+      newPassword,
+      confirmPassword,
+    });
+  }
+
   deleteUser(userId: number): Observable<void> {
     return this.http.delete<void>(`${this.usersApiBase}/${userId}`);
   }

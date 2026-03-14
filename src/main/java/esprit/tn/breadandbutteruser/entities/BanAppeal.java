@@ -26,6 +26,11 @@ public class BanAppeal {
     private LocalDateTime submittedDate;
     private LocalDateTime resolvedDate;
     private String reviewedBy;
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean viewed = false;
+    private LocalDateTime viewedAt;
+    private String viewedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
@@ -37,6 +42,9 @@ public class BanAppeal {
     public void submitAppeal() {
         this.submittedDate = LocalDateTime.now();
         this.appealStatus = "PENDING";
+        this.viewed = false;
+        this.viewedAt = null;
+        this.viewedBy = null;
         System.out.println("Appeal submitted: " + description);
     }
 
@@ -54,5 +62,17 @@ public class BanAppeal {
         this.appealStatus = "REJECTED";
         this.resolvedDate = LocalDateTime.now();
         System.out.println("Appeal rejected.");
+    }
+
+    public void markViewed(String actor) {
+        this.viewed = true;
+        this.viewedAt = LocalDateTime.now();
+        this.viewedBy = actor;
+    }
+
+    public void markUnviewed() {
+        this.viewed = false;
+        this.viewedAt = null;
+        this.viewedBy = null;
     }
 }

@@ -64,6 +64,7 @@ export class ProfileComponent implements OnInit {
   appealsLoadFailed = false;
   appealSubmitting = false;
   faceBiometricSaving = false;
+  changingPassword = false;
   faceDialogOpen = false;
   profileSubmitAttempted = false;
   profileValidationErrors: string[] = [];
@@ -205,6 +206,10 @@ export class ProfileComponent implements OnInit {
   }
 
   onChangePassword(): void {
+    if (!this.user || this.changingPassword) {
+      return;
+    }
+
     const { newPwd, confirmPwd } = this.passwordModel;
     this.passwordValidationError = '';
     if (!newPwd || !confirmPwd) {
@@ -221,11 +226,21 @@ export class ProfileComponent implements OnInit {
       return this.showToast(this.passwordValidationError, true);
     }
 
-    // TODO: wire to backend
-    // this.userService.changePassword(newPwd).subscribe(...)
-    this.passwordModel = { newPwd: '', confirmPwd: '' };
-    this.passwordValidationError = '';
-    this.showToast('Password updated successfully!');
+    this.changingPassword = true;
+    this.userService.changePassword(this.user.userId, newPwd, confirmPwd).subscribe({
+      next: () => {
+        this.changingPassword = false;
+        this.passwordModel = { newPwd: '', confirmPwd: '' };
+        this.passwordValidationError = '';
+        this.showToast('Password updated successfully!');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.changingPassword = false;
+        const message = this.getPasswordChangeErrorMessage(err);
+        this.passwordValidationError = message;
+        this.showToast(message, true);
+      },
+    });
   }
 
   onDeleteAccount(): void {
@@ -746,6 +761,27 @@ export class ProfileComponent implements OnInit {
     }
 
     return backendMessage ? `Face login failed: ${backendMessage}` : 'Face login failed. Please try again.';
+  }
+
+  private getPasswordChangeErrorMessage(err: HttpErrorResponse): string {
+    const backendMessage =
+      typeof err?.error === 'string'
+        ? err.error
+        : typeof err?.error?.message === 'string'
+          ? err.error.message
+          : null;
+
+    if (err?.status === 0) {
+      return 'Password update failed: could not reach the server.';
+    }
+    if (err?.status === 403) {
+      return 'Password update failed: you are not allowed to change this password.';
+    }
+    if (err?.status === 400) {
+      return backendMessage ? `Password update failed: ${backendMessage}` : 'Password update failed: invalid request.';
+    }
+
+    return backendMessage ? `Password update failed: ${backendMessage}` : 'Password update failed. Please try again.';
   }
 
   private sortWarnings(warnings: ProfileWarning[]): ProfileWarning[] {

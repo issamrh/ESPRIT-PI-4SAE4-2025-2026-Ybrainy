@@ -9,10 +9,12 @@ import esprit.tn.breadandbutteruser.dto.SignUpDto;
 import esprit.tn.breadandbutteruser.dto.UpdateUserDto;
 import esprit.tn.breadandbutteruser.dto.UserActivityDto;
 import esprit.tn.breadandbutteruser.dto.UserDto;
+import esprit.tn.breadandbutteruser.entities.BanAppeal;
 import esprit.tn.breadandbutteruser.entities.InteractionEvent;
 import esprit.tn.breadandbutteruser.entities.User;
 import esprit.tn.breadandbutteruser.entities.enums.IntegrityStatus;
 import esprit.tn.breadandbutteruser.entities.enums.Role;
+import esprit.tn.breadandbutteruser.repositories.BanAppealRepository;
 import esprit.tn.breadandbutteruser.repositories.InteractionEventRepository;
 import esprit.tn.breadandbutteruser.repositories.UserRepository;
 import esprit.tn.breadandbutteruser.repositories.WarningRepository;
@@ -51,6 +53,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final WarningRepository warningRepository;
+    private final BanAppealRepository banAppealRepository;
     private final InteractionEventRepository interactionEventRepository;
     private final KeycloakAdminService keycloakAdminService;
     private final SignUpChallengeService signUpChallengeService;
@@ -61,10 +64,8 @@ public class UserService {
 
     public AuthResponseDto signUp(SignUpDto signUpDto) {
         log.info("Signing up new user: {}", signUpDto.getUsername());
-        
-        if (!signUpDto.getPassword().equals(signUpDto.getConfirmPassword())) {
-            throw new RuntimeException("Passwords do not match");
-        }
+
+        validatePasswordPair(signUpDto.getPassword(), signUpDto.getConfirmPassword());
         
         if (userRepository.existsByUsername(signUpDto.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -166,6 +167,9 @@ public class UserService {
                 if (state.cooldownUntil() != null && state.cooldownUntil().isAfter(LocalDateTime.now())) {
                     throw new RuntimeException(buildLoginCooldownMessage(state.cooldownUntil()));
                 }
+            }
+            if (isRestrictedLoginFailure(ex)) {
+                throw new RuntimeException(buildRestrictedLoginMessage(signInDto.getEmail()), ex);
             }
             throw ex;
         }
@@ -388,21 +392,7 @@ public class UserService {
         if (!StringUtils.hasText(email) || !StringUtils.hasText(code)) {
             throw new RuntimeException("Email and verification code are required");
         }
-        if (!StringUtils.hasText(newPassword) || !StringUtils.hasText(confirmPassword)) {
-            throw new RuntimeException("New password and confirmation are required");
-        }
-        if (!newPassword.equals(confirmPassword)) {
-            throw new RuntimeException("Passwords do not match");
-        }
-        if (newPassword.length() < 8) {
-            throw new RuntimeException("Password must be at least 8 characters");
-        }
-        boolean hasUpper = newPassword.chars().anyMatch(Character::isUpperCase);
-        boolean hasLower = newPassword.chars().anyMatch(Character::isLowerCase);
-        boolean hasDigit = newPassword.chars().anyMatch(Character::isDigit);
-        if (!(hasUpper && hasLower && hasDigit)) {
-            throw new RuntimeException("Password must include uppercase, lowercase, and numeric characters");
-        }
+        validatePasswordPair(newPassword, confirmPassword);
 
         String normalizedEmail = email.trim();
         if (!forgotPasswordVerificationService.verifyCode(normalizedEmail, code)) {
@@ -419,8 +409,68 @@ public class UserService {
         log.info("Password reset completed via verification code for local user ID {}", user.getUserId());
     }
 
+    public void changePassword(Long userId, String newPassword, String confirmPassword) {
+        validatePasswordPair(newPassword, confirmPassword);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
+
+        String keycloakUserId = resolveKeycloakUserId(user)
+                .orElseThrow(() -> new RuntimeException("Unable to resolve account identity for password change"));
+
+        keycloakAdminService.setPassword(keycloakUserId, newPassword, false);
+        user.setLastProfileUpdate(LocalDateTime.now());
+        userRepository.save(user);
+        log.info("Password changed successfully for local user ID {}", user.getUserId());
+    }
+
     @Transactional(readOnly = true)
     public List<AdminUserOverviewDto> getAdminUserOverview(String search, String filter) {
+        return buildAdminUserOverview(search, filter);
+    }
+
+    @Transactional(readOnly = true)
+    public AdminOverviewPageResult getAdminUserOverviewPage(String search, String filter, int page, int size) {
+        int safeSize = Math.max(1, Math.min(size, 100));
+        List<AdminUserOverviewDto> allUsers = buildAdminUserOverview(search, filter);
+        long totalElements = allUsers.size();
+        int totalPages = totalElements == 0L ? 1 : (int) Math.ceil((double) totalElements / safeSize);
+
+        int maxPageIndex = Math.max(0, totalPages - 1);
+        int safePage = Math.min(Math.max(0, page), maxPageIndex);
+
+        long offset = (long) safePage * safeSize;
+        int fromIndex = offset >= totalElements ? (int) totalElements : (int) offset;
+        int toIndex = (int) Math.min(totalElements, fromIndex + safeSize);
+        List<AdminUserOverviewDto> content = allUsers.subList(fromIndex, toIndex);
+
+        long pendingVerificationCount = allUsers.stream()
+                .filter(dto -> dto.isVerificationRequired() && !dto.isVerificationApproved())
+                .count();
+        long bannedCount = allUsers.stream()
+                .filter(AdminUserOverviewDto::isBanned)
+                .count();
+        long warnedCount = allUsers.stream()
+                .filter(dto -> dto.getWarningCount() > 0)
+                .count();
+        long activeRecentlyCount = allUsers.stream()
+                .filter(dto -> dto.getActivityCountLast30Days() > 0)
+                .count();
+
+        return new AdminOverviewPageResult(
+                content,
+                totalElements,
+                totalPages,
+                safePage,
+                safeSize,
+                pendingVerificationCount,
+                bannedCount,
+                warnedCount,
+                activeRecentlyCount
+        );
+    }
+
+    private List<AdminUserOverviewDto> buildAdminUserOverview(String search, String filter) {
         String normalizedSearch = StringUtils.hasText(search) ? search.trim().toLowerCase(Locale.ROOT) : null;
         String normalizedFilter = StringUtils.hasText(filter) ? filter.trim().toLowerCase(Locale.ROOT) : "all";
         LocalDateTime since = LocalDateTime.now().minusDays(30);
@@ -437,6 +487,19 @@ public class UserService {
                         .thenComparing(AdminUserOverviewDto::getAccountCreatedAt,
                                 Comparator.nullsLast(Comparator.reverseOrder())))
                 .collect(Collectors.toList());
+    }
+
+    public record AdminOverviewPageResult(
+            List<AdminUserOverviewDto> content,
+            long totalElements,
+            int totalPages,
+            int page,
+            int size,
+            long pendingVerificationCount,
+            long bannedCount,
+            long warnedCount,
+            long activeRecentlyCount
+    ) {
     }
 
     public UserDto setAdminVerification(Long userId, boolean verified, String actorName) {
@@ -866,6 +929,71 @@ public class UserService {
         return "Too many failed password attempts. Try again in " + secondsRemaining + " second(s).";
     }
 
+    private boolean isRestrictedLoginFailure(RuntimeException ex) {
+        if (ex == null || !StringUtils.hasText(ex.getMessage())) {
+            return false;
+        }
+        String message = ex.getMessage().toLowerCase(Locale.ROOT);
+        return message.contains("restricted")
+                || message.contains("disabled")
+                || message.contains("banned")
+                || message.contains("ban appeal");
+    }
+
+    private String buildRestrictedLoginMessage(String email) {
+        String generic = "Account is currently restricted. Submit a ban appeal to request review.";
+        if (!StringUtils.hasText(email)) {
+            return generic;
+        }
+
+        Optional<User> maybeUser = userRepository.findByEmailIgnoreCase(email.trim());
+        if (maybeUser.isEmpty()) {
+            return generic;
+        }
+
+        User user = maybeUser.get();
+        Long userId = user.getUserId();
+        if (userId == null) {
+            return generic;
+        }
+
+        boolean hasPendingAppeal = banAppealRepository.existsByUserUserIdAndAppealStatus(userId, "PENDING");
+        if (hasPendingAppeal) {
+            return "Ban appeal submitted. Please wait for admin response.";
+        }
+
+        Optional<BanAppeal> latestAppeal = banAppealRepository.findTopByUserUserIdOrderBySubmittedDateDesc(userId);
+        if (latestAppeal.isPresent() && "REJECTED".equalsIgnoreCase(latestAppeal.get().getAppealStatus())) {
+            String remainingDays = formatRemainingBanDays(user.getLockedUntil());
+            if (remainingDays != null) {
+                return "Your ban appeal was rejected. You are still banned for " + remainingDays + ".";
+            }
+            return "Your ban appeal was rejected. Please wait until your ban period ends.";
+        }
+
+        String remainingDays = formatRemainingBanDays(user.getLockedUntil());
+        if (remainingDays != null) {
+            return "Account is currently banned for " + remainingDays + ".";
+        }
+
+        return generic;
+    }
+
+    private String formatRemainingBanDays(LocalDateTime lockedUntil) {
+        if (lockedUntil == null) {
+            return null;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        if (!lockedUntil.isAfter(now)) {
+            return null;
+        }
+
+        long hoursRemaining = ChronoUnit.HOURS.between(now, lockedUntil);
+        long daysRemaining = Math.max(1L, (hoursRemaining + 23L) / 24L);
+        return daysRemaining + (daysRemaining == 1 ? " day" : " days");
+    }
+
     private Optional<Role> extractPrimaryRole(Map<String, Object> claims) {
         Object realmAccessObj = claims.get("realm_access");
         if (!(realmAccessObj instanceof Map<?, ?> realmAccess)) {
@@ -913,6 +1041,24 @@ public class UserService {
 
     private String stringValue(Object value) {
         return value != null ? String.valueOf(value) : null;
+    }
+
+    private void validatePasswordPair(String newPassword, String confirmPassword) {
+        if (!StringUtils.hasText(newPassword) || !StringUtils.hasText(confirmPassword)) {
+            throw new RuntimeException("Password and confirmation are required");
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            throw new RuntimeException("Passwords do not match");
+        }
+        if (newPassword.length() < 8) {
+            throw new RuntimeException("Password must be at least 8 characters");
+        }
+        boolean hasUpper = newPassword.chars().anyMatch(Character::isUpperCase);
+        boolean hasLower = newPassword.chars().anyMatch(Character::isLowerCase);
+        boolean hasDigit = newPassword.chars().anyMatch(Character::isDigit);
+        if (!(hasUpper && hasLower && hasDigit)) {
+            throw new RuntimeException("Password must include uppercase, lowercase, and numeric characters");
+        }
     }
 
     private Long longValue(Object value) {

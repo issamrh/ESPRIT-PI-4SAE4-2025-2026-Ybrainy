@@ -48,6 +48,7 @@ public class SecurityConfig {
                                 "/api/auth/refresh",
                                 "/api/auth/forgot-password",
                                 "/api/auth/forgot-password/reset-with-code",
+                                "/api/ban-appeals/public",
                                 "/api/users/uploads/**"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
