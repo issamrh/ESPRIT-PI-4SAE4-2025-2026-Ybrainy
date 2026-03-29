@@ -1,0 +1,86 @@
+<div class="cv-page">
+  <div class="cv-scanlines"></div>
+
+  <!-- Header -->
+  <div class="cv-header">
+    <div class="cv-header-inner">
+      <div class="cv-logo">YBrainy</div>
+      <div class="cv-logo-sub">CERTIFICATE VERIFICATION SYSTEM</div>
+      <div class="cv-header-line"></div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="cv-loading">
+    <div class="cv-spinner"></div>
+    <div class="cv-loading-text">Verifying certificate...</div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error && !loading" class="cv-result cv-invalid">
+    <div class="cv-icon-wrap cv-icon-invalid">✗</div>
+    <h2 class="cv-status-text cv-text-invalid">CERTIFICATE NOT FOUND</h2>
+    <p class="cv-sub">Certificate ID: {{ certificateId }}</p>
+    <p class="cv-desc">
+      This certificate could not be verified. It may be invalid,
+      expired, or the ID may be incorrect.
+    </p>
+  </div>
+
+  <!-- Valid result -->
+  <div *ngIf="result && !loading" class="cv-result"
+       [class.cv-valid]="result.valid"
+       [class.cv-invalid]="!result.valid">
+
+    <div *ngIf="result.valid">
+      <div class="cv-icon-wrap cv-icon-valid">✓</div>
+      <h2 class="cv-status-text cv-text-valid">CERTIFICATE VERIFIED</h2>
+      <div class="cv-divider"></div>
+
+      <div class="cv-details-grid">
+        <div class="cv-detail-item">
+          <div class="cv-detail-label">STUDENT</div>
+          <div class="cv-detail-value">{{ result.studentName }}</div>
+        </div>
+        <div class="cv-detail-item">
+          <div class="cv-detail-label">COURSE</div>
+          <div class="cv-detail-value">{{ result.courseTitle }}</div>
+        </div>
+        <div class="cv-detail-item">
+          <div class="cv-detail-label">COMPLETED</div>
+          <div class="cv-detail-value">{{ result.completionDate }}</div>
+        </div>
+        <div class="cv-detail-item" *ngIf="result.quizScore">
+          <div class="cv-detail-label">QUIZ SCORE</div>
+          <div class="cv-detail-value cv-score">
+            {{ result.quizScore | number:'1.0-1' }}%
+          </div>
+        </div>
+        <div class="cv-detail-item">
+          <div class="cv-detail-label">HOURS SPENT</div>
+          <div class="cv-detail-value">{{ result.hoursSpent }}h</div>
+        </div>
+        <div class="cv-detail-item">
+          <div class="cv-detail-label">ISSUED BY</div>
+          <div class="cv-detail-value">{{ result.issuedBy }}</div>
+        </div>
+      </div>
+
+      <div class="cv-cert-id">
+        <span class="cv-cert-id-label">CERTIFICATE ID</span>
+        <span class="cv-cert-id-value">{{ result.certificateId }}</span>
+      </div>
+
+      <div class="cv-footer-badge">
+        🎓 This certificate was issued by YBrainy and is authentic and verified.
+      </div>
+    </div>
+
+    <div *ngIf="!result.valid">
+      <div class="cv-icon-wrap cv-icon-invalid">✗</div>
+      <h2 class="cv-status-text cv-text-invalid">INVALID CERTIFICATE</h2>
+      <p class="cv-desc">This certificate ID exists but is not valid.</p>
+    </div>
+
+  </div>
+</div>

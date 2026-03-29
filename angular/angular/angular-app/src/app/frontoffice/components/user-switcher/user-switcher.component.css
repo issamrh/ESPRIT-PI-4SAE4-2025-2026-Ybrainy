@@ -1,0 +1,213 @@
+/* ══════════════════════════════════════════════════════════
+   :host IS the fixed element — most reliable approach.
+══════════════════════════════════════════════════════════ */
+:host {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: block;
+}
+
+.us-root {
+  /* Establish stacking context for the absolute panel */
+  isolation: isolate;
+}
+
+/* ══════════════════════════════════════════════════════════
+   FAB trigger button
+══════════════════════════════════════════════════════════ */
+.us-fab {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+  color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.us-fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.us-fab-role {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+}
+
+/* ══════════════════════════════════════════════════════════
+   Panel (dark glassmorphism, floats above the FAB)
+══════════════════════════════════════════════════════════ */
+.us-panel {
+  position: absolute;
+  bottom: 58px;
+  right: 0;
+  width: 300px;
+  background: rgba(10, 15, 30, 0.96);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  /* hidden by default */
+  opacity: 0;
+  transform: translateY(10px) scale(0.97);
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.us-panel-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: all;
+}
+
+/* ── Panel header ──────────────────────────────────────── */
+.us-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.us-title {
+  font-size: 12px;
+  font-weight: 950;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.us-shortcut {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ── User cards ────────────────────────────────────────── */
+.us-users {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.us-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+  text-align: left;
+}
+
+.us-card:hover {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.us-card-active {
+  background: rgba(54, 93, 247, 0.18) !important;
+  border-color: rgba(54, 93, 247, 0.45) !important;
+}
+
+.us-avatar {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 950;
+  color: rgba(255, 255, 255, 0.8);
+  text-transform: uppercase;
+}
+
+.us-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.us-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.88);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.us-uid {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Role badges ───────────────────────────────────────── */
+.us-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 950;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+/* STUDENT = blue */
+.us-badge-student,
+.us-fab-role.us-badge-student {
+  background: rgba(54, 93, 247, 0.25);
+  color: #93c5fd;
+}
+
+/* INSTRUCTOR = purple */
+.us-badge-instructor,
+.us-fab-role.us-badge-instructor {
+  background: rgba(124, 58, 237, 0.25);
+  color: #c4b5fd;
+}
+
+/* ADMIN = red */
+.us-badge-admin,
+.us-fab-role.us-badge-admin {
+  background: rgba(220, 38, 38, 0.25);
+  color: #fca5a5;
+}
