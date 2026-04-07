@@ -1,0 +1,115 @@
+<main class="history-page">
+  <section class="history-hero">
+    <div class="container">
+      <div class="history-copy">
+        <span class="hero-eyebrow">Cart Timeline</span>
+        <h1>Cart History</h1>
+        <p>Follow every add, removal, and checkout event so you can confirm what changed and when it happened.</p>
+      </div>
+      <div class="hero-actions">
+        <a routerLink="/cart" class="hero-link">My Cart</a>
+        <a routerLink="/packs" class="hero-link hero-link-alt">Browse Packs</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="history-content">
+    <div class="container">
+      <div class="summary-grid" *ngIf="!loading && !error">
+        <article class="summary-tile">
+          <span>Events</span>
+          <strong>{{ history.length }}</strong>
+        </article>
+        <article class="summary-tile">
+          <span>Added Items</span>
+          <strong>{{ addCount }}</strong>
+        </article>
+        <article class="summary-tile">
+          <span>Checkouts</span>
+          <strong>{{ checkoutCount }}</strong>
+        </article>
+        <article class="summary-tile">
+          <span>Carts Tracked</span>
+          <strong>{{ uniqueCartCount }}</strong>
+        </article>
+      </div>
+
+      <div *ngIf="!loading && !error && history.length" class="filter-bar">
+        <button
+          type="button"
+          *ngFor="let filter of filters"
+          class="filter-pill"
+          [class.active]="selectedFilter === filter.value"
+          (click)="selectedFilter = filter.value">
+          {{ filter.label }}
+        </button>
+      </div>
+
+      <div *ngIf="loading" class="state-card">
+        <div class="spinner"></div>
+        <h3>Loading your history</h3>
+        <p>We are gathering the latest cart events for your account.</p>
+      </div>
+
+      <div *ngIf="!loading && error" class="state-card error-card">
+        <div class="state-icon">
+          <i class="bi bi-exclamation-circle"></i>
+        </div>
+        <h3>History unavailable</h3>
+        <p>{{ error }}</p>
+      </div>
+
+      <div *ngIf="!loading && !error && !history.length" class="state-card">
+        <div class="state-icon">
+          <i class="bi bi-clock-history"></i>
+        </div>
+        <h3>No cart activity yet</h3>
+        <p>Once you add a pack, remove one, or complete a checkout, the event will appear here.</p>
+        <div class="state-actions">
+          <a routerLink="/packs" class="primary-link">Start with Packs</a>
+          <a routerLink="/cart" class="secondary-link">Open My Cart</a>
+        </div>
+      </div>
+
+      <div *ngIf="!loading && !error && history.length && !filteredHistory.length" class="state-card">
+        <div class="state-icon">
+          <i class="bi bi-funnel"></i>
+        </div>
+        <h3>No events for this filter</h3>
+        <p>Try a different activity filter to see the rest of your cart timeline.</p>
+      </div>
+
+      <div *ngIf="!loading && !error && filteredHistory.length" class="history-list">
+        <article class="history-card" *ngFor="let record of filteredHistory; trackBy: trackById">
+          <div class="history-top">
+            <div class="history-main">
+              <span class="action-pill" [ngClass]="getActionTone(record.action)">{{ getActionLabel(record.action) }}</span>
+              <h3>{{ record.packTitle || 'Cart activity' }}</h3>
+              <p>{{ record.description || getFallbackDescription(record) }}</p>
+            </div>
+
+            <div class="history-side">
+              <strong>{{ record.createdAt | date:'medium' }}</strong>
+              <span>Cart #{{ record.cartId }}</span>
+            </div>
+          </div>
+
+          <div class="history-metrics">
+            <div class="metric-box">
+              <span>Status</span>
+              <strong>{{ getStatusLabel(record.cartStatus) }}</strong>
+            </div>
+            <div class="metric-box">
+              <span>Quantity</span>
+              <strong>{{ record.quantity || 0 }}</strong>
+            </div>
+            <div class="metric-box">
+              <span>Total</span>
+              <strong>${{ record.totalAmount | number:'1.2-2' }}</strong>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>

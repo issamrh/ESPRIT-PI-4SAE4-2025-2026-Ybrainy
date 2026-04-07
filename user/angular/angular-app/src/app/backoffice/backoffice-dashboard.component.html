@@ -1,0 +1,26 @@
+<div class="bo-frame-wrap">
+  <details class="bo-quick-menu">
+    <summary class="bo-quick-menu-trigger">{{ userRole === 'INSTRUCTOR' ? 'Instructor Menu' : 'Admin Menu' }}</summary>
+    <div class="bo-quick-menu-list">
+      <div class="bo-quick-menu-head">
+        <div class="bo-admin-avatar">{{ (adminDisplayName || 'A').charAt(0) }}</div>
+        <div class="bo-admin-meta">
+          <div class="bo-admin-name">{{ adminDisplayName }}</div>
+          <div class="bo-admin-role">{{ userRole === 'INSTRUCTOR' ? 'Instructor' : 'Administrator' }}</div>
+        </div>
+      </div>
+      <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/users" class="quick-link primary">User Management</a>
+      <a routerLink="/dashboard/profile" class="quick-link">My Profile</a>
+      <a routerLink="/courses" class="quick-link">← Student View</a>
+      <button type="button" class="quick-link quick-link-danger" (click)="onLogout()">Logout</button>
+    </div>
+  </details>
+
+  <iframe
+    class="bo-frame"
+    [src]="safeDashboardUrl"
+    title="Backoffice Dashboard"
+  ></iframe>
+</div>
+
+

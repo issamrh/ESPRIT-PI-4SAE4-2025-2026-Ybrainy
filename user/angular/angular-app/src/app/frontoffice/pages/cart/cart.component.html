@@ -1,0 +1,102 @@
+<main class="cart-page">
+  <section class="cart-hero">
+    <div class="container">
+      <div class="cart-hero-copy">
+        <span class="hero-eyebrow">Shopping Cart</span>
+        <h1>My Cart</h1>
+        <p>Review the packs you added, remove anything you no longer want, and jump to your activity history anytime.</p>
+      </div>
+      <div class="hero-links">
+        <a routerLink="/packs" class="hero-link">Continue Shopping</a>
+        <a routerLink="/cart/history" class="hero-link hero-link-alt">Cart History</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="cart-content">
+    <div class="container">
+      <div *ngIf="feedback" class="message-banner success-banner">{{ feedback }}</div>
+      <div *ngIf="!feedback && error" class="message-banner error-banner">{{ error }}</div>
+
+      <div *ngIf="loading" class="state-card">
+        <div class="spinner"></div>
+        <h3>Loading your cart</h3>
+        <p>We are pulling in the latest packs you selected.</p>
+      </div>
+
+      <div *ngIf="!loading && !error && !hasItems" class="state-card">
+        <div class="state-icon">
+          <i class="bi bi-cart-x"></i>
+        </div>
+        <h3>Your cart is empty</h3>
+        <p>Add a pack from the catalog to see it here, then use cart history to track every update.</p>
+        <div class="state-actions">
+          <a routerLink="/packs" class="primary-link">Browse Packs</a>
+          <a routerLink="/cart/history" class="secondary-link">View Cart History</a>
+        </div>
+      </div>
+
+      <div *ngIf="!loading && !error && hasItems" class="row g-4">
+        <div class="col-lg-8">
+          <article class="cart-item-card" *ngFor="let item of cart?.items">
+            <div class="cart-item-copy">
+              <span class="item-badge">Pack</span>
+              <h3>{{ item.packTitle }}</h3>
+              <p>{{ item.quantity }} {{ item.quantity === 1 ? 'license' : 'licenses' }} selected</p>
+            </div>
+
+            <div class="cart-item-meta">
+              <div class="price-block">
+                <span>Unit price</span>
+                <strong>${{ item.priceAtPurchase | number:'1.2-2' }}</strong>
+              </div>
+
+              <div class="price-block">
+                <span>Subtotal</span>
+                <strong>${{ item.subtotal | number:'1.2-2' }}</strong>
+              </div>
+
+              <button
+                type="button"
+                class="remove-btn"
+                (click)="removeItem(item)"
+                [disabled]="removingItemId === item.id">
+                {{ removingItemId === item.id ? 'Removing...' : 'Remove' }}
+              </button>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-lg-4">
+          <aside class="summary-card">
+            <div class="summary-header">
+              <p>Cart Summary</p>
+              <span class="status-pill">{{ getStatusLabel(cart?.status) }}</span>
+            </div>
+
+            <div class="summary-row">
+              <span>Total items</span>
+              <strong>{{ totalItems }}</strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Total amount</span>
+              <strong>${{ totalAmount | number:'1.2-2' }}</strong>
+            </div>
+
+            <button
+              type="button"
+              class="danger-btn"
+              (click)="clearCart()"
+              [disabled]="clearing">
+              {{ clearing ? 'Clearing...' : 'Clear Cart' }}
+            </button>
+
+            <a routerLink="/packs" class="secondary-link wide-link">Add More Packs</a>
+            <a routerLink="/cart/history" class="secondary-link wide-link">Open Cart History</a>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
