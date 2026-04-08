@@ -4,6 +4,7 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -12,9 +13,11 @@ import tn.esprit.inscriptionservice.dto.UserDto;
 import tn.esprit.inscriptionservice.entity.Inscription;
 import tn.esprit.inscriptionservice.entity.InscriptionStatut;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -26,13 +29,16 @@ public class InscriptionNotificationEmailService {
 
     private final JavaMailSender mailSender;
     private final String fromAddress;
+    private final String logoPath;
 
     public InscriptionNotificationEmailService(
             JavaMailSender mailSender,
-            @Value("${ybrainy.mail.from:}") String fromAddress
+            @Value("${ybrainy.mail.from:}") String fromAddress,
+            @Value("${ybrainy.mail.logo-path:Frontend/src/assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/logos.svg}") String logoPath
     ) {
         this.mailSender = mailSender;
         this.fromAddress = fromAddress;
+        this.logoPath = logoPath;
     }
 
     public void sendDecisionEmail(UserDto student, EventDto event, Inscription inscription, InscriptionStatut status) {
@@ -46,13 +52,14 @@ public class InscriptionNotificationEmailService {
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
             if (fromAddress != null && !fromAddress.isBlank()) {
-                helper.setFrom(fromAddress, "YBrainy");
+                helper.setFrom(fromAddress);
             }
             helper.setTo(student.email());
             helper.setSubject(buildSubject(status, event));
-            helper.setText(buildHtml(student, event, inscription, status), true);
+            boolean hasInlineLogo = attachInlineLogo(helper);
+            helper.setText(buildHtml(student, event, inscription, status, hasInlineLogo), true);
             mailSender.send(mimeMessage);
-        } catch (MessagingException | RuntimeException | UnsupportedEncodingException ex) {
+        } catch (MessagingException | RuntimeException ex) {
             log.warn("Failed to send inscription decision email for inscriptionId={}: {}",
                     inscription != null ? inscription.getIdInscription() : -1, ex.getMessage());
         }
@@ -65,7 +72,7 @@ public class InscriptionNotificationEmailService {
                 : "YBrainy - Update about your registration for ") + eventName;
     }
 
-    private String buildHtml(UserDto student, EventDto event, Inscription inscription, InscriptionStatut status) {
+    private String buildHtml(UserDto student, EventDto event, Inscription inscription, InscriptionStatut status, boolean hasInlineLogo) {
         String studentName = buildStudentName(student);
         String eventName = safe(event != null ? event.name() : null, "Event");
         String eventRef = safe(event != null ? event.referenceEvent() : null, "N/A");
@@ -80,6 +87,15 @@ public class InscriptionNotificationEmailService {
                 ? "Your inscription has been approved by the YBrainy team. Your QR pass is ready below."
                 : "Your inscription could not be approved this time. You can still explore upcoming events on YBrainy.";
         boolean isConfirmed = status == InscriptionStatut.CONFIRMEE;
+        String headerBackground = isConfirmed
+                ? "#EEF3FF"
+                : "#FFF6F2";
+        String headerTitleColor = "#243166";
+        String headerBodyColor = "#5E6887";
+        String logoMarkup = hasInlineLogo
+                ? "<img src=\"cid:ybrainyLogo\" alt=\"YBrainy\" style=\"display:block;height:42px;width:auto;\">"
+                : "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\"><tr><td style=\"width:44px;height:44px;border-radius:14px;background:#0F73EE;text-align:center;vertical-align:middle;font-size:20px;font-weight:800;color:#ffffff;\">Y</td><td style=\"padding-left:12px;font-size:28px;line-height:1;font-weight:800;color:"
+                + headerTitleColor + ";\">YBrainy</td></tr></table>";
 
         String qrPayload = """
                 YBrainy Event Pass
@@ -150,6 +166,14 @@ public class InscriptionNotificationEmailService {
                 : "";
 
         String leftColumnWidth = isConfirmed ? "62%%" : "100%%";
+        String eventReferenceBlock = isConfirmed
+                ? """
+                    <div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7f8aac;">Event Reference</div>
+                    <div style="height:8px;"></div>
+                    <div style="font-size:22px;font-weight:800;color:#202a4c;">%s</div>
+                    """.formatted(escapeHtml(eventRef))
+                : "";
+        String eventCardTopSpacing = isConfirmed ? "<div style=\"height:16px;\"></div>" : "";
 
         return """
                 <!DOCTYPE html>
@@ -160,31 +184,26 @@ public class InscriptionNotificationEmailService {
                       <td align="center" style="padding:28px 14px;">
                         <table role="presentation" width="680" cellpadding="0" cellspacing="0" border="0" style="width:680px;max-width:680px;background:#ffffff;border-radius:28px;overflow:hidden;box-shadow:0 18px 48px rgba(16,24,52,0.12);">
                           <tr>
-                            <td style="padding:30px 32px;background:linear-gradient(135deg,#1f2947 0%%,#27345d 58%%,#33467b 100%%);">
+                            <td style="padding:30px 32px;background:%s;">
                               <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                   <td align="left">
-                                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                                      <tr>
-                                        <td style="width:44px;height:44px;border-radius:14px;background:#0F73EE;text-align:center;vertical-align:middle;font-size:20px;font-weight:800;color:#ffffff;">Y</td>
-                                        <td style="padding-left:12px;font-size:28px;line-height:1;font-weight:800;color:#ffffff;">YBrainy</td>
-                                      </tr>
-                                    </table>
+                                    %s
                                   </td>
                                 </tr>
                                 <tr><td style="height:20px;"></td></tr>
                                 <tr>
                                   <td>
-                                    <span style="display:inline-block;padding:8px 13px;border-radius:999px;background:rgba(255,255,255,0.14);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#ffffff;">Registration %s</span>
+                                    <span style="display:inline-block;padding:8px 13px;border-radius:999px;background:%s;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:%s;">Registration %s</span>
                                   </td>
                                 </tr>
                                 <tr><td style="height:18px;"></td></tr>
                                 <tr>
-                                  <td style="font-size:30px;line-height:1.14;font-weight:800;color:#ffffff;">%s</td>
+                                  <td style="font-size:30px;line-height:1.14;font-weight:800;color:%s;">%s</td>
                                 </tr>
                                 <tr><td style="height:10px;"></td></tr>
                                 <tr>
-                                  <td style="font-size:15px;line-height:1.75;color:rgba(242,246,255,0.88);">%s</td>
+                                  <td style="font-size:15px;line-height:1.75;color:%s;">%s</td>
                                 </tr>
                               </table>
                             </td>
@@ -220,16 +239,14 @@ public class InscriptionNotificationEmailService {
                                                 <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" border="0">
                                                   <tr>
                                                     <td valign="top">
-                                                      <div style="font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#7f8aac;">Event Reference</div>
-                                                      <div style="height:8px;"></div>
-                                                      <div style="font-size:22px;font-weight:800;color:#202a4c;">%s</div>
+                                                      %s
                                                     </td>
                                                     <td align="right" valign="top">
                                                       <span style="display:inline-block;padding:8px 12px;border-radius:999px;background:%s;color:%s;font-size:11px;font-weight:800;text-transform:uppercase;">%s</span>
                                                     </td>
                                                   </tr>
                                                 </table>
-                                                <div style="height:16px;"></div>
+                                                %s
                                                 <div style="font-size:24px;font-weight:800;line-height:1.2;color:#1f2947;">%s</div>
                                                 <div style="height:14px;"></div>
                                                 %s
@@ -253,17 +270,24 @@ public class InscriptionNotificationEmailService {
                 </body>
                 </html>
                 """.formatted(
+                headerBackground,
+                logoMarkup,
+                isConfirmed ? "#E3EAFE" : "#FDE7E0",
+                isConfirmed ? "#3556D8" : "#E05C4F",
                 decisionLabel,
+                headerTitleColor,
                 status == InscriptionStatut.CONFIRMEE ? "Your registration is confirmed" : "Your registration was not accepted",
+                headerBodyColor,
                 decisionText,
                 studentName,
                 safe(student.email(), ""),
                 leftColumnWidth,
                 isConfirmed ? "10px" : "0",
-                eventRef,
+                eventReferenceBlock,
                 decisionSurface,
                 decisionColor,
                 decisionLabel,
+                eventCardTopSpacing,
                 eventName,
                 detailsBlock,
                 qrBlock
@@ -302,4 +326,36 @@ public class InscriptionNotificationEmailService {
                 .replace("'", "&#39;");
     }
 
+    private boolean attachInlineLogo(MimeMessageHelper helper) {
+        Path path = resolveLogoPath();
+        if (path == null) {
+            return false;
+        }
+
+        try {
+            helper.addInline("ybrainyLogo", new FileSystemResource(path), "image/svg+xml");
+            return true;
+        } catch (MessagingException ex) {
+            log.warn("Unable to inline YBrainy logo from {}: {}", path, ex.getMessage());
+            return false;
+        }
+    }
+
+    private Path resolveLogoPath() {
+        if (logoPath == null || logoPath.isBlank()) {
+            return null;
+        }
+
+        Path configured = Paths.get(logoPath);
+        if (Files.exists(configured)) {
+            return configured;
+        }
+
+        Path fromWorkingDir = Paths.get(System.getProperty("user.dir", "")).resolve(logoPath).normalize();
+        if (Files.exists(fromWorkingDir)) {
+            return fromWorkingDir;
+        }
+
+        return null;
+    }
 }
