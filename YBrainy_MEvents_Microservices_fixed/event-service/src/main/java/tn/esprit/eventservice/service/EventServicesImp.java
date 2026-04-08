@@ -30,6 +30,8 @@ public class EventServicesImp implements IEventServices {
     /** Cross-service: inscription-service */
     private final InscriptionClient inscriptionClient;
 
+    private final EventDescriptionGenerationService eventDescriptionGenerationService;
+
     // ------------------------------------------------------------------ CRUD
 
     @Override
@@ -55,6 +57,11 @@ public class EventServicesImp implements IEventServices {
         ensureAdminId(event, existing);
         preserveOrGenerateReference(event, existing);
         return eventRepository.save(event);
+    }
+
+    @Override
+    public String generateDescription(String name, String type) {
+        return eventDescriptionGenerationService.generateDescription(name, type).description();
     }
 
     @Override

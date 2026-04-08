@@ -2,6 +2,8 @@ package tn.esprit.eventservice.controller;
 
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import tn.esprit.eventservice.dto.DescriptionGenerationRequest;
+import tn.esprit.eventservice.dto.DescriptionGenerationResponse;
 import tn.esprit.eventservice.entity.Event;
 import tn.esprit.eventservice.service.IEventServices;
 
@@ -26,6 +28,12 @@ public class EventRestControllers {
     @PutMapping("/update")
     public Event updateEvent(@RequestBody Event event) {
         return eventServices.updateEvent(event);
+    }
+
+    @PostMapping("/generate-description")
+    public DescriptionGenerationResponse generateDescription(@RequestBody DescriptionGenerationRequest request) {
+        String description = eventServices.generateDescription(request.name(), request.type());
+        return new DescriptionGenerationResponse(description);
     }
 
     @GetMapping("/all")
