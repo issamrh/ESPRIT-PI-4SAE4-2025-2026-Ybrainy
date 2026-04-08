@@ -6,6 +6,10 @@ import pandas as pd
 import os
 import traceback
 import requests
+import time
+
+_forecast_cache = {}
+_FORECAST_TTL = 3600  # 1 hour cache
 
 app = Flask(__name__)
 CORS(app)
@@ -163,11 +167,14 @@ def recommend():
         n_neighbors = min(top_n + 1, len(real_courses))
         from sklearn.metrics.pairwise import cosine_similarity
         sims = cosine_similarity(query_scaled, X_real)[0]
-        top_indices = sims.argsort()[::-1][:top_n]
+        sorted_indices = sims.argsort()[::-1]
+        exclude_ids = set(str(x) for x in data.get('excludeIds', []))
 
         results = []
-        for idx in top_indices:
+        for idx in sorted_indices:
             c = real_courses[idx]
+            if str(c.get('id', '')) in exclude_ids:
+                continue
             results.append({
                 'courseId': str(c.get('id')),
                 'title': c.get('title', ''),
@@ -180,6 +187,8 @@ def recommend():
                 'thumbnailUrl': c.get('thumbnailUrl', ''),
                 'matchScore': round(float(sims[idx]) * 100, 1)
             })
+            if len(results) >= top_n:
+                break
 
         print(f"[DSO2] Returning {len(results)} recommendations, first matchScore: {results[0]['matchScore'] if results else 'N/A'}")
         return jsonify({
@@ -234,7 +243,7 @@ def predict_quality():
 
         factors = {
             'lessons': {
-                'score': round(min(num_lessons_val / 10.0, 1.0), 3),
+                'score': round(min(num_lectures_val / 30.0, 1.0) * 100, 1),
                 'value': int(num_lessons_val),
                 'target': 10,
                 'tip': None if num_lessons_val >= 10 else f'Add {int(10 - num_lessons_val)} more lessons (currently {int(num_lessons_val)})'
@@ -246,7 +255,7 @@ def predict_quality():
                 'tip': None if content_dur_val >= 5.0 else f'Increase total duration to at least 5 hours (currently {round(content_dur_val, 1)}h)'
             },
             'contentVariety': {
-                'score': round(min(variety_val / 3.0, 1.0), 3),
+                'score': round(min(variety_val / 4.0, 1.0) * 100, 1),
                 'value': int(variety_val),
                 'target': 3,
                 'tip': None if variety_val >= 3 else f'Add more content types — use at least 3 types (videos, PDFs, images)'
@@ -258,13 +267,13 @@ def predict_quality():
                 'tip': None if pct_video_val >= 0.5 else f'Increase video content to at least 50%'
             },
             'certificate': {
-                'score': float(cert_val),
+                'score': float(cert_val) * 100,
                 'value': bool(cert_val),
                 'target': 1,
                 'tip': None if cert_val else 'Enable certificate offering to boost quality score'
             },
             'rating': {
-                'score': round(min(rating_val / 4.0, 1.0), 3),
+                'score': round(max((rating_val - 2.0) / 3.0, 0.0) * 100, 1),
                 'value': round(rating_val, 1),
                 'target': 4.0,
                 'tip': None if rating_val >= 4.0 else (
@@ -275,12 +284,11 @@ def predict_quality():
             }
         }
 
-        weights = {
-            'lessons': 0.25, 'duration': 0.20, 'contentVariety': 0.15,
-            'videoRatio': 0.15, 'certificate': 0.10, 'rating': 0.15
-        }
-        overall_score = round(sum(
-            factors[k]['score'] * weights[k] for k in weights
+        overall_score = round((
+            min(num_lectures_val / 30.0, 1.0) * 0.30 +
+            max((rating_val - 2.0) / 3.0, 0.0) * 0.30 +
+            float(cert_val) * 0.20 +
+            min(variety_val / 4.0, 1.0) * 0.20
         ) * 100)
 
         tips = [f['tip'] for f in factors.values() if f.get('tip') is not None]
@@ -305,6 +313,12 @@ def predict_quality():
 def forecast_demand():
     try:
         steps = int(request.args.get('steps', 6))
+        cache_key = f"forecast_{steps}"
+        now = time.time()
+        if cache_key in _forecast_cache:
+            cached_time, cached_result = _forecast_cache[cache_key]
+            if now - cached_time < _FORECAST_TTL:
+                return jsonify(cached_result)
         category = request.args.get('category', None)
 
         # Step 1: Fetch real enrollment data from Course Service
@@ -328,7 +342,17 @@ def forecast_demand():
 
         # Only blend real data if we have enough months to be meaningful
         series = synthetic.copy()
-        if real_monthly and len(real_monthly) >= 6:
+
+        # Scale synthetic series to match real data magnitude
+        if real_monthly:
+            real_avg = sum(real_monthly.values()) / len(real_monthly)
+            synthetic_last_n = [series[i] for i in range(
+                max(0, len(series) - len(real_monthly)), len(series))]
+            synthetic_avg = sum(synthetic_last_n) / len(synthetic_last_n) if synthetic_last_n else 1
+            scale_factor = real_avg / synthetic_avg if synthetic_avg > 0 else 1.0
+            series = series * scale_factor
+
+        if real_monthly and len(real_monthly) >= 2:
             sorted_months = sorted(real_monthly.keys())
             for i, month in enumerate(sorted_months[-12:]):
                 idx = 60 - len(sorted_months[-12:]) + i
@@ -387,7 +411,7 @@ def forecast_demand():
         trend_val = predicted[-1] - predicted[0]
         trend_pct = round((trend_val / predicted[0]) * 100, 1) if predicted[0] else 0
 
-        return jsonify({
+        result_dict = {
             'forecastSteps': steps,
             'predictedDemand': [round(x, 2) for x in predicted],
             'confidenceIntervals': [[round(lo, 2), round(hi, 2)] for lo, hi in ci],
@@ -397,7 +421,9 @@ def forecast_demand():
             'modelUsed': 'SARIMA(1,1,1)(1,1,1,12)' if use_sarima else 'ARIMA(1,1,1)',
             'realDataPoints': len(real_monthly),
             'categoryForecast': category_forecast
-        })
+        }
+        _forecast_cache[cache_key] = (now, result_dict)
+        return jsonify(result_dict)
 
     except Exception as e:
         # Final fallback to loaded ARIMA model

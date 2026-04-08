@@ -426,7 +426,8 @@
 .orbit-cta,
 .summary-primary,
 .summary-secondary,
-.cart-item-remove {
+.cart-item-remove,
+.summary-link {
   border: none;
   text-decoration: none;
   display: inline-flex;
@@ -448,7 +449,8 @@
 }
 
 .summary-secondary,
-.cart-item-remove {
+.cart-item-remove,
+.summary-link {
   min-height: 46px;
   padding: 0 16px;
   color: #f8fafc;
@@ -456,11 +458,27 @@
   border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
+.summary-link {
+  width: 100%;
+  margin-top: 12px;
+}
+
 .orbit-cta:hover,
 .summary-primary:hover,
 .summary-secondary:hover,
-.cart-item-remove:hover {
+.cart-item-remove:hover,
+.summary-link:hover {
   transform: translateY(-1px);
+}
+
+.orbit-cta:disabled,
+.summary-primary:disabled,
+.summary-secondary:disabled,
+.cart-item-remove:disabled,
+.summary-link:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .cart-orbit-stack {

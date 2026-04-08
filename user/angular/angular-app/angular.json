@@ -29,6 +29,11 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "/assets"
+              },
+              {
+                "glob": "**/*",
+                "input": "../../../payment/forcasting/outputs",
+                "output": "/assets/forecasting"
               }
             ],
             "styles": [
@@ -60,8 +65,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "2MB",
-                  "maximumError": "3MB"
+                  "maximumWarning": "100kB",
+                  "maximumError": "300kB"
                 }
               ],
               "fileReplacements": [
@@ -112,6 +117,11 @@
                 "glob": "**/*",
                 "input": "src/assets",
                 "output": "/assets"
+              },
+              {
+                "glob": "**/*",
+                "input": "../../../payment/forcasting/outputs",
+                "output": "/assets/forecasting"
               }
             ],
             "styles": [

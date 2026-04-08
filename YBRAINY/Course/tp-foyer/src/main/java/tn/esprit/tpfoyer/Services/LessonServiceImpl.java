@@ -49,6 +49,14 @@ public class LessonServiceImpl implements ILessonService {
 
         Course course = findCourseOrThrow(courseId);
 
+        boolean titleExists = lessonRepository.findByCourseIdOrderByOrderIndexAsc(courseId)
+                .stream()
+                .anyMatch(l -> l.getTitle().equalsIgnoreCase(meta.getTitle()));
+        if (titleExists) {
+            throw new IllegalArgumentException(
+                    "A lesson with this title already exists in the course");
+        }
+
         int orderIndex;
         if (meta.getOrderIndex() != null) {
             orderIndex = meta.getOrderIndex();

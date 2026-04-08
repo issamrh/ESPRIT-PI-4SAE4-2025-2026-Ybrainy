@@ -1,19 +1,16 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { getRealmRoles, isAuthenticated } from './keycloak.service';
+import { getRealmRoles, isAuthenticated, redirectToAppLogin } from './keycloak.service';
 
 export const frontofficeUserGuard: CanActivateFn = () => {
-  const router = inject(Router);
-
   if (!isAuthenticated()) {
-    return router.createUrlTree(['/login'], {
-      queryParams: { redirect: router.url || window.location.pathname || '/' },
-    });
+    redirectToAppLogin(window.location.href);
+    return false;
   }
 
   const isAdmin = getRealmRoles().some((role) => String(role).toUpperCase() === 'ADMIN');
   if (isAdmin) {
-    return router.createUrlTree(['/dashboard']);
+    return inject(Router).createUrlTree(['/dashboard']);
   }
 
   return true;

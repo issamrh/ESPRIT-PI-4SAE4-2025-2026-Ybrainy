@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ConversionInsight, EnrolledCourse, StudentDashboard } from '../../models/course.models';
 import { CourseApiService } from '../../services/course-api.service';
@@ -10,7 +10,7 @@ import { UserSessionService } from '../../../tracking/user-session.service';
   templateUrl: './student-dashboard.component.html',
   styleUrls: ['./student-dashboard.component.css']
 })
-export class StudentDashboardComponent implements OnInit {
+export class StudentDashboardComponent implements OnInit, AfterViewInit {
   dashboard: StudentDashboard | null = null;
   loading = true;
   activeTab: 'all' | 'active' | 'completed' = 'all';
@@ -99,4 +99,74 @@ export class StudentDashboardComponent implements OnInit {
     }
     return userId;
   }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => this.initAnimations(), 300);
+  }
+
+  initAnimations(): void {
+    // Wait for Angular to fully render data-bound values
+    setTimeout(() => {
+
+      // Counter animation for stat cards
+      document.querySelectorAll('.scard-val').forEach(el => {
+        const text = el.textContent?.trim() || '0';
+        const target = parseInt(text, 10);
+        if (isNaN(target) || target === 0) return;
+        let current = 0;
+        const steps = 40;
+        const increment = target / steps;
+        const timer = setInterval(() => {
+          current = Math.min(current + increment, target);
+          el.textContent = Math.floor(current).toString();
+          if (current >= target) clearInterval(timer);
+        }, 20);
+      });
+
+      // Ring counter animation
+      const ringNum = document.querySelector('.ring-num');
+      if (ringNum) {
+        const text = ringNum.textContent?.trim() || '0';
+        const target = parseInt(text, 10);
+        if (!isNaN(target) && target > 0) {
+          let current = 0;
+          const steps = 50;
+          const increment = target / steps;
+          const timer = setInterval(() => {
+            current = Math.min(current + increment, target);
+            ringNum.textContent = Math.floor(current).toString();
+            if (current >= target) clearInterval(timer);
+          }, 20);
+        }
+      }
+
+      // Stat bar fills with stagger
+      document.querySelectorAll('.scard-bar-fill').forEach((el: any, i) => {
+        setTimeout(() => { el.style.width = '65%'; }, i * 100);
+      });
+
+      // 3D tilt
+      document.querySelectorAll('.ccard').forEach((card: any) => {
+        card.addEventListener('mousemove', (e: MouseEvent) => {
+          const rect = card.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const cx = rect.width / 2;
+          const cy = rect.height / 2;
+          const rotX = ((y - cy) / cy) * -5;
+          const rotY = ((x - cx) / cx) * 5;
+          card.style.transform = `perspective(800px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateZ(6px)`;
+          card.style.transition = 'none';
+        });
+        card.addEventListener('mouseleave', () => {
+          card.style.transition = 'transform 0.4s ease';
+          card.style.transform = 'perspective(800px) rotateX(0) rotateY(0) translateZ(0)';
+        });
+      });
+
+    }, 600);
+  }
+
+  onCardTilt(event: MouseEvent): void {}
+  onCardReset(event: MouseEvent): void {}
 }

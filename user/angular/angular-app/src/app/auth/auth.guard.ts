@@ -1,10 +1,10 @@
 import { CanActivateFn } from '@angular/router';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { isAuthenticated } from './keycloak.service';
+import { isAuthenticated, redirectToAppLogin } from './keycloak.service';
 import { UserSessionService } from '../tracking/user-session.service';
 
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const router = inject(Router);
   const userSession = inject(UserSessionService);
 
@@ -12,11 +12,10 @@ export const authGuard: CanActivateFn = () => {
   console.log('[AUTH GUARD] isAuthenticated:', isAuthenticated());
 
   if (!isAuthenticated()) {
-    const redirect = router.url || window.location.pathname || '/';
+    const url = router.url || window.location.href;
     console.log('[AUTH GUARD] Not authenticated, redirecting to login');
-    return router.createUrlTree(['/login'], {
-      queryParams: { redirect },
-    });
+    redirectToAppLogin(url);
+    return false;
   }
 
   // Set default mode on first login (if not already set)
@@ -28,15 +27,23 @@ export const authGuard: CanActivateFn = () => {
   console.log('[AUTH GUARD] User session:', userSession.get());
 
   if (!storedMode && userRole) {
-    console.log('[AUTH GUARD] First login detected, setting mode to:', userRole);
-    // First time - set mode to role
-    userSession.setMode(userRole as 'STUDENT' | 'INSTRUCTOR' | 'ADMIN');
+    const targetUrl = (state.url || '/').split('?')[0].split('#')[0] || '/';
+    const normalizedTargetUrl = targetUrl.startsWith('/') ? targetUrl : `/${targetUrl}`;
+    const isDashboardRoute = normalizedTargetUrl.startsWith('/dashboard');
+    const isRootRoute = normalizedTargetUrl === '/';
 
-    // Route to appropriate default page
-    if (userRole === 'ADMIN') {
+    console.log('[AUTH GUARD] First login detected, setting mode to:', userRole);
+    // First time:
+    // - preserve frontoffice destinations like /packs
+    // - still default root/dashboard entry to the user's dashboard mode
+    const initialMode = isDashboardRoute || isRootRoute ? userRole : 'STUDENT';
+    userSession.setMode(initialMode as 'STUDENT' | 'INSTRUCTOR' | 'ADMIN');
+
+    // Route to the role-specific default page only from the app root.
+    if (isRootRoute && userRole === 'ADMIN') {
       console.log('[AUTH GUARD] Redirecting to /dashboard');
       return router.parseUrl('/dashboard');
-    } else if (userRole === 'INSTRUCTOR') {
+    } else if (isRootRoute && userRole === 'INSTRUCTOR') {
       console.log('[AUTH GUARD] Redirecting to /dashboard/courses');
       return router.parseUrl('/dashboard/courses');
     }

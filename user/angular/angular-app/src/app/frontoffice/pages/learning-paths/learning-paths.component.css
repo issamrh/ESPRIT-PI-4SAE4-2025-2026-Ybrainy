@@ -1,9 +1,13 @@
-.lp-page { min-height: 100vh; }
+.lp-page {
+  min-height: 100vh;
+  padding-top: 80px;
+}
 
 /* Hero */
 .lp-hero {
   background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-  padding: 64px 24px;
+  padding: 80px 24px 64px;
+  margin-top: 0;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -421,3 +425,91 @@
   background: #667eea;
   color: white;
 }
+
+/* ═══ EXAMPLE PATHS SECTION ═══ */
+.lp-examples-section {
+  max-width: 760px;
+  margin: 0 auto 64px;
+  padding: 0 24px;
+}
+.lp-examples-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.lp-examples-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 6px;
+}
+.lp-examples-sub {
+  font-size: 0.85rem;
+  color: #718096;
+}
+.lp-examples-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+@media (max-width: 600px) {
+  .lp-examples-grid { grid-template-columns: 1fr; }
+}
+.lp-example-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.lp-example-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(102,126,234,0.35);
+  box-shadow: 0 8px 24px rgba(102,126,234,0.12);
+}
+.lp-example-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+.lp-example-content { flex: 1; min-width: 0; }
+.lp-example-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #1a202c;
+  margin-bottom: 3px;
+}
+.lp-example-desc {
+  font-size: 0.78rem;
+  color: #718096;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+.lp-example-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.lp-example-tags span {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(102,126,234,0.08);
+  color: #667eea;
+  letter-spacing: 0.04em;
+}
+.lp-example-arrow {
+  font-size: 1.1rem;
+  color: #cbd5e0;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+.lp-example-card:hover .lp-example-arrow {
+  color: #667eea;
+  transform: translateX(4px);
+}
+/* ═══ END EXAMPLE PATHS SECTION ═══ */

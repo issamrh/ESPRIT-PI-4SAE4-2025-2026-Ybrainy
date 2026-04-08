@@ -1,19 +1,22 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, AfterViewInit, ViewEncapsulation, HostListener } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { AfterViewInit, Component, HostListener, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { CategoryFormComponent } from '../category-form/category-form.component';
 import { CategoryService } from '../../services/category.service';
 import { PackCategory } from '../../models/pack-category.model';
-import { CategoryFormComponent } from '../category-form/category-form.component';
+import { RuntimePageStyleService } from '../runtime-page-style.service';
 
 @Component({
   selector: 'app-category-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, CategoryFormComponent],
+  imports: [CommonModule, CategoryFormComponent],
   templateUrl: './category-list.component.html',
   styleUrl: './category-list.component.css',
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
+  host: { style: 'display:block' }
 })
-export class CategoryListComponent implements OnInit, AfterViewInit {
+export class CategoryListComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly detachPageStyles: () => void;
+
   categories: PackCategory[] = [];
   loading = false;
   error = '';
@@ -27,7 +30,12 @@ export class CategoryListComponent implements OnInit, AfterViewInit {
   deleteError = '';
   categoryToDelete: PackCategory | null = null;
 
-  constructor(private categoryService: CategoryService) { }
+  constructor(
+    private categoryService: CategoryService,
+    private pageStyles: RuntimePageStyleService
+  ) {
+    this.detachPageStyles = this.pageStyles.attach(['assets/backoffice/pages/category-list-page.css']);
+  }
 
   ngOnInit(): void {
     this.loadCategories();
@@ -38,6 +46,10 @@ export class CategoryListComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       this.loadScripts();
     }, 100);
+  }
+
+  ngOnDestroy(): void {
+    this.detachPageStyles();
   }
 
   private loadScripts(): void {
@@ -179,7 +191,4 @@ export class CategoryListComponent implements OnInit, AfterViewInit {
     this.selectedCategory = null;
   }
 }
-
-
-
 

@@ -1,15 +1,15 @@
-import { Component, AfterViewInit, OnDestroy, ElementRef, HostListener, ChangeDetectorRef } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, HostListener, OnDestroy } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, Subscription } from 'rxjs';
 import {
   getDisplayName,
   getRealmRoles,
   isAuthenticated,
-  redirectToAppLogin,
   logout,
+  redirectToAppLogin
 } from '../../auth/keycloak.service';
-import { UserService } from '../services/user.service';
 import { UserSessionService } from '../../tracking/user-session.service';
+import { UserService } from '../services/user.service';
 import { CartService } from '../services/cart.service';
 import { CartOverlayService, CartOverlayTab } from '../services/cart-overlay.service';
 
@@ -20,29 +20,35 @@ declare var $: any;
   standalone: false,
   templateUrl: './header.component.html',
   styleUrl: './header.component.css',
-  host: { 'style': 'display:block' }
+  host: { style: 'display:block' }
 })
 export class HeaderComponent implements AfterViewInit, OnDestroy {
   readonly assets = 'assets/frontoffice/www.ciklum.com/';
+
   isHome = true;
   menuOpen = false;
-  profileMenuOpen = false;
   showModeDropdown = false;
   cartItemCount = 0;
   headerProfileImage: string | null = null;
   headerProfileName: string | null = null;
-  private mobileNav: any;
+  checkoutInProgress = false;
+  showCheckoutToast = false;
+  checkoutToastType: 'success' | 'error' = 'success';
+  checkoutToastTitle = '';
+  checkoutToastMessage = '';
+
   private readonly subscriptions = new Subscription();
+  private checkoutToastTimer: ReturnType<typeof setTimeout> | null = null;
+  private processingStripeSessionId: string | null = null;
 
   constructor(
-    private el: ElementRef,
-    private router: Router,
-    private frontofficeUserService: UserService,
-    private userSession: UserSessionService,
-    private cdr: ChangeDetectorRef,
-    private cartService: CartService,
-    private cartOverlay: CartOverlayService
-  ) { }
+    private readonly router: Router,
+    private readonly frontofficeUserService: UserService,
+    private readonly userSession: UserSessionService,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly cartService: CartService,
+    private readonly cartOverlay: CartOverlayService
+  ) {}
 
   get authenticated(): boolean {
     return isAuthenticated();
@@ -61,9 +67,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   }
 
   get currentMode(): string {
-    const mode = this.userSession.getMode();
-    console.log('[HEADER] currentMode:', mode);
-    return mode;
+    return this.userSession.getMode();
   }
 
   get currentRole(): string {
@@ -75,10 +79,10 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   }
 
   getModeIcon(mode: string): string {
-    if (mode === 'STUDENT') return '📚';
-    if (mode === 'INSTRUCTOR') return '🎓';
-    if (mode === 'ADMIN') return '👑';
-    return '👤';
+    if (mode === 'STUDENT') return 'S';
+    if (mode === 'INSTRUCTOR') return 'I';
+    if (mode === 'ADMIN') return 'A';
+    return 'U';
   }
 
   getModeLabel(mode: string): string {
@@ -94,7 +98,6 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     this.userSession.setMode(mode);
     this.showModeDropdown = false;
 
-    // Route based on mode
     if (mode === 'STUDENT') {
       this.router.navigate(['/courses']);
     } else if (mode === 'INSTRUCTOR') {
@@ -103,7 +106,6 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
       this.router.navigate(['/dashboard']);
     }
 
-    // Force Angular to update the view
     this.cdr.detectChanges();
   }
 
@@ -129,31 +131,28 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     return (parts[0]?.slice(0, 2) || '?').toUpperCase();
   }
 
-  toggleProfileMenu(event: MouseEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.profileMenuOpen = !this.profileMenuOpen;
-  }
-
   ngAfterViewInit(): void {
     this.syncIsHomeFromUrl(this.router.url);
+    this.handleStripeCheckoutReturn(this.router.url);
     this.loadHeaderUserData();
+
     this.subscriptions.add(
       this.cartService.cart$.subscribe((cart) => {
         this.cartItemCount = (cart?.items ?? []).reduce((count, item) => count + item.quantity, 0);
       })
     );
+
     this.syncCartState();
+
     this.subscriptions.add(
       this.router.events
-        .pipe(
-          filter((e): e is NavigationEnd => e instanceof NavigationEnd)
-        )
-        .subscribe((e) => {
-          this.syncIsHomeFromUrl(e.urlAfterRedirects);
-          this.profileMenuOpen = false;
+        .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+        .subscribe((event) => {
+          this.syncIsHomeFromUrl(event.urlAfterRedirects);
+          this.handleStripeCheckoutReturn(event.urlAfterRedirects);
           this.loadHeaderUserData();
           this.syncCartState();
+          this.showModeDropdown = false;
         })
     );
 
@@ -164,32 +163,24 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     $(window).off('scroll.headerSticky');
+
+    if (this.checkoutToastTimer) {
+      clearTimeout(this.checkoutToastTimer);
+      this.checkoutToastTimer = null;
+    }
+
     this.subscriptions.unsubscribe();
   }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
-    if (!target?.closest('.profile-menu-wrapper')) {
-      this.profileMenuOpen = false;
-    }
     if (!target?.closest('.mode-switcher-container')) {
       this.showModeDropdown = false;
     }
   }
 
-  toggleMenu(): void {
-    this.menuOpen = !this.menuOpen;
-    $('.menu').toggleClass('show-menu');
-    $('.nav-wrapper').toggleClass('show-menu');
-    const rt = window.innerWidth;
-    const menuBtnX = $('.js-nav-toggle').offset()?.left || 0;
-    $('.js-nav-toggle').css('right', 0);
-    $('.show-menu .js-nav-toggle').css('right', -(rt - menuBtnX - 50));
-  }
-
   openCartOverlay(tab: CartOverlayTab = 'cart'): void {
-    this.profileMenuOpen = false;
     this.showModeDropdown = false;
 
     if (this.menuOpen) {
@@ -202,6 +193,25 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     }
 
     this.cartOverlay.openCart();
+  }
+
+  closeCheckoutToast(): void {
+    this.showCheckoutToast = false;
+
+    if (this.checkoutToastTimer) {
+      clearTimeout(this.checkoutToastTimer);
+      this.checkoutToastTimer = null;
+    }
+  }
+
+  toggleMenu(): void {
+    this.menuOpen = !this.menuOpen;
+    $('.menu').toggleClass('show-menu');
+    $('.nav-wrapper').toggleClass('show-menu');
+    const rt = window.innerWidth;
+    const menuBtnX = $('.js-nav-toggle').offset()?.left || 0;
+    $('.js-nav-toggle').css('right', 0);
+    $('.show-menu .js-nav-toggle').css('right', -(rt - menuBtnX - 50));
   }
 
   private initStickyHeader(): void {
@@ -236,8 +246,8 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
       error: () => {
         this.headerProfileImage = null;
         this.headerProfileName = null;
-      },
-      });
+      }
+    });
   }
 
   private syncCartState(): void {
@@ -249,15 +259,99 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     this.cartService.refreshCart();
   }
 
+  private showCheckoutMessage(type: 'success' | 'error', title: string, message: string): void {
+    this.checkoutToastType = type;
+    this.checkoutToastTitle = title;
+    this.checkoutToastMessage = message;
+    this.showCheckoutToast = true;
+
+    if (this.checkoutToastTimer) {
+      clearTimeout(this.checkoutToastTimer);
+    }
+
+    this.checkoutToastTimer = setTimeout(() => this.closeCheckoutToast(), 4000);
+  }
+
+  private handleStripeCheckoutReturn(url: string): void {
+    const queryIndex = url.indexOf('?');
+    if (queryIndex < 0) {
+      return;
+    }
+
+    const params = new URLSearchParams(url.substring(queryIndex + 1));
+    const payment = params.get('payment');
+
+    if (payment === 'cancelled') {
+      this.showCheckoutMessage(
+        'error',
+        'Checkout cancelled',
+        'Your payment was cancelled. You can try again anytime.'
+      );
+      this.clearStripeQueryParams();
+      return;
+    }
+
+    if (payment !== 'success') {
+      return;
+    }
+
+    const sessionId = params.get('session_id');
+    if (!sessionId) {
+      this.showCheckoutMessage(
+        'error',
+        'Checkout failed',
+        'Missing Stripe session id in return URL.'
+      );
+      this.clearStripeQueryParams();
+      return;
+    }
+
+    if (this.processingStripeSessionId === sessionId || this.checkoutInProgress) {
+      return;
+    }
+
+    this.processingStripeSessionId = sessionId;
+    this.checkoutInProgress = true;
+
+    this.cartService.confirmStripeCheckout(sessionId).subscribe({
+      next: () => {
+        this.showCheckoutMessage(
+          'success',
+          'Enrollment confirmed',
+          'Your learning pack checkout was completed successfully.'
+        );
+        this.checkoutInProgress = false;
+        this.processingStripeSessionId = null;
+        this.clearStripeQueryParams();
+      },
+      error: (err) => {
+        this.checkoutInProgress = false;
+        this.processingStripeSessionId = null;
+        console.error('Stripe checkout confirmation failed', err);
+        this.showCheckoutMessage(
+          'error',
+          'Checkout failed',
+          err.error?.message || err.message || 'Payment verification failed. Please contact support.'
+        );
+        this.clearStripeQueryParams();
+      }
+    });
+  }
+
+  private clearStripeQueryParams(): void {
+    const cleanPath = this.router.url.split('?')[0] || '/';
+    this.router.navigateByUrl(cleanPath, { replaceUrl: true });
+  }
+
   private initMegaMenu(): void {
     const dropLinks = document.querySelectorAll('.drop-list-links');
     const dropList = document.querySelectorAll('.drop-list-tabs li');
-    dropList.forEach((element: any, i: number) => {
+    dropList.forEach((element: any, index: number) => {
       $(element).mouseenter(function () {
         $('.drop-list-tabs li').removeClass('active');
         $(element).addClass('active');
         $('.drop-list-links').removeClass('active');
-        $(dropLinks[i]).addClass('active');
+        $(dropLinks[index]).addClass('active');
       });
     });
 
@@ -270,7 +364,6 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
       $(allListTab[0]).addClass('active');
     });
 
-    // Add dropdown icon class to nav items with dropdowns
     const navItems = document.querySelectorAll('.nav-item');
     navItems.forEach((item: any) => {
       if (item.querySelector('.dropdown') !== null) {
@@ -288,17 +381,15 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     let curLevel = 0;
     let curItem: any = null;
 
-    // Click handler for submenus
-    initElem.on('click', '.has-dropdown > a', function (e: any) {
-      e.preventDefault();
-      curItem = $(e.target).closest('li');
+    initElem.on('click', '.has-dropdown > a', function (event: any) {
+      event.preventDefault();
+      curItem = $(event.target).closest('li');
       curLevel += 1;
       curItem.addClass('nav-dropdown-open nav-dropdown-active');
       updateMenuTitle();
       slideMenu();
     });
 
-    // Click handler for back button
     initElem.on('click', '.nav-toggle', function () {
       if (curItem) {
         curItem.removeClass('nav-dropdown-open nav-dropdown-active');
@@ -325,7 +416,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
 
     function slideMenu() {
       initElem.children('ul').css({
-        transform: 'translateX(-' + curLevel * 100 + '%)',
+        transform: 'translateX(-' + curLevel * 100 + '%)'
       });
     }
 

@@ -31,7 +31,7 @@ public class AiSearchServiceImpl implements IAiSearchService {
                     Extract search intent from this student query: "%s"
 
                     The platform has these categories: PROGRAMMING, DESIGN, \
-                    BUSINESS, SCIENCE, LANGUAGE, MATH, OTHER
+                    BUSINESS, MARKETING, SCIENCE, LANGUAGE, MATH, MUSIC, PHOTOGRAPHY
                     And these levels: BEGINNER, INTERMEDIATE, ADVANCED
 
                     Respond ONLY with a valid JSON object, no markdown, no explanation:
@@ -67,13 +67,13 @@ public class AiSearchServiceImpl implements IAiSearchService {
             );
 
             Map responseBody = response.getBody();
-            System.out.println("[AiSearch] Raw response: " + responseBody);
+            log.debug("[AiSearch] Raw response: {}", responseBody);
 
             List choices = (List) responseBody.get("choices");
             Map firstChoice = (Map) choices.get(0);
             Map messageObj = (Map) firstChoice.get("message");
             String content = (String) messageObj.get("content");
-            System.out.println("[AiSearch] Extracted content: " + content);
+            log.debug("[AiSearch] Extracted content: {}", content);
 
             content = content.trim();
             if (content.startsWith("```")) {
@@ -84,14 +84,12 @@ public class AiSearchServiceImpl implements IAiSearchService {
 
             ObjectMapper mapper = new ObjectMapper();
             AiSearchIntentDTO intent = mapper.readValue(content, AiSearchIntentDTO.class);
-            System.out.println("[AiSearch] Parsed: keywords=" + intent.getKeywords()
-                    + " category=" + intent.getCategory()
-                    + " level=" + intent.getLevel());
+            log.info("[AiSearch] Parsed: keywords='{}' category={} level={}",
+                    intent.getKeywords(), intent.getCategory(), intent.getLevel());
             return intent;
 
         } catch (Exception e) {
-            System.out.println("[AiSearch] ERROR: " + e.getMessage());
-            e.printStackTrace();
+            log.error("[AiSearch] ERROR extracting intent: {}", e.getMessage());
             AiSearchIntentDTO fallback = new AiSearchIntentDTO();
             fallback.setKeywords(query);
             fallback.setCategory(null);

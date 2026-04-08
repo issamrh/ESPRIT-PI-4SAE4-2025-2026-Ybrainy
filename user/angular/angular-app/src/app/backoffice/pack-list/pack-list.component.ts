@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, AfterViewInit, ViewEncapsulation, HostListener } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { AfterViewInit, Component, HostListener, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { PackService } from '../../services/pack.service';
 import { CategoryService } from '../../services/category.service';
 import { FinanceService, ScraperRunStatus } from '../../services/finance.service';
@@ -9,6 +9,7 @@ import { RecommendationService } from '../../services/recommendation.service';
 import { Pack, PackLevel, PackStatus, PageResponse } from '../../models/pack.model';
 import { PackCategory } from '../../models/pack-category.model';
 import { RecommendationSummary } from '../../models/recommendation.model';
+import { RuntimePageStyleService } from '../runtime-page-style.service';
 
 @Component({
   selector: 'app-pack-list',
@@ -16,9 +17,12 @@ import { RecommendationSummary } from '../../models/recommendation.model';
   imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
   templateUrl: './pack-list.component.html',
   styleUrl: './pack-list.component.css',
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
+  host: { style: 'display:block' }
 })
-export class PackListComponent implements OnInit, AfterViewInit {
+export class PackListComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly detachPageStyles: () => void;
+
   packs: Pack[] = [];
   filteredPacks: Pack[] = [];
   categories: PackCategory[] = [];
@@ -82,8 +86,11 @@ export class PackListComponent implements OnInit, AfterViewInit {
     private packService: PackService,
     private categoryService: CategoryService,
     private financeService: FinanceService,
-    private recommendationService: RecommendationService
-  ) { }
+    private recommendationService: RecommendationService,
+    private pageStyles: RuntimePageStyleService
+  ) {
+    this.detachPageStyles = this.pageStyles.attach(['assets/backoffice/pages/pack-list-page.css']);
+  }
 
   ngOnInit(): void {
     this.initForm();
@@ -108,6 +115,10 @@ export class PackListComponent implements OnInit, AfterViewInit {
     setTimeout(() => {
       this.loadScripts();
     }, 100);
+  }
+
+  ngOnDestroy(): void {
+    this.detachPageStyles();
   }
 
   private loadScripts(): void {
@@ -536,9 +547,11 @@ export class PackListComponent implements OnInit, AfterViewInit {
     }
   }
 
-  getDiscount(pack: Pack): number {
-    if (!pack.originalPrice || pack.originalPrice === 0) return 0;
-    return Math.round(((pack.originalPrice - pack.salePrice) / pack.originalPrice) * 100);
+  getDiscount(pack: { originalPrice?: number | null; salePrice?: number | null } | null | undefined): number {
+    const originalPrice = Number(pack?.originalPrice ?? 0);
+    const salePrice = Number(pack?.salePrice ?? 0);
+    if (!originalPrice) return 0;
+    return Math.round(((originalPrice - salePrice) / originalPrice) * 100);
   }
 
   getConfidenceBadgeClass(level: string | null | undefined): string {
@@ -566,7 +579,4 @@ export class PackListComponent implements OnInit, AfterViewInit {
     return Array.from({ length: this.totalPages }, (_, i) => i);
   }
 }
-
-
-
 

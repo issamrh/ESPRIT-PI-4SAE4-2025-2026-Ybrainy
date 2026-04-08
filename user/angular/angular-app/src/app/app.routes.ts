@@ -4,8 +4,11 @@ import { BackofficeDashboardComponent } from './backoffice/backoffice-dashboard.
 import { SignUpPageComponent } from './signup/signup.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { UsersComponent } from './backoffice/users/users.component';
+import { FinanceComponent } from './backoffice/finance/finance.component';
+import { CategoryListComponent } from './backoffice/category-list/category-list.component';
+import { PackListComponent } from './backoffice/pack-list/pack-list.component';
+import { PacksOrderComponent } from './backoffice/packs-order/packs-order.component';
 import { adminGuard } from './auth/admin.guard';
-import { loginRequiredGuard } from './auth/login-required.guard';
 
 export const routes: Routes = [
   {
@@ -19,30 +22,6 @@ export const routes: Routes = [
   {
     path: 'forgot-password',
     component: ForgotPasswordComponent,
-  },
-  {
-    path: 'dashboard/categories',
-    canActivate: [loginRequiredGuard],
-    loadComponent: () =>
-      import('./backoffice/category-list/category-list.component').then((m) => m.CategoryListComponent),
-  },
-  {
-    path: 'dashboard/packs',
-    canActivate: [loginRequiredGuard],
-    loadComponent: () =>
-      import('./backoffice/pack-list/pack-list.component').then((m) => m.PackListComponent),
-  },
-  {
-    path: 'dashboard/packsorder',
-    canActivate: [loginRequiredGuard],
-    loadComponent: () =>
-      import('./backoffice/packs-order/packs-order.component').then((m) => m.PacksOrderComponent),
-  },
-  {
-    path: 'dashboard/finance',
-    canActivate: [loginRequiredGuard],
-    loadComponent: () =>
-      import('./backoffice/finance/finance.component').then((m) => m.FinanceComponent),
   },
   {
     path: 'dashboard/courses',
@@ -68,6 +47,26 @@ export const routes: Routes = [
     canActivate: [adminGuard],
   },
   {
+    path: 'dashboard/finance',
+    component: FinanceComponent,
+    canActivate: [adminGuard],
+  },
+  {
+    path: 'dashboard/categories',
+    component: CategoryListComponent,
+    canActivate: [adminGuard],
+  },
+  {
+    path: 'dashboard/packs',
+    component: PackListComponent,
+    canActivate: [adminGuard],
+  },
+  {
+    path: 'dashboard/packsorder',
+    component: PacksOrderComponent,
+    canActivate: [adminGuard],
+  },
+  {
     path: 'dashboard/profile',
     canActivate: [adminGuard],
     loadComponent: () =>
@@ -77,11 +76,10 @@ export const routes: Routes = [
     path: 'dashboard',
     component: BackofficeDashboardComponent,
     canActivate: [adminGuard],
-    data: { page: 'index.html' },
   },
   {
     path: '',
-    loadChildren: () => import('./frontoffice/frontoffice.module').then((m) => m.FrontofficeModule)
+    loadChildren: () => import('./frontoffice/frontoffice.module').then(m => m.FrontofficeModule)
   },
   {
     path: '**',

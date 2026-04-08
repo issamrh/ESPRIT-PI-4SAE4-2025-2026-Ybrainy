@@ -42,6 +42,14 @@ public class LearningPathController {
 
     @PostMapping("/generate")
     public ResponseEntity<?> generate(@RequestBody GenerateLearningPathRequestDTO request) {
+        if (request.getGoal() == null || request.getGoal().trim().isEmpty()) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Learning path goal is required"));
+        }
+        if (request.getGoal().trim().length() < 5) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Goal must be at least 5 characters"));
+        }
         try {
             LearningPathDTO result = learningPathService.generate(
                 request.getStudentId(), request.getGoal());

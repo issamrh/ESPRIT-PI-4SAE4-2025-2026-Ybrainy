@@ -159,4 +159,87 @@
     </div>
   </div>
 
+  <!-- SECTION 4 — Example paths inspiration -->
+  <div class="lp-examples-section" *ngIf="!generatedPath && savedPaths.length === 0">
+    <div class="lp-examples-header">
+      <h3 class="lp-examples-title">✨ Need inspiration? Try one of these</h3>
+      <p class="lp-examples-sub">Click any example to use it as your goal</p>
+    </div>
+    <div class="lp-examples-grid">
+
+      <div class="lp-example-card" (click)="useExample('I want to become a full-stack web developer using React and Node.js')">
+        <div class="lp-example-icon">💻</div>
+        <div class="lp-example-content">
+          <div class="lp-example-title">Full-Stack Developer</div>
+          <div class="lp-example-desc">React, Node.js, databases and deployment</div>
+          <div class="lp-example-tags">
+            <span>PROGRAMMING</span><span>BEGINNER→ADVANCED</span>
+          </div>
+        </div>
+        <div class="lp-example-arrow">→</div>
+      </div>
+
+      <div class="lp-example-card" (click)="useExample('I want to learn data science and machine learning with Python from scratch')">
+        <div class="lp-example-icon">🤖</div>
+        <div class="lp-example-content">
+          <div class="lp-example-title">Data Scientist</div>
+          <div class="lp-example-desc">Python, statistics, ML models and visualization</div>
+          <div class="lp-example-tags">
+            <span>SCIENCE</span><span>MATH</span>
+          </div>
+        </div>
+        <div class="lp-example-arrow">→</div>
+      </div>
+
+      <div class="lp-example-card" (click)="useExample('I want to start my own business and learn entrepreneurship and marketing')">
+        <div class="lp-example-icon">🚀</div>
+        <div class="lp-example-content">
+          <div class="lp-example-title">Entrepreneur</div>
+          <div class="lp-example-desc">Business strategy, marketing and financial planning</div>
+          <div class="lp-example-tags">
+            <span>BUSINESS</span><span>MARKETING</span>
+          </div>
+        </div>
+        <div class="lp-example-arrow">→</div>
+      </div>
+
+      <div class="lp-example-card" (click)="useExample('I want to become a UI/UX designer and learn Figma and design principles')">
+        <div class="lp-example-icon">🎨</div>
+        <div class="lp-example-content">
+          <div class="lp-example-title">UI/UX Designer</div>
+          <div class="lp-example-desc">Design principles, Figma and user research</div>
+          <div class="lp-example-tags">
+            <span>DESIGN</span><span>BEGINNER</span>
+          </div>
+        </div>
+        <div class="lp-example-arrow">→</div>
+      </div>
+
+      <div class="lp-example-card" (click)="useExample('I want to learn digital marketing including SEO, social media and content creation')">
+        <div class="lp-example-icon">📈</div>
+        <div class="lp-example-content">
+          <div class="lp-example-title">Digital Marketer</div>
+          <div class="lp-example-desc">SEO, social media strategy and content marketing</div>
+          <div class="lp-example-tags">
+            <span>MARKETING</span><span>BEGINNER</span>
+          </div>
+        </div>
+        <div class="lp-example-arrow">→</div>
+      </div>
+
+      <div class="lp-example-card" (click)="useExample('I want to learn photography from basics to advanced including editing')">
+        <div class="lp-example-icon">📷</div>
+        <div class="lp-example-content">
+          <div class="lp-example-title">Photographer</div>
+          <div class="lp-example-desc">Camera basics, composition and photo editing</div>
+          <div class="lp-example-tags">
+            <span>PHOTOGRAPHY</span><span>BEGINNER</span>
+          </div>
+        </div>
+        <div class="lp-example-arrow">→</div>
+      </div>
+
+    </div>
+  </div>
+
 </div>

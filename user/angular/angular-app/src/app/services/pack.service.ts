@@ -15,12 +15,13 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class PackService {
-  private readonly apiBase = environment.packApiUrl || `${environment.apiBaseUrl}/api`;
+  private readonly apiBase = environment.apiUrl || 'http://localhost:8091/api';
   private readonly adminBase = `${this.apiBase}/admin/packs`;
   private readonly publicBase = `${this.apiBase}/packs`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
+  /* Admin */
   getAll(params: {
     page?: number;
     size?: number;
@@ -75,6 +76,7 @@ export class PackService {
     return this.http.post<GeneratePackContentResponse>(`${this.adminBase}/content/generate`, payload);
   }
 
+  /* Public (Frontoffice) */
   getActivePacks(): Observable<Pack[]> {
     return this.http.get<Pack[]>(`${this.publicBase}/active`);
   }

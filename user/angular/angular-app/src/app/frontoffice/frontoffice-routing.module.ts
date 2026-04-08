@@ -23,24 +23,8 @@ import { AiLearningPathPageComponent } from './pages/learning-paths/learning-pat
 import { StudentDashboardComponent } from './pages/student-dashboard/student-dashboard.component';
 import { FoPackListComponent } from './pages/packs/pack-list/pack-list.component';
 import { FoPackDetailComponent } from './pages/packs/pack-detail/pack-detail.component';
-import { CartComponent } from './pages/cart/cart.component';
-import { CartHistoryComponent } from './pages/cart-history/cart-history.component';
 
 const routes: Routes = [
-  {
-    path: 'packs',
-    component: LayoutComponent,
-    children: [
-      { path: '', component: FoPackListComponent }
-    ]
-  },
-  {
-    path: 'packs/:id',
-    component: LayoutComponent,
-    children: [
-      { path: '', component: FoPackDetailComponent }
-    ]
-  },
   {
     path: '',
     component: LayoutComponent,
@@ -61,10 +45,10 @@ const routes: Routes = [
       { path: 'courses/:courseId/quiz', component: QuizPageComponent },
       { path: 'courses/:courseId/reviews', component: CourseReviewsComponent },
       { path: 'courses/:courseId', component: CourseDetailComponent },
+      { path: 'packs', component: FoPackListComponent },
+      { path: 'packs/:id', component: FoPackDetailComponent },
       { path: 'learning-paths', component: AiLearningPathPageComponent },
       { path: 'my-learning', component: StudentDashboardComponent },
-      { path: 'cart/history', component: CartHistoryComponent },
-      { path: 'cart', component: CartComponent },
       {
         path: 'profile',
         canActivate: [frontofficeUserGuard],

@@ -6,12 +6,13 @@ import { PackCategory, CreatePackCategory, UpdatePackCategory } from '../models/
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
-  private readonly apiBase = environment.packApiUrl || `${environment.apiBaseUrl}/api`;
+  private readonly apiBase = environment.apiUrl || 'http://localhost:8091/api';
   private readonly adminBase = `${this.apiBase}/admin/categories`;
   private readonly publicBase = `${this.apiBase}/categories`;
 
   constructor(private http: HttpClient) {}
 
+  /* ─── Admin ─── */
   getAll(): Observable<PackCategory[]> {
     return this.http.get<PackCategory[]>(this.adminBase);
   }
@@ -36,7 +37,9 @@ export class CategoryService {
     return this.http.patch<PackCategory>(`${this.adminBase}/${id}/status`, {});
   }
 
+  /* ─── Public (Frontoffice) ─── */
   getActiveCategories(): Observable<PackCategory[]> {
     return this.http.get<PackCategory[]>(`${this.publicBase}/active`);
   }
 }
+

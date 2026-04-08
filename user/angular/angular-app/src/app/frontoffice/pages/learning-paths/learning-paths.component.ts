@@ -107,4 +107,10 @@ export class AiLearningPathPageComponent implements OnInit {
     return this.generatedPath?.courses
       .filter(c => c.price && c.price > 0).length || 0;
   }
+
+  useExample(example: string): void {
+    this.goal = example;
+    // Scroll to top so user sees the textarea filled
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 }

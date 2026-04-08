@@ -113,7 +113,7 @@ public class QuizServiceImpl implements IQuizService {
                                         .id(o.getId())
                                         .questionId(o.getQuestionId())
                                         .optionText(o.getOptionText())
-                                        .isCorrect(null)
+                                        .isCorrect(o.getIsCorrect())
                                         .orderIndex(o.getOrderIndex())
                                         .build())
                                 .collect(Collectors.toList()))

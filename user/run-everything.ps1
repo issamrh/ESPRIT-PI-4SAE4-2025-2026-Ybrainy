@@ -169,6 +169,7 @@ $gatewayDir = Require-ProjectDir -Name "API Gateway" -Candidates @(
 $angularDir = Require-ProjectDir -Name "Angular" -Candidates @(
     "angular\angular-app"
 )
+$angularNodeModulesDir = Join-Path $angularDir "node_modules"
 
 Write-Host "Root: $root"
 Write-Host "Detected projects:"
@@ -183,6 +184,10 @@ Write-Host " - Optional but recommended: set KEYCLOAK_ADMIN_CLIENT_SECRET for th
 Write-Host " - Login uses keycloak.auth client (default: angular-client) and goes through Gateway/Eureka."
 Write-Host " - For Google sign-in, set KEYCLOAK_GOOGLE_CLIENT_ID and KEYCLOAK_GOOGLE_CLIENT_SECRET."
 Write-Host ""
+
+if (-not (Test-Path $angularNodeModulesDir -PathType Container)) {
+    throw "Angular dependencies are missing in $angularDir. Run 'npm.cmd install' there first."
+}
 
 $googleIdpScript = Join-Path $root "scripts\configure-keycloak-google-idp.ps1"
 if ($env:KEYCLOAK_GOOGLE_CLIENT_ID -and $env:KEYCLOAK_GOOGLE_CLIENT_SECRET) {
@@ -206,7 +211,7 @@ Start-Module -Name "API Gateway" -WorkingDir $gatewayDir -Command ".\mvnw.cmd sp
 Wait-HttpReady -Name "API Gateway" -Url "http://localhost:8088/" -TimeoutSeconds 180
 Wait-EurekaRegistration -AppName "api-gateway" -TimeoutSeconds 120
 
-Start-Module -Name "Angular" -WorkingDir $angularDir -Command "npm run start"
+Start-Module -Name "Angular" -WorkingDir $angularDir -Command "npm.cmd run start"
 
 Write-Host ""
 Write-Host "All launch commands were started in separate PowerShell windows."

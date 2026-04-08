@@ -41,14 +41,16 @@ public class MLController {
             @RequestParam(defaultValue = "5") int topN,
             @RequestParam(required = false) Long studentId) {
 
+        List<Long> enrolledCourseIds = new ArrayList<>();
+
         if (studentId != null) {
             List<Enrollment> enrollments = enrollmentRepository.findByStudentId(studentId);
 
-            List<Long> courseIds = enrollments.stream()
+            enrolledCourseIds = enrollments.stream()
                 .map(Enrollment::getCourseId)
                 .collect(Collectors.toList());
 
-            List<Course> courses = courseRepository.findAllById(courseIds);
+            List<Course> courses = courseRepository.findAllById(enrolledCourseIds);
 
             // Find most frequent category from all enrollments
             Map<String, Long> categoryCounts = courses.stream()
@@ -84,7 +86,7 @@ public class MLController {
             category = "PROGRAMMING";
         }
 
-        return ResponseEntity.ok(mlClient.getRecommendations(category, level, topN));
+        return ResponseEntity.ok(mlClient.getRecommendations(category, level, topN, enrolledCourseIds));
     }
 
     // GET /api/ml/student/{studentId}/conversion

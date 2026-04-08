@@ -21,17 +21,24 @@ import tn.esprit.tpfoyer.Repositories.CourseRepository;
 import tn.esprit.tpfoyer.Repositories.CourseReviewRepository;
 import tn.esprit.tpfoyer.Repositories.EnrollmentRepository;
 import tn.esprit.tpfoyer.Repositories.LessonProgressRepository;
+import tn.esprit.tpfoyer.Repositories.LessonRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import tn.esprit.tpfoyer.Repositories.CourseSpecification;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +47,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -51,6 +59,8 @@ public class CourseServiceImpl implements ICourseService {
     private final EnrollmentRepository enrollmentRepository;
     private final CourseReviewRepository courseReviewRepository;
     private final LessonProgressRepository lessonProgressRepository;
+    private final LessonRepository lessonRepository;
+    private final RestTemplate restTemplate;
 
     @Override
     public CourseResponseDTO createCourse(CourseRequestDTO dto, MultipartFile thumbnail, MultipartFile certificate) {
@@ -198,6 +208,13 @@ public class CourseServiceImpl implements ICourseService {
                     // legacy
                     fileStorageService.deleteFile(lesson.getContentUrl());
                 });
+        // Delete quizzes for this course from Quiz Service
+        try {
+            restTemplate.delete("http://localhost:8083/api/quizzes/course/" + id);
+        } catch (Exception e) {
+            log.warn("Could not delete quizzes for course {}: {}", id, e.getMessage());
+        }
+
         courseRepository.delete(course);
     }
 
@@ -443,11 +460,6 @@ public class CourseServiceImpl implements ICourseService {
     public AiSearchResultDTO aiSearch(String query, int page, int size) {
         AiSearchIntentDTO intent = aiSearchService.extractSearchIntent(query);
 
-        System.out.println("[AiSearch] Intent: keywords=" + intent.getKeywords()
-                + " category=" + intent.getCategory()
-                + " level=" + intent.getLevel()
-                + " explanation=" + intent.getExplanation());
-
         // fall back to original query if keywords blank
         String keywords = (intent.getKeywords() != null && !intent.getKeywords().isBlank())
                 ? intent.getKeywords()
@@ -467,41 +479,99 @@ public class CourseServiceImpl implements ICourseService {
             } catch (IllegalArgumentException ignored) {}
         }
 
-        Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size,
-                org.springframework.data.domain.Sort.by("createdAt").descending());
+        log.info("[AI Search] query='{}' → category={} level={} keywords='{}'",
+                query, category, level, keywords);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
         // STEP 1 — Try with all filters (keywords + category + level)
         Page<CourseResponseDTO> results = getAllCourses(
                 keywords, category, level, null, null, null, null, pageable);
-        System.out.println("[AiSearch] STEP1 results: " + results.getTotalElements());
+        log.info("[AI Search] STEP1 results: {}", results.getTotalElements());
 
         // STEP 2 — If empty and level was set, try without level
         if (results.isEmpty() && level != null) {
             results = getAllCourses(
                     keywords, category, null, null, null, null, null, pageable);
-            System.out.println("[AiSearch] STEP2 results: " + results.getTotalElements());
+            log.info("[AI Search] STEP2 results: {}", results.getTotalElements());
         }
 
-        // STEP 3 — If still empty and category was set, try without category
+        // STEP 3 — If still empty and category was set, try keyword only (no category/level)
         if (results.isEmpty() && category != null) {
             results = getAllCourses(
                     keywords, null, null, null, null, null, null, pageable);
-            System.out.println("[AiSearch] STEP3 results: " + results.getTotalElements());
+            log.info("[AI Search] STEP3 results: {}", results.getTotalElements());
         }
 
-        // STEP 4 — If still empty, fall back to raw query with no filters
+        // STEP 4 — If still empty and category was set, try category only (no keyword)
+        if (results.isEmpty() && category != null) {
+            results = getAllCourses(
+                    null, category, null, null, null, null, null, pageable);
+            log.info("[AI Search] STEP4 (category-only) results: {}", results.getTotalElements());
+        }
+
+        // STEP 5 — Last resort: raw query with no filters
         if (results.isEmpty()) {
             results = getAllCourses(
                     query, null, null, null, null, null, null, pageable);
-            System.out.println("[AiSearch] STEP4 results: " + results.getTotalElements());
+            log.info("[AI Search] STEP5 results: {}", results.getTotalElements());
         }
+
+        log.info("[AI Search] found {} candidates", results.getTotalElements());
+
+        // ── Build mutable list for merging ───────────────────────────────────
+        List<CourseResponseDTO> merged = new ArrayList<>(results.getContent());
+        Set<Long> seenIds = merged.stream()
+                .map(CourseResponseDTO::getId)
+                .collect(Collectors.toSet());
+
+        // FALLBACK ENRICHMENT — If < 3 results and a category was detected,
+        // pad with category-only courses so the page is never nearly empty.
+        if (merged.size() < 3 && category != null) {
+            getAllCourses(null, category, null, null, null, null, null, pageable)
+                    .getContent().stream()
+                    .filter(c -> !seenIds.contains(c.getId()))
+                    .forEach(c -> { merged.add(c); seenIds.add(c.getId()); });
+            log.info("[AI Search] After category-only enrichment: {} candidates", merged.size());
+        }
+
+        // LESSON-TITLE SEARCH — find courses whose lesson titles match any keyword term
+        // and merge them in (up to the requested page size).
+        String[] terms = keywords.split("[,\\s]+");
+        for (String term : terms) {
+            String t = term.trim();
+            if (t.isBlank() || merged.size() >= size) continue;
+            List<Long> courseIdsFromLessons = lessonRepository
+                    .findByTitleContainingIgnoreCase(t)
+                    .stream()
+                    .map(l -> l.getCourse().getId())
+                    .distinct()
+                    .filter(id -> !seenIds.contains(id))
+                    .collect(Collectors.toList());
+            for (Long courseId : courseIdsFromLessons) {
+                if (merged.size() >= size) break;
+                courseRepository.findById(courseId).ifPresent(course -> {
+                    merged.add(toResponseDTO(course));
+                    seenIds.add(course.getId());
+                });
+            }
+        }
+        log.info("[AI Search] Final result count after lesson-title merge: {}", merged.size());
+
+        // Cap at requested page size and wrap in a Page
+        List<CourseResponseDTO> capped = merged.stream().limit(size).collect(Collectors.toList());
+        Page<CourseResponseDTO> finalPage = new PageImpl<>(
+                capped,
+                pageable,
+                Math.max(results.getTotalElements(), capped.size())
+        );
 
         return new AiSearchResultDTO(
                 intent.getExplanation(),
                 keywords,
                 intent.getCategory(),
                 intent.getLevel(),
-                results
+                finalPage
         );
     }
 

@@ -16,4 +16,5 @@ public class MlRecommendationDTO {
     private Double rating;
     private Integer numLectures;
     private Boolean isPaid;
+    private Double matchScore;
 }

@@ -26,6 +26,7 @@ export class CartOverlayComponent implements OnInit, OnDestroy {
   historyError = '';
   removingItemId: number | null = null;
   clearing = false;
+  checkoutInProgress = false;
 
   private readonly subscriptions = new Subscription();
   private previousBodyOverflow = '';
@@ -172,6 +173,31 @@ export class CartOverlayComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.cartError = err?.error?.message || 'Failed to clear your cart.';
         this.clearing = false;
+      }
+    });
+  }
+
+  startCheckout(): void {
+    if (!this.hasItems || this.checkoutInProgress) {
+      return;
+    }
+
+    this.cartError = '';
+    this.checkoutInProgress = true;
+
+    this.cartService.createStripeCheckoutSession().subscribe({
+      next: (session) => {
+        if (!session?.checkoutUrl) {
+          this.checkoutInProgress = false;
+          this.cartError = 'Stripe checkout URL is missing. Please try again.';
+          return;
+        }
+
+        window.location.href = session.checkoutUrl;
+      },
+      error: (err) => {
+        this.checkoutInProgress = false;
+        this.cartError = err?.error?.message || err?.message || 'Unable to start checkout right now.';
       }
     });
   }

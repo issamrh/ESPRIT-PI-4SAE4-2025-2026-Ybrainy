@@ -137,17 +137,25 @@
               <button
                 type="button"
                 class="summary-primary"
-                (click)="switchTab('history')">
-                Open History
+                (click)="startCheckout()"
+                [disabled]="checkoutInProgress || !hasItems">
+                {{ checkoutInProgress ? 'Redirecting...' : 'Checkout' }}
               </button>
               <button
                 type="button"
                 class="summary-secondary"
                 (click)="clearCart()"
-                [disabled]="clearing">
+                [disabled]="clearing || checkoutInProgress">
                 {{ clearing ? 'Clearing...' : 'Clear Cart' }}
               </button>
             </div>
+
+            <button
+              type="button"
+              class="summary-link"
+              (click)="switchTab('history')">
+              Open History
+            </button>
           </section>
         </div>
       </ng-container>
@@ -185,7 +193,7 @@
           <article class="history-orbit-card" *ngFor="let record of history; trackBy: trackHistory">
             <div class="history-orbit-head">
               <span class="history-pill" [ngClass]="getActionTone(record.action)">{{ getActionLabel(record.action) }}</span>
-              <strong>{{ record.createdAt | date:'MMM d, y · h:mm a' }}</strong>
+              <strong>{{ record.createdAt | date:'MMM d, y - h:mm a' }}</strong>
             </div>
             <h3>{{ record.packTitle || 'Cart activity' }}</h3>
             <p>{{ record.description }}</p>

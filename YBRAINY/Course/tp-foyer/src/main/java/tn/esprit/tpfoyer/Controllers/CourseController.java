@@ -103,6 +103,12 @@ public class CourseController {
             @RequestParam(required = false) Long requestingUserId,
             @RequestParam(required = false) String requestingRole) {
         try {
+            // Authorization: STUDENT cannot publish or unpublish any course
+            if ("STUDENT".equalsIgnoreCase(requestingRole)) {
+                return ResponseEntity.status(403)
+                    .body(Map.of("error", "Students are not allowed to publish or unpublish courses"));
+            }
+
             Course course = courseRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Course not found: " + id));
 

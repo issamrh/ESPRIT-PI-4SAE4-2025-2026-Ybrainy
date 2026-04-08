@@ -39,6 +39,18 @@ public class QuizController {
         return ResponseEntity.status(HttpStatus.CREATED).body(quizService.createQuiz(courseId, request));
     }
 
+    @GetMapping("/{quizId}")
+    public ResponseEntity<?> getQuizById(@PathVariable Long quizId) {
+        try {
+            return ResponseEntity.ok(quizService.getQuizById(null, quizId));
+        } catch (RuntimeException e) {
+            if ("Quiz not found".equals(e.getMessage())) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
+    }
+
     @DeleteMapping("/{quizId}")
     public ResponseEntity<Void> deleteQuiz(@PathVariable Long quizId) {
         quizService.deleteQuiz(null, quizId);

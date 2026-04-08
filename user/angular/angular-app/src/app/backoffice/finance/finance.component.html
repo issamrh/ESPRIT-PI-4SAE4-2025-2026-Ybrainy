@@ -415,11 +415,16 @@
                                     Toggle stats and static visual charts when you need them.
                                 </p>
                             </div>
-                            <button type="button" class="btn finance-overview-toggle-btn"
-                                (click)="toggleStaticVisuals()">
-                                <i class="fa me-2" [ngClass]="showStaticVisuals ? 'fa-eye-slash' : 'fa-eye'"></i>
-                                {{ showStaticVisuals ? 'Hide Overview' : 'Show Overview' }}
-                            </button>
+                            <div class="finance-overview-actions">
+                                <button type="button" class="btn forecast-open-btn" (click)="openForecastModal()">
+                                    <i class="fa fa-line-chart me-2"></i> Forecast Window
+                                </button>
+                                <button type="button" class="btn finance-overview-toggle-btn"
+                                    (click)="toggleStaticVisuals()">
+                                    <i class="fa me-2" [ngClass]="showStaticVisuals ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                    {{ showStaticVisuals ? 'Hide Overview' : 'Show Overview' }}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -568,36 +573,43 @@
                             class="card-header border-0 p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                             <h4 class="heading mb-0">Income Management</h4>
 
-                            <div class="d-flex align-items-center gap-2 flex-grow-1 max-w-500">
-                                <div class="input-group search-area-creative">
+                            <div class="finance-toolbar">
+                                <div class="input-group search-area-creative finance-toolbar__search">
                                     <span class="input-group-text bg-transparent border-0"><i
                                             class="fa fa-search text-primary"></i></span>
                                     <input type="text" class="form-control border-0 ps-0" placeholder="Search income..."
                                         [value]="incomeSearch" (input)="onIncomeSearch($any($event.target).value)">
                                 </div>
-                                <div class="finance-export-dropdown dropdown position-relative">
-                                    <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button"
-                                        (click)="toggleExportDropdown('income'); $event.stopPropagation()">
-                                        <i class="fa fa-download me-1"></i> Export
+                                <div class="finance-toolbar__actions">
+                                    <div class="finance-export-dropdown dropdown position-relative">
+                                        <button class="btn finance-action-btn finance-action-btn--outline btn-sm dropdown-toggle"
+                                            type="button" (click)="toggleExportDropdown('income'); $event.stopPropagation()">
+                                            <i class="fa fa-download me-1"></i> Export
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" *ngIf="openExportDropdown === 'income'"
+                                            (click)="$event.stopPropagation()">
+                                            <li><a class="dropdown-item cursor-pointer" (click)="exportIncomes('excel')">
+                                                    <i class="fa fa-file-excel text-success me-2"></i> Excel
+                                                </a></li>
+                                            <li><a class="dropdown-item cursor-pointer" (click)="exportIncomes('pdf')">
+                                                    <i class="fa fa-file-pdf text-danger me-2"></i> PDF
+                                                </a></li>
+                                        </ul>
+                                    </div>
+                                    <button class="btn finance-action-btn finance-action-btn--soft btn-sm text-nowrap"
+                                        (click)="openIncomeSourceStats()" type="button">
+                                        <i class="fa fa-pie-chart me-1"></i> Source Stats
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" *ngIf="openExportDropdown === 'income'"
-                                        (click)="$event.stopPropagation()">
-                                        <li><a class="dropdown-item cursor-pointer" (click)="exportIncomes('excel')">
-                                                <i class="fa fa-file-excel text-success me-2"></i> Excel
-                                            </a></li>
-                                        <li><a class="dropdown-item cursor-pointer" (click)="exportIncomes('pdf')">
-                                                <i class="fa fa-file-pdf text-danger me-2"></i> PDF
-                                            </a></li>
-                                    </ul>
+                                    <button class="btn finance-action-btn finance-action-btn--surface btn-sm text-nowrap"
+                                        (click)="openTwelveDataModal()" type="button">
+                                        <i class="fa fa-chart-line me-1"></i> Market Data
+                                    </button>
+                                    <button class="btn finance-action-btn finance-action-btn--primary btn-sm text-nowrap"
+                                        (click)="resetIncomeForm()" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#incomeCollapse" aria-expanded="false" aria-controls="incomeCollapse">
+                                        <i class="fa fa-plus me-1"></i> Add
+                                    </button>
                                 </div>
-                                <button class="btn btn-info btn-sm text-nowrap" (click)="openTwelveDataModal()" type="button">
-                                    <i class="fa fa-chart-line me-1"></i> Market Data
-                                </button>
-                                <button class="btn btn-primary btn-sm text-nowrap" (click)="resetIncomeForm()"
-                                    type="button" data-bs-toggle="collapse" data-bs-target="#incomeCollapse"
-                                    aria-expanded="false" aria-controls="incomeCollapse">
-                                    <i class="fa fa-plus me-1"></i> Add
-                                </button>
                             </div>
                         </div>
                         <!-- INCOME FORM (Collapsible) -->
@@ -743,34 +755,40 @@
                             class="card-header border-0 p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                             <h4 class="heading mb-0">School Expense</h4>
 
-                            <div class="d-flex align-items-center gap-2 flex-grow-1 max-w-500">
-                                <div class="input-group search-area-creative">
+                            <div class="finance-toolbar">
+                                <div class="input-group search-area-creative finance-toolbar__search">
                                     <span class="input-group-text bg-transparent border-0"><i
                                             class="fa fa-search text-danger"></i></span>
                                     <input type="text" class="form-control border-0 ps-0"
                                         placeholder="Search expense..." [value]="expenseSearch"
                                         (input)="onExpenseSearch($any($event.target).value)">
                                 </div>
-                                <div class="finance-export-dropdown dropdown position-relative">
-                                    <button class="btn btn-outline-danger btn-sm dropdown-toggle" type="button"
-                                        (click)="toggleExportDropdown('expense'); $event.stopPropagation()">
-                                        <i class="fa fa-download me-1"></i> Export
+                                <div class="finance-toolbar__actions">
+                                    <div class="finance-export-dropdown dropdown position-relative">
+                                        <button class="btn finance-action-btn finance-action-btn--outline btn-sm dropdown-toggle"
+                                            type="button" (click)="toggleExportDropdown('expense'); $event.stopPropagation()">
+                                            <i class="fa fa-download me-1"></i> Export
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end" *ngIf="openExportDropdown === 'expense'"
+                                            (click)="$event.stopPropagation()">
+                                            <li><a class="dropdown-item cursor-pointer" (click)="exportExpenses('excel')">
+                                                    <i class="fa fa-file-excel text-success me-2"></i> Excel
+                                                </a></li>
+                                            <li><a class="dropdown-item cursor-pointer" (click)="exportExpenses('pdf')">
+                                                    <i class="fa fa-file-pdf text-danger me-2"></i> PDF
+                                                </a></li>
+                                        </ul>
+                                    </div>
+                                    <button class="btn finance-action-btn finance-action-btn--soft btn-sm text-nowrap"
+                                        (click)="openExpenseStatusStats()" type="button">
+                                        <i class="fa fa-chart-pie me-1"></i> Status Stats
                                     </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" *ngIf="openExportDropdown === 'expense'"
-                                        (click)="$event.stopPropagation()">
-                                        <li><a class="dropdown-item cursor-pointer" (click)="exportExpenses('excel')">
-                                                <i class="fa fa-file-excel text-success me-2"></i> Excel
-                                            </a></li>
-                                        <li><a class="dropdown-item cursor-pointer" (click)="exportExpenses('pdf')">
-                                                <i class="fa fa-file-pdf text-danger me-2"></i> PDF
-                                            </a></li>
-                                    </ul>
+                                    <button class="btn finance-action-btn finance-action-btn--primary btn-sm text-nowrap"
+                                        (click)="resetExpenseForm()" type="button" data-bs-toggle="collapse"
+                                        data-bs-target="#expenseCollapse" aria-expanded="false" aria-controls="expenseCollapse">
+                                        <i class="fa fa-plus me-1"></i> Add
+                                    </button>
                                 </div>
-                                <button class="btn btn-primary btn-sm text-nowrap" (click)="resetExpenseForm()"
-                                    type="button" data-bs-toggle="collapse" data-bs-target="#expenseCollapse"
-                                    aria-expanded="false" aria-controls="expenseCollapse">
-                                    <i class="fa fa-plus me-1"></i> Add
-                                </button>
                             </div>
                         </div>
 
@@ -917,6 +935,410 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Forecast Window -->
+            <div class="forecast-window-backdrop" *ngIf="showForecastModal" (click)="closeForecastModal()"></div>
+            <div class="forecast-window" *ngIf="showForecastModal" role="dialog" aria-modal="true"
+                aria-labelledby="forecastWindowTitle">
+                <div class="forecast-window__dialog" (click)="$event.stopPropagation()">
+                    <div class="forecast-window__header">
+                        <div>
+                            <span class="forecast-window__eyebrow">AI Finance Forecast</span>
+                            <h4 id="forecastWindowTitle" class="forecast-window__title">Forecast window for admins</h4>
+                            <p class="forecast-window__subtitle" *ngIf="forecastData as data; else forecastWindowIntro">
+                                Plan from {{ formatForecastMonth(data.forecast_horizon_summary.from) }} to
+                                {{ formatForecastMonth(data.forecast_horizon_summary.to) }} using the latest generated
+                                outputs.
+                            </p>
+                            <ng-template #forecastWindowIntro>
+                                <p class="forecast-window__subtitle">
+                                    Review the generated finance outlook, understand risk, and see where admins should
+                                    act for better profits.
+                                </p>
+                            </ng-template>
+                        </div>
+                        <div class="forecast-window__header-actions">
+                            <button type="button" class="btn btn-light" (click)="refreshForecasting()"
+                                [disabled]="forecastLoading">
+                                <i class="fa fa-refresh me-2"></i> Refresh
+                            </button>
+                            <button type="button" class="btn btn-outline-dark" (click)="closeForecastModal()">
+                                <i class="fa fa-times me-2"></i> Close
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="forecast-window__body">
+                        <div class="forecast-window__state" *ngIf="forecastLoading">
+                            <div class="spinner-border text-primary mb-3" role="status"></div>
+                            <h5 class="mb-2">Loading forecast outputs...</h5>
+                            <p class="mb-0 text-muted">Pulling the latest JSON, summaries, and chart images into the
+                                finance dashboard.</p>
+                        </div>
+
+                        <div class="alert alert-danger border-0 shadow-sm" *ngIf="forecastError && !forecastLoading">
+                            <div class="d-flex align-items-start gap-3">
+                                <i class="fa fa-exclamation-triangle forecast-window__alert-icon"></i>
+                                <div>
+                                    <h6 class="mb-1">Forecast data is unavailable</h6>
+                                    <p class="mb-0">{{ forecastError }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <ng-container *ngIf="forecastData as data">
+                            <div class="forecast-window__hero">
+                                <div class="forecast-window__hero-copy">
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                        <span [ngClass]="getForecastRiskClass(data.forecast_horizon_summary.risk_level)">
+                                            {{ data.forecast_horizon_summary.risk_level }} risk
+                                        </span>
+                                        <span class="forecast-pill forecast-pill--neutral"
+                                            *ngIf="forecastTopRevenueSource">
+                                            Top revenue: {{ humanizeForecastLabel(forecastTopRevenueSource) }}
+                                        </span>
+                                        <span class="forecast-pill forecast-pill--neutral"
+                                            *ngIf="forecastExpenseToWatch">
+                                            Watch: {{ forecastExpenseToWatch }}
+                                        </span>
+                                    </div>
+                                    <h5 class="forecast-window__hero-title">
+                                        {{ forecastBusinessSummary || 'Use this forecast window to align revenue moves with cost control.' }}
+                                    </h5>
+                                    <p class="forecast-window__hero-text">
+                                        This view turns the generated forecast outputs into practical management guidance
+                                        so admins can protect margin, prioritize the strongest revenue stream, and watch
+                                        categories that threaten profit.
+                                    </p>
+                                </div>
+                                <div class="forecast-window__hero-actions">
+                                    <button type="button" class="btn btn-dark"
+                                        (click)="openForecastAsset('forecast_dashboard.png')">
+                                        <i class="fa fa-external-link me-2"></i> Open dashboard image
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 forecast-kpi-row">
+                                <div class="col-md-6 col-xl-3">
+                                    <div class="forecast-kpi-card">
+                                        <span class="forecast-kpi-card__label">Forecast Income</span>
+                                        <strong class="forecast-kpi-card__value">
+                                            {{ data.forecast_horizon_summary.income_total | currency:'USD':'symbol':'1.0-0' }}
+                                        </strong>
+                                        <span class="forecast-kpi-card__range">
+                                            Range {{ data.forecast_horizon_summary.income_total_low | currency:'USD':'symbol':'1.0-0' }}
+                                            to {{ data.forecast_horizon_summary.income_total_high | currency:'USD':'symbol':'1.0-0' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-xl-3">
+                                    <div class="forecast-kpi-card">
+                                        <span class="forecast-kpi-card__label">Forecast Expenses</span>
+                                        <strong class="forecast-kpi-card__value">
+                                            {{ data.forecast_horizon_summary.expenses_total | currency:'USD':'symbol':'1.0-0' }}
+                                        </strong>
+                                        <span class="forecast-kpi-card__range">
+                                            Range {{ data.forecast_horizon_summary.expenses_total_low | currency:'USD':'symbol':'1.0-0' }}
+                                            to {{ data.forecast_horizon_summary.expenses_total_high | currency:'USD':'symbol':'1.0-0' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-xl-3">
+                                    <div class="forecast-kpi-card">
+                                        <span class="forecast-kpi-card__label">Forecast Profit</span>
+                                        <strong class="forecast-kpi-card__value">
+                                            {{ data.forecast_horizon_summary.profit_total | currency:'USD':'symbol':'1.0-0' }}
+                                        </strong>
+                                        <span class="forecast-kpi-card__range">
+                                            Range {{ data.forecast_horizon_summary.profit_total_low | currency:'USD':'symbol':'1.0-0' }}
+                                            to {{ data.forecast_horizon_summary.profit_total_high | currency:'USD':'symbol':'1.0-0' }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-xl-3">
+                                    <div class="forecast-kpi-card">
+                                        <span class="forecast-kpi-card__label">Forecast Margin</span>
+                                        <strong class="forecast-kpi-card__value">
+                                            {{ data.forecast_horizon_summary.margin | number:'1.0-2' }}%
+                                        </strong>
+                                        <span class="forecast-kpi-card__range">
+                                            Range {{ data.forecast_horizon_summary.margin_low | number:'1.0-2' }}%
+                                            to {{ data.forecast_horizon_summary.margin_high | number:'1.0-2' }}%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <section class="forecast-window__section">
+                                <div class="forecast-window__section-head">
+                                    <div>
+                                        <h5 class="mb-1">What admins should do now</h5>
+                                        <p class="mb-0 text-muted">Use the forecast to drive higher profit with fewer
+                                            reactive decisions.</p>
+                                    </div>
+                                </div>
+                                <div class="forecast-action-grid">
+                                    <article *ngFor="let action of forecastActions"
+                                        [ngClass]="getForecastActionClass(action.tone)">
+                                        <h6 class="forecast-action-card__title">{{ action.title }}</h6>
+                                        <p class="forecast-action-card__text">{{ action.detail }}</p>
+                                    </article>
+                                </div>
+                            </section>
+
+                            <div class="row g-3">
+                                <div class="col-lg-5">
+                                    <section class="forecast-window__section forecast-window__section--compact h-100">
+                                        <div class="forecast-window__section-head">
+                                            <div>
+                                                <h5 class="mb-1">Revenue mix</h5>
+                                                <p class="mb-0 text-muted">Invest first where money is already proving
+                                                    strongest.</p>
+                                            </div>
+                                        </div>
+                                        <div class="forecast-stat-list">
+                                            <div class="forecast-stat-row" *ngFor="let item of forecastRevenueMix">
+                                                <div>
+                                                    <strong>{{ humanizeForecastLabel(item.source) }}</strong>
+                                                </div>
+                                                <div class="text-end">
+                                                    <div class="fw-semibold">{{ item.share | number:'1.0-2' }}%</div>
+                                                    <div class="forecast-progress">
+                                                        <span class="forecast-progress__bar"
+                                                            [style.width.%]="item.share"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                                <div class="col-lg-7">
+                                    <section class="forecast-window__section forecast-window__section--compact h-100">
+                                        <div class="forecast-window__section-head">
+                                            <div>
+                                                <h5 class="mb-1">Next-month expense watch</h5>
+                                                <p class="mb-0 text-muted">These are the categories likely to shape the
+                                                    next margin outcome.</p>
+                                            </div>
+                                        </div>
+                                        <div class="forecast-stat-list">
+                                            <div class="forecast-stat-row" *ngFor="let item of forecastExpenseRows">
+                                                <div>
+                                                    <strong>{{ humanizeForecastLabel(item.category) }}</strong>
+                                                </div>
+                                                <div class="text-end">
+                                                    <div class="fw-semibold">{{ item.amount | currency:'USD':'symbol':'1.0-0' }}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                            </div>
+
+                            <section class="forecast-window__section">
+                                <div class="forecast-window__section-head">
+                                    <div>
+                                        <h5 class="mb-1">Monthly outlook</h5>
+                                        <p class="mb-0 text-muted">Track how income, expenses, profit, and margin evolve
+                                            across the forecast horizon.</p>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover forecast-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Month</th>
+                                                <th>Income</th>
+                                                <th>Expenses</th>
+                                                <th>Profit</th>
+                                                <th>Margin</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let row of forecastMonthRows">
+                                                <td>
+                                                    <strong>{{ formatForecastMonth(row.month) }}</strong>
+                                                </td>
+                                                <td>{{ row.income | currency:'USD':'symbol':'1.0-0' }}</td>
+                                                <td>{{ row.expenses | currency:'USD':'symbol':'1.0-0' }}</td>
+                                                <td>{{ row.profit | currency:'USD':'symbol':'1.0-0' }}</td>
+                                                <td>{{ row.margin | number:'1.0-2' }}%</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+
+                            <div class="row g-3">
+                                <div class="col-lg-6">
+                                    <section class="forecast-window__section forecast-window__section--compact h-100">
+                                        <div class="forecast-window__section-head">
+                                            <div>
+                                                <h5 class="mb-1">Low-confidence models</h5>
+                                                <p class="mb-0 text-muted">Use extra human review when these categories
+                                                    drive decisions.</p>
+                                            </div>
+                                        </div>
+                                        <div class="forecast-model-list" *ngIf="forecastLowReliabilityModels.length; else noLowModels">
+                                            <article class="forecast-model-item"
+                                                *ngFor="let model of forecastLowReliabilityModels">
+                                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                                    <strong>{{ humanizeForecastLabel(model.target) }}</strong>
+                                                    <span [ngClass]="getForecastReliabilityClass(model.reliability)">
+                                                        {{ model.reliability }}
+                                                    </span>
+                                                </div>
+                                                <div class="forecast-model-item__meta">
+                                                    WAPE {{ model.validation_wape | number:'1.0-2' }}%
+                                                    • R² {{ model.validation_r2 | number:'1.0-2' }}
+                                                    • {{ model.selected_model }}
+                                                </div>
+                                            </article>
+                                        </div>
+                                        <ng-template #noLowModels>
+                                            <p class="text-muted mb-0">No low-confidence categories were reported in the
+                                                current scorecard.</p>
+                                        </ng-template>
+                                    </section>
+                                </div>
+                                <div class="col-lg-6">
+                                    <section class="forecast-window__section forecast-window__section--compact h-100">
+                                        <div class="forecast-window__section-head">
+                                            <div>
+                                                <h5 class="mb-1">Generated summary</h5>
+                                                <p class="mb-0 text-muted">Quick language version of the forecast output
+                                                    for management review.</p>
+                                            </div>
+                                        </div>
+                                        <pre class="forecast-window__pre">{{ forecastPlainSummary }}</pre>
+                                    </section>
+                                </div>
+                            </div>
+
+                            <section class="forecast-window__section">
+                                <div class="forecast-window__section-head">
+                                    <div>
+                                        <h5 class="mb-1">Charts and dashboards</h5>
+                                        <p class="mb-0 text-muted">Open any generated image for a bigger view during
+                                            finance reviews.</p>
+                                    </div>
+                                </div>
+                                <div class="forecast-chart-grid">
+                                    <article class="forecast-chart-card" *ngFor="let chart of forecastCharts">
+                                        <div class="forecast-chart-card__preview">
+                                            <img [src]="forecastAssetUrl(chart.fileName)" [alt]="chart.title">
+                                        </div>
+                                        <div class="forecast-chart-card__content">
+                                            <div>
+                                                <h6 class="mb-1">{{ chart.title }}</h6>
+                                                <p class="mb-0 text-muted">{{ chart.helper }}</p>
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-outline-dark"
+                                                (click)="openForecastAsset(chart.fileName)">
+                                                Open chart
+                                            </button>
+                                        </div>
+                                    </article>
+                                </div>
+                            </section>
+
+                            <section class="forecast-window__section forecast-window__section--compact">
+                                <div class="forecast-window__section-head">
+                                    <div>
+                                        <h5 class="mb-1">Detailed report</h5>
+                                        <p class="mb-0 text-muted">Raw report output for deeper discussion or handoff.
+                                        </p>
+                                    </div>
+                                </div>
+                                <pre class="forecast-window__pre forecast-window__pre--tall">{{ forecastDetailedReport }}</pre>
+                            </section>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Finance Insight Modal -->
+            <div class="finance-insight-backdrop" *ngIf="showInsightModal" (click)="closeInsightModal()"></div>
+            <div class="finance-insight-modal" *ngIf="showInsightModal" role="dialog" aria-modal="true"
+                aria-labelledby="financeInsightTitle">
+                <div class="finance-insight-modal__dialog" (click)="$event.stopPropagation()">
+                    <ng-container *ngIf="financeInsight as insight">
+                        <div class="finance-insight-modal__header">
+                            <div>
+                                <span class="finance-insight-modal__eyebrow">Finance Insights</span>
+                                <h4 id="financeInsightTitle" class="finance-insight-modal__title">{{ insight.title }}</h4>
+                                <p class="finance-insight-modal__subtitle">{{ insight.subtitle }}</p>
+                            </div>
+                            <button type="button" class="btn btn-outline-dark" (click)="closeInsightModal()">
+                                <i class="fa fa-times me-2"></i>Close
+                            </button>
+                        </div>
+
+                        <div class="finance-insight-modal__body" *ngIf="insight.slices.length; else financeInsightEmpty">
+                            <div class="finance-insight-modal__hero">
+                                <div class="finance-insight-modal__chart-panel">
+                                    <div class="finance-insight-donut" [style.background]="insight.chartStyle">
+                                        <div class="finance-insight-donut__center">
+                                            <span class="finance-insight-donut__value">{{ insight.totalRecords }}</span>
+                                            <span class="finance-insight-donut__label">records</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="finance-insight-modal__summary">
+                                    <div class="finance-insight-spotlight">
+                                        <span class="finance-insight-spotlight__eyebrow">{{ insight.highlightLabel }}</span>
+                                        <h5 class="finance-insight-spotlight__title">{{ insight.topLabel }}</h5>
+                                        <p class="finance-insight-spotlight__text">
+                                            {{ insight.topPercentage | number:'1.0-1' }}% of records
+                                            • {{ insight.topAmount | currency:'USD':'symbol':'1.0-0' }} total amount
+                                        </p>
+                                    </div>
+                                    <div class="finance-insight-metrics">
+                                        <div class="finance-insight-metric">
+                                            <span class="finance-insight-metric__label">Total records</span>
+                                            <strong class="finance-insight-metric__value">{{ insight.totalRecords }}</strong>
+                                        </div>
+                                        <div class="finance-insight-metric">
+                                            <span class="finance-insight-metric__label">Combined amount</span>
+                                            <strong class="finance-insight-metric__value">
+                                                {{ insight.totalAmount | currency:'USD':'symbol':'1.0-0' }}
+                                            </strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="finance-insight-legend">
+                                <article class="finance-insight-legend__item" *ngFor="let slice of insight.slices">
+                                    <div class="finance-insight-legend__main">
+                                        <span class="finance-insight-legend__dot" [style.background]="slice.color"></span>
+                                        <div>
+                                            <h6 class="mb-1">{{ slice.label }}</h6>
+                                            <p class="mb-0 text-muted">
+                                                {{ slice.value }} record{{ slice.value === 1 ? '' : 's' }}
+                                                • avg {{ slice.averageAmount | currency:'USD':'symbol':'1.0-0' }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="finance-insight-legend__meta">
+                                        <strong>{{ slice.percentage | number:'1.0-1' }}%</strong>
+                                        <span>{{ slice.totalAmount | currency:'USD':'symbol':'1.0-0' }}</span>
+                                    </div>
+                                </article>
+                            </div>
+                        </div>
+
+                        <ng-template #financeInsightEmpty>
+                            <div class="finance-insight-empty">
+                                <i class="fa fa-chart-pie"></i>
+                                <h5 class="mb-2">No statistics available yet</h5>
+                                <p class="mb-0">{{ insight.emptyMessage }}</p>
+                            </div>
+                        </ng-template>
+                    </ng-container>
                 </div>
             </div>
 

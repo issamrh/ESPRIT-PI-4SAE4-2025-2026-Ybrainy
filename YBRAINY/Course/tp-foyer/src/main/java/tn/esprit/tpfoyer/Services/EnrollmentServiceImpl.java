@@ -35,6 +35,9 @@ public class EnrollmentServiceImpl implements IEnrollmentService {
 
     @Override
     public EnrollmentDTO enrollStudent(Long studentId, Long courseId) {
+        if (!courseRepository.existsById(courseId)) {
+            throw new RuntimeException("Course not found: " + courseId);
+        }
         if (enrollmentRepository.existsByStudentIdAndCourseId(studentId, courseId)) {
             throw new RuntimeException("Already enrolled");
         }
@@ -49,6 +52,9 @@ public class EnrollmentServiceImpl implements IEnrollmentService {
 
     @Override
     public EnrollmentDTO enrollStudentWithPayment(Long studentId, Long courseId, String paymentIntentId) {
+        if (!courseRepository.existsById(courseId)) {
+            throw new RuntimeException("Course not found: " + courseId);
+        }
         if (enrollmentRepository.existsByStudentIdAndCourseId(studentId, courseId)) {
             throw new RuntimeException("Already enrolled");
         }

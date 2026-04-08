@@ -1,0 +1,30 @@
+server:
+  port: 8092
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: scraper-service
+          uri: lb://scraper-service
+          predicates:
+            - Path=/api/scraper/**
+        - id: finance-service
+          uri: http://localhost:8093
+          predicates:
+            - Path=/api/finance/**
+        - id: ybrainy-backend
+          uri: lb://ybrainy-backend
+          predicates:
+            - Path=/api/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

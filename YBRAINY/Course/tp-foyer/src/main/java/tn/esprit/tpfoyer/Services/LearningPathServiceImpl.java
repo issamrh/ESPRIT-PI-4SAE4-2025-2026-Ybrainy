@@ -41,7 +41,6 @@ public class LearningPathServiceImpl implements ILearningPathService {
     private String openRouterKey;
 
     @Override
-    @Transactional(readOnly = true)
     public LearningPathDTO generate(Long studentId, String goal) {
         // STEP A — Load all courses
         List<Course> allCourses = courseRepository.findAll();
@@ -161,8 +160,38 @@ public class LearningPathServiceImpl implements ILearningPathService {
                 }
             }
 
+            // Build whyIncluded JSON map
+            Map<String, String> whyMap = new HashMap<>();
+            for (LearningPathCourseDTO dto : courseDTOs) {
+                whyMap.put(String.valueOf(dto.getId()), dto.getWhyIncluded());
+            }
+            String whyIncludedJson;
+            try {
+                whyIncludedJson = objectMapper.writeValueAsString(whyMap);
+            } catch (Exception ex) {
+                whyIncludedJson = "{}";
+            }
+
+            String courseIdsStr = courseDTOs.stream()
+                .map(dto -> String.valueOf(dto.getId()))
+                .collect(Collectors.joining(","));
+
+            LearningPath entity = LearningPath.builder()
+                .studentId(studentId)
+                .goal(goal)
+                .generatedTitle(title)
+                .generatedDescription(description)
+                .courseIds(courseIdsStr)
+                .whyIncluded(whyIncludedJson)
+                .totalPrice(totalPrice)
+                .totalDurationMinutes(totalDuration)
+                .saved(true)
+                .build();
+
+            LearningPath saved = learningPathRepository.save(entity);
+
             return LearningPathDTO.builder()
-                .id(null)
+                .id(saved.getId())
                 .studentId(studentId)
                 .goal(goal)
                 .generatedTitle(title)
@@ -170,7 +199,8 @@ public class LearningPathServiceImpl implements ILearningPathService {
                 .courses(courseDTOs)
                 .totalPrice(totalPrice)
                 .totalDurationMinutes(totalDuration)
-                .saved(false)
+                .saved(true)
+                .createdAt(saved.getCreatedAt())
                 .build();
 
         } catch (Exception e) {

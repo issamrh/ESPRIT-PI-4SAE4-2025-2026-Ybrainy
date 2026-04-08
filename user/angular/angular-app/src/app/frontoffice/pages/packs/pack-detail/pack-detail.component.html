@@ -148,13 +148,7 @@
                 {{ addingToCart ? 'Adding...' : 'Add to Cart' }}
               </button>
 
-              <p class="cart-popup-note">
-                Adding this pack opens a live cart popup with your latest cart activity and history.
-              </p>
-
-              <div *ngIf="cartError" class="cart-feedback error-feedback">
-                <p>{{ cartError }}</p>
-              </div>
+              <div *ngIf="cartError" class="cart-error-banner">{{ cartError }}</div>
 
               <ul class="price-details">
                 <li>

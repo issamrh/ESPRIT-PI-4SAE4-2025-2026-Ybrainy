@@ -39,6 +39,10 @@ public class EnrollmentController {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(Map.of("message", e.getMessage()));
             }
+            if (e.getMessage() != null && e.getMessage().contains("Course not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", e.getMessage()));
+            }
             throw e;
         }
     }

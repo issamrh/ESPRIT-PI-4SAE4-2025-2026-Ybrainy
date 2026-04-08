@@ -1,20 +1,153 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, AfterViewInit, ViewEncapsulation, HostListener } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { AfterViewInit, Component, HostListener, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { FinanceService } from '../../services/finance.service';
 import { ExportService } from '../../services/export.service';
 import { Income, Expense, ExpenseCategory, ExpenseStatus, TwelveDataQuote, TwelveDataTimeSeries } from '../../models/finance.model';
+import { RuntimePageStyleService } from '../runtime-page-style.service';
+
+interface ForecastSnapshot {
+    income: number;
+    income_low: number;
+    income_high: number;
+    expenses: number;
+    expenses_low: number;
+    expenses_high: number;
+    profit: number;
+    profit_low: number;
+    profit_high: number;
+    margin: number;
+    margin_low: number;
+    margin_high: number;
+    expenses_by_category: Record<string, number>;
+    expenses_by_category_low: Record<string, number>;
+    expenses_by_category_high: Record<string, number>;
+}
+
+interface ForecastNextMonthSnapshot extends ForecastSnapshot {
+    month: string;
+}
+
+interface ForecastHorizonSummary {
+    months_ahead: number;
+    from: string;
+    to: string;
+    income_total: number;
+    income_total_low: number;
+    income_total_high: number;
+    expenses_total: number;
+    expenses_total_low: number;
+    expenses_total_high: number;
+    profit_total: number;
+    profit_total_low: number;
+    profit_total_high: number;
+    margin: number;
+    margin_low: number;
+    margin_high: number;
+    risk_level: string;
+}
+
+interface ForecastModelScore {
+    target: string;
+    selected_model: string;
+    ensemble_models: string;
+    validation_mae: number;
+    validation_rmse: number;
+    validation_wape: number;
+    validation_mape: number;
+    validation_smape: number;
+    validation_r2: number;
+    confidence_ratio: number;
+    reliability: string;
+}
+
+interface ForecastConfidenceAssumption {
+    selected_model: string;
+    ensemble_models: string[];
+    confidence_ratio: number;
+    reliability: string;
+}
+
+interface ForecastDashboardData {
+    monthly_income_actual: Record<string, number>;
+    monthly_expense_actual: Record<string, number>;
+    monthly_profit_actual: Record<string, number>;
+    next_month_forecast: ForecastNextMonthSnapshot;
+    forecast_monthly: Record<string, ForecastSnapshot>;
+    forecast_horizon_summary: ForecastHorizonSummary;
+    revenue_mix_percent: Record<string, number>;
+    model_scorecard: ForecastModelScore[];
+    confidence_assumptions: Record<string, ForecastConfidenceAssumption>;
+}
+
+interface ForecastActionCard {
+    title: string;
+    detail: string;
+    tone: 'success' | 'warning' | 'danger';
+}
+
+interface ForecastImageCard {
+    title: string;
+    fileName: string;
+    helper: string;
+}
+
+interface ForecastMonthRow extends ForecastSnapshot {
+    month: string;
+}
+
+interface ForecastExpenseRow {
+    category: string;
+    amount: number;
+}
+
+interface ForecastRevenueMixRow {
+    source: string;
+    share: number;
+}
+
+interface ForecastSummaryLines {
+    topRevenueSource: string | null;
+    expenseToWatch: string | null;
+    businessSummary: string | null;
+}
+
+interface FinanceInsightSlice {
+    label: string;
+    value: number;
+    percentage: number;
+    totalAmount: number;
+    averageAmount: number;
+    color: string;
+}
+
+interface FinanceInsightSnapshot {
+    title: string;
+    subtitle: string;
+    highlightLabel: string;
+    emptyMessage: string;
+    totalRecords: number;
+    totalAmount: number;
+    topLabel: string;
+    topPercentage: number;
+    topAmount: number;
+    chartStyle: string;
+    slices: FinanceInsightSlice[];
+}
 
 @Component({
     selector: 'app-finance',
     standalone: true,
-    imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterLink],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule],
     templateUrl: './finance.component.html',
     styleUrls: ['./finance.component.css'],
-    encapsulation: ViewEncapsulation.None
+    encapsulation: ViewEncapsulation.None,
+    host: { style: 'display:block' }
 })
-export class FinanceComponent implements OnInit, AfterViewInit {
+export class FinanceComponent implements OnInit, AfterViewInit, OnDestroy {
+    private readonly detachPageStyles: () => void;
 
     incomes: Income[] = [];
     filteredIncomes: Income[] = [];
@@ -75,14 +208,77 @@ export class FinanceComponent implements OnInit, AfterViewInit {
     twelveDataResult: TwelveDataQuote | TwelveDataTimeSeries | null = null;
     twelveDataError: string | null = null;
 
+    // Forecasting window state
+    readonly forecastAssetBase = 'assets/forecasting';
+    readonly forecastCharts: ForecastImageCard[] = [
+        {
+            title: 'Executive Dashboard',
+            fileName: 'forecast_dashboard.png',
+            helper: 'High-level snapshot of the forecast horizon.'
+        },
+        {
+            title: 'KPI Cards',
+            fileName: 'kpi_cards_forecast.png',
+            helper: 'Income, expense, profit, and margin cards for the next six months.'
+        },
+        {
+            title: 'Income Trend',
+            fileName: 'income_trend_forecast.png',
+            helper: 'Actual-to-forecast revenue trajectory.'
+        },
+        {
+            title: 'Profit Trend',
+            fileName: 'profit_trend_forecast.png',
+            helper: 'How profitability changes month by month.'
+        },
+        {
+            title: 'Expense Categories',
+            fileName: 'expenses_by_category_forecast.png',
+            helper: 'Next-month cost pressure by category.'
+        },
+        {
+            title: 'Revenue Mix',
+            fileName: 'revenue_mix_share.png',
+            helper: 'Which revenue streams deserve the most attention.'
+        },
+        {
+            title: 'Model Quality',
+            fileName: 'model_quality_scorecard.png',
+            helper: 'Confidence view for finance decisions.'
+        }
+    ];
+    showForecastModal = false;
+    forecastLoading = false;
+    forecastError: string | null = null;
+    forecastData: ForecastDashboardData | null = null;
+    forecastPlainSummary = '';
+    forecastDetailedReport = '';
+    forecastBusinessSummary = '';
+    forecastTopRevenueSource = '';
+    forecastExpenseToWatch = '';
+    forecastActions: ForecastActionCard[] = [];
+    forecastMonthRows: ForecastMonthRow[] = [];
+    forecastExpenseRows: ForecastExpenseRow[] = [];
+    forecastRevenueMix: ForecastRevenueMixRow[] = [];
+    forecastLowReliabilityModels: ForecastModelScore[] = [];
+
+    // Finance insight modal state
+    readonly financeInsightColors = ['#2563eb', '#8b5cf6', '#0ea5e9', '#22c55e', '#f97316', '#e11d48', '#facc15', '#14b8a6'];
+    showInsightModal = false;
+    financeInsight: FinanceInsightSnapshot | null = null;
+
     // Make Math available in template
     Math = Math;
 
     constructor(
+        private http: HttpClient,
         private financeService: FinanceService,
         private exportService: ExportService,
-        private fb: FormBuilder
+        private fb: FormBuilder,
+        private pageStyles: RuntimePageStyleService
     ) {
+        this.detachPageStyles = this.pageStyles.attach(['assets/backoffice/pages/finance-page.css']);
+
         this.incomeForm = this.fb.group({
             sourceType: ['MANUAL', Validators.required],
             description: ['', [Validators.maxLength(500)]],
@@ -116,6 +312,14 @@ export class FinanceComponent implements OnInit, AfterViewInit {
         setTimeout(() => {
             this.loadScripts();
         }, 100);
+    }
+
+    ngOnDestroy(): void {
+        this.detachPageStyles();
+        if (this.financeToastTimer) {
+            clearTimeout(this.financeToastTimer);
+            this.financeToastTimer = null;
+        }
     }
 
     private loadScripts(): void {
@@ -436,6 +640,12 @@ export class FinanceComponent implements OnInit, AfterViewInit {
         if (this.showDeleteModal) {
             this.closeDeleteModal();
         }
+        if (this.showInsightModal) {
+            this.closeInsightModal();
+        }
+        if (this.showForecastModal) {
+            this.closeForecastModal();
+        }
         if (this.showTwelveDataModal) {
             this.closeTwelveDataModal();
         }
@@ -674,7 +884,319 @@ export class FinanceComponent implements OnInit, AfterViewInit {
             });
         }
     }
+
+    openForecastModal(): void {
+        this.showForecastModal = true;
+        void this.loadForecastingOutputs();
+    }
+
+    openIncomeSourceStats(): void {
+        this.financeInsight = this.buildInsightSnapshot(this.filteredIncomes, {
+            title: 'Income Source Type Statistics',
+            subtitle: 'A creative breakdown of the source types currently shown in Income Management.',
+            highlightLabel: 'Most common source type',
+            emptyMessage: 'Add or load income records to see source-type statistics.',
+            labelOf: (income) => this.humanizeForecastLabel(income.sourceType),
+            amountOf: (income) => income.amount
+        });
+        this.showInsightModal = true;
+    }
+
+    openExpenseStatusStats(): void {
+        this.financeInsight = this.buildInsightSnapshot(this.filteredExpenses, {
+            title: 'Expense Status Statistics',
+            subtitle: 'A creative status view of the expenses currently shown in School Expense.',
+            highlightLabel: 'Most common expense status',
+            emptyMessage: 'Add or load expense records to see status statistics.',
+            labelOf: (expense) => this.humanizeForecastLabel(expense.status),
+            amountOf: (expense) => expense.amount
+        });
+        this.showInsightModal = true;
+    }
+
+    closeInsightModal(): void {
+        this.showInsightModal = false;
+    }
+
+    refreshForecasting(): void {
+        void this.loadForecastingOutputs();
+    }
+
+    closeForecastModal(): void {
+        this.showForecastModal = false;
+    }
+
+    openForecastAsset(fileName: string): void {
+        window.open(this.forecastAssetUrl(fileName), '_blank', 'noopener');
+    }
+
+    forecastAssetUrl(fileName: string): string {
+        return `${this.forecastAssetBase}/${fileName}`;
+    }
+
+    formatForecastMonth(month: string): string {
+        const [year, monthIndex] = month.split('-').map(value => Number(value));
+        if (!year || !monthIndex) {
+            return month;
+        }
+
+        return new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            year: 'numeric'
+        }).format(new Date(year, monthIndex - 1, 1));
+    }
+
+    humanizeForecastLabel(value: string): string {
+        return value
+            .replace(/^expense_/i, '')
+            .replace(/^income_/i, '')
+            .replace(/[._-]+/g, ' ')
+            .toLowerCase()
+            .replace(/\b\w/g, char => char.toUpperCase());
+    }
+
+    getForecastRiskClass(riskLevel: string | null | undefined): string {
+        const risk = (riskLevel || '').toUpperCase();
+        if (risk === 'HIGH') {
+            return 'forecast-pill forecast-pill--danger';
+        }
+        if (risk === 'MEDIUM') {
+            return 'forecast-pill forecast-pill--warning';
+        }
+        return 'forecast-pill forecast-pill--success';
+    }
+
+    getForecastReliabilityClass(reliability: string | null | undefined): string {
+        const value = (reliability || '').toUpperCase();
+        if (value === 'LOW') {
+            return 'forecast-pill forecast-pill--danger';
+        }
+        if (value === 'MEDIUM') {
+            return 'forecast-pill forecast-pill--warning';
+        }
+        return 'forecast-pill forecast-pill--success';
+    }
+
+    getForecastActionClass(tone: ForecastActionCard['tone']): string {
+        return `forecast-action-card forecast-action-card--${tone}`;
+    }
+
+    private buildInsightSnapshot<T>(
+        items: T[],
+        config: {
+            title: string;
+            subtitle: string;
+            highlightLabel: string;
+            emptyMessage: string;
+            labelOf: (item: T) => string;
+            amountOf: (item: T) => number;
+        }
+    ): FinanceInsightSnapshot {
+        const grouped = new Map<string, { count: number; amount: number }>();
+        let totalAmount = 0;
+
+        items.forEach((item) => {
+            const label = config.labelOf(item);
+            const amount = Number(config.amountOf(item) || 0);
+            const current = grouped.get(label) || { count: 0, amount: 0 };
+            current.count += 1;
+            current.amount += amount;
+            totalAmount += amount;
+            grouped.set(label, current);
+        });
+
+        const totalRecords = items.length;
+        const sortedEntries = Array.from(grouped.entries())
+            .sort((left, right) => {
+                if (right[1].count !== left[1].count) {
+                    return right[1].count - left[1].count;
+                }
+                return right[1].amount - left[1].amount;
+            });
+
+        const slices: FinanceInsightSlice[] = sortedEntries.map(([label, aggregate], index) => ({
+            label,
+            value: aggregate.count,
+            percentage: totalRecords ? (aggregate.count / totalRecords) * 100 : 0,
+            totalAmount: aggregate.amount,
+            averageAmount: aggregate.count ? aggregate.amount / aggregate.count : 0,
+            color: this.financeInsightColors[index % this.financeInsightColors.length]
+        }));
+
+        const top = slices[0];
+
+        return {
+            title: config.title,
+            subtitle: config.subtitle,
+            highlightLabel: config.highlightLabel,
+            emptyMessage: config.emptyMessage,
+            totalRecords,
+            totalAmount,
+            topLabel: top?.label || 'No data',
+            topPercentage: top?.percentage || 0,
+            topAmount: top?.totalAmount || 0,
+            chartStyle: this.buildInsightChartStyle(slices),
+            slices
+        };
+    }
+
+    private buildInsightChartStyle(slices: FinanceInsightSlice[]): string {
+        if (!slices.length) {
+            return 'conic-gradient(#e2e8f0 0 100%)';
+        }
+
+        let cursor = 0;
+        const stops = slices.map((slice) => {
+            const start = cursor;
+            cursor += slice.percentage;
+            return `${slice.color} ${start.toFixed(2)}% ${cursor.toFixed(2)}%`;
+        });
+
+        return `conic-gradient(${stops.join(', ')})`;
+    }
+
+    private async loadForecastingOutputs(): Promise<void> {
+        if (this.forecastLoading) {
+            return;
+        }
+
+        this.forecastLoading = true;
+        this.forecastError = null;
+
+        const cacheBust = `ts=${Date.now()}`;
+
+        try {
+            const [data, plainSummary, detailedReport] = await Promise.all([
+                firstValueFrom(this.http.get<ForecastDashboardData>(`${this.forecastAssetBase}/dashboard_data.json?${cacheBust}`)),
+                firstValueFrom(this.http.get(`${this.forecastAssetBase}/plain_language_summary.txt?${cacheBust}`, { responseType: 'text' })),
+                firstValueFrom(this.http.get(`${this.forecastAssetBase}/forecast_report.txt?${cacheBust}`, { responseType: 'text' }))
+            ]);
+
+            const monthRows = Object.entries(data.forecast_monthly)
+                .map(([month, snapshot]) => ({ month, ...snapshot }))
+                .sort((left, right) => left.month.localeCompare(right.month));
+            const summaryLines = this.extractForecastSummaryLines(plainSummary);
+
+            this.forecastData = data;
+            this.forecastPlainSummary = plainSummary;
+            this.forecastDetailedReport = detailedReport;
+            this.forecastBusinessSummary = summaryLines.businessSummary || '';
+            this.forecastTopRevenueSource = summaryLines.topRevenueSource || '';
+            this.forecastExpenseToWatch = summaryLines.expenseToWatch || '';
+            this.forecastMonthRows = monthRows;
+            this.forecastExpenseRows = Object.entries(data.next_month_forecast.expenses_by_category)
+                .map(([category, amount]) => ({ category, amount }))
+                .sort((left, right) => right.amount - left.amount);
+            this.forecastRevenueMix = Object.entries(data.revenue_mix_percent)
+                .map(([source, share]) => ({ source, share }))
+                .sort((left, right) => right.share - left.share);
+            this.forecastLowReliabilityModels = data.model_scorecard
+                .filter(item => item.reliability.toUpperCase() === 'LOW')
+                .sort((left, right) => right.validation_wape - left.validation_wape);
+            this.forecastActions = this.buildForecastActions(data, summaryLines, monthRows);
+        } catch (error) {
+            console.error('Error loading forecasting outputs', error);
+            this.forecastError = 'Forecast outputs are not available yet. Generate the latest forecasting files, then reload this window.';
+        } finally {
+            this.forecastLoading = false;
+        }
+    }
+
+    private buildForecastActions(
+        data: ForecastDashboardData,
+        summaryLines: ForecastSummaryLines,
+        monthRows: ForecastMonthRow[]
+    ): ForecastActionCard[] {
+        const actions: ForecastActionCard[] = [];
+        const horizon = data.forecast_horizon_summary;
+        const weakestMonth = monthRows.reduce<ForecastMonthRow | null>((lowest, current) => {
+            if (!lowest || current.margin < lowest.margin) {
+                return current;
+            }
+            return lowest;
+        }, null);
+        const strongestMonth = monthRows.reduce<ForecastMonthRow | null>((highest, current) => {
+            if (!highest || current.profit > highest.profit) {
+                return current;
+            }
+            return highest;
+        }, null);
+        const lowReliabilityTargets = data.model_scorecard
+            .filter(item => item.reliability.toUpperCase() === 'LOW')
+            .map(item => this.humanizeForecastLabel(item.target));
+
+        if (horizon.risk_level.toUpperCase() === 'HIGH' || horizon.margin < 30) {
+            actions.push({
+                title: 'Protect margin before scaling',
+                detail: `The six-month margin is forecast at ${horizon.margin.toFixed(2)}% with ${horizon.risk_level} risk. Review discounts, CAC, and nonessential spend every month.`,
+                tone: 'danger'
+            });
+        }
+
+        if (summaryLines.topRevenueSource) {
+            const source = this.humanizeForecastLabel(summaryLines.topRevenueSource);
+            actions.push({
+                title: `Push ${source} harder`,
+                detail: `${source} is the top revenue source right now. Give it first priority in campaigns, bundles, and landing-page placement to maximize profit.`,
+                tone: 'success'
+            });
+        }
+
+        if (summaryLines.expenseToWatch) {
+            const category = this.humanizeForecastLabel(summaryLines.expenseToWatch.split('-')[0].trim());
+            actions.push({
+                title: `Control ${category} growth`,
+                detail: `${summaryLines.expenseToWatch}. Tie new approvals in this category to clear ROI or cost-saving impact.`,
+                tone: 'warning'
+            });
+        }
+
+        if (weakestMonth) {
+            actions.push({
+                title: `Prepare for ${this.formatForecastMonth(weakestMonth.month)} pressure`,
+                detail: `That month has the weakest projected margin at ${weakestMonth.margin.toFixed(2)}%. Reduce avoidable spend before that point to keep profits healthy.`,
+                tone: 'warning'
+            });
+        }
+
+        if (strongestMonth) {
+            actions.push({
+                title: `Use ${this.formatForecastMonth(strongestMonth.month)} for premium offers`,
+                detail: `Projected profit peaks around ${this.formatCurrency(strongestMonth.profit)} in ${this.formatForecastMonth(strongestMonth.month)}. Schedule bundles, upsells, or launches there first.`,
+                tone: 'success'
+            });
+        }
+
+        if (lowReliabilityTargets.length > 0) {
+            actions.push({
+                title: 'Manually review low-confidence budgets',
+                detail: `Forecast reliability is weakest for ${lowReliabilityTargets.slice(0, 3).join(', ')}. Treat those figures as guidance, not fixed budgets.`,
+                tone: 'warning'
+            });
+        }
+
+        return actions.slice(0, 5);
+    }
+
+    private extractForecastSummaryLines(content: string): ForecastSummaryLines {
+        return {
+            topRevenueSource: this.extractTaggedLine(content, 'TOP REVENUE SOURCE'),
+            expenseToWatch: this.extractTaggedLine(content, 'EXPENSE TO WATCH'),
+            businessSummary: this.extractTaggedLine(content, 'BUSINESS SUMMARY')
+        };
+    }
+
+    private extractTaggedLine(content: string, label: string): string | null {
+        const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const match = content.match(new RegExp(`${escapedLabel}:\\s*(.+)`, 'i'));
+        return match?.[1]?.trim() || null;
+    }
+
+    private formatCurrency(value: number): string {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            maximumFractionDigits: 0
+        }).format(value);
+    }
 }
-
-
-

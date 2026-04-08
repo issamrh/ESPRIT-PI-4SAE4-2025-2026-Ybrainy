@@ -5,11 +5,13 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { FrontofficeRoutingModule } from './frontoffice-routing.module';
 
+// Layout components
 import { LayoutComponent } from './layout/layout.component';
 import { HeaderComponent } from './header/header.component';
 import { FooterComponent } from './footer/footer.component';
 import { CartOverlayComponent } from './cart-overlay/cart-overlay.component';
 
+// Page components
 import { HomeComponent } from './home/home.component';
 import { ServicesComponent } from './pages/services/services.component';
 import { ServiceDetailComponent } from './pages/service-detail/service-detail.component';
@@ -26,13 +28,12 @@ import { LessonDetailComponent } from './pages/lesson-detail/lesson-detail.compo
 import { QuizPageComponent } from './pages/quiz-page/quiz-page.component';
 import { CourseProgressComponent } from './pages/course-progress/course-progress.component';
 import { CourseReviewsComponent } from './pages/course-reviews/course-reviews.component';
-import { FoPackListComponent } from './pages/packs/pack-list/pack-list.component';
-import { FoPackDetailComponent } from './pages/packs/pack-detail/pack-detail.component';
-import { CartComponent } from './pages/cart/cart.component';
-import { CartHistoryComponent } from './pages/cart-history/cart-history.component';
 import { AiLearningPathPageComponent } from './pages/learning-paths/learning-paths.component';
 import { StudentDashboardComponent } from './pages/student-dashboard/student-dashboard.component';
+import { FoPackListComponent } from './pages/packs/pack-list/pack-list.component';
+import { FoPackDetailComponent } from './pages/packs/pack-detail/pack-detail.component';
 
+// Section components
 import { HeroSectionComponent } from './home/hero-section/hero-section.component';
 import { TrustLogosComponent } from './home/trust-logos/trust-logos.component';
 import { WhyYbrainyComponent } from './home/why-ybrainy/why-ybrainy.component';
@@ -67,12 +68,10 @@ import { PrefooterCtaComponent } from './home/prefooter-cta/prefooter-cta.compon
     QuizPageComponent,
     CourseProgressComponent,
     CourseReviewsComponent,
-    FoPackListComponent,
-    FoPackDetailComponent,
-    CartComponent,
-    CartHistoryComponent,
     AiLearningPathPageComponent,
     StudentDashboardComponent,
+    FoPackListComponent,
+    FoPackDetailComponent,
     HeroSectionComponent,
     TrustLogosComponent,
     WhyYbrainyComponent,

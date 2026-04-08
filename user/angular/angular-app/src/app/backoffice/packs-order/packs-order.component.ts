@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, AfterViewInit, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CartHistoryService } from '../../services/cart-history.service';
 import { CartHistoryRecord, PackOrderRow } from '../../models/cart-history.model';
+import { RuntimePageStyleService } from '../runtime-page-style.service';
 
 @Component({
   selector: 'app-packs-order',
@@ -11,9 +12,12 @@ import { CartHistoryRecord, PackOrderRow } from '../../models/cart-history.model
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './packs-order.component.html',
   styleUrl: './packs-order.component.css',
-  encapsulation: ViewEncapsulation.None
+  encapsulation: ViewEncapsulation.None,
+  host: { style: 'display:block' }
 })
-export class PacksOrderComponent implements OnInit, AfterViewInit {
+export class PacksOrderComponent implements OnInit, AfterViewInit, OnDestroy {
+  private readonly detachPageStyles: () => void;
+
   loading = false;
   error = '';
   searchTerm = '';
@@ -28,7 +32,12 @@ export class PacksOrderComponent implements OnInit, AfterViewInit {
   mostBoughtPackQuantity = 0;
   mostBoughtPackBasedOnCheckedOut = true;
 
-  constructor(private cartHistoryService: CartHistoryService) { }
+  constructor(
+    private cartHistoryService: CartHistoryService,
+    private pageStyles: RuntimePageStyleService
+  ) {
+    this.detachPageStyles = this.pageStyles.attach(['assets/backoffice/pages/packs-order-page.css']);
+  }
 
   ngOnInit(): void {
     this.loadOrderHistory();
@@ -36,6 +45,10 @@ export class PacksOrderComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit(): void {
     setTimeout(() => this.loadScripts(), 100);
+  }
+
+  ngOnDestroy(): void {
+    this.detachPageStyles();
   }
 
   loadOrderHistory(): void {
@@ -157,5 +170,3 @@ export class PacksOrderComponent implements OnInit, AfterViewInit {
     );
   }
 }
-
-

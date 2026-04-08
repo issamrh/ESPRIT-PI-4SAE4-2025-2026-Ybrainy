@@ -16,6 +16,7 @@ import org.springframework.core.ParameterizedTypeReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -63,12 +64,13 @@ public class MLServiceClient {
 
     // DSO2 — Get course recommendations by category and level
     public MlRecommendationsResponseDTO getRecommendations(
-            String category, String level, int topN) {
+            String category, String level, int topN, List<Long> excludeIds) {
         try {
             Map<String, Object> body = new HashMap<>();
             body.put("category", category);
             body.put("level", level);
             body.put("topN", topN);
+            body.put("excludeIds", excludeIds);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);

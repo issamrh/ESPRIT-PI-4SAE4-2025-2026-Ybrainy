@@ -1,6 +1,12 @@
 import Keycloak from 'keycloak-js';
 import { environment } from '../../environments/environment';
 
+type AuthEnvironment = typeof environment & {
+  keycloakUrl?: string;
+  keycloakRealm?: string;
+  keycloakClientId?: string;
+};
+
 interface StoredAuthSession {
   accessToken: string;
   refreshToken?: string | null;
@@ -19,14 +25,15 @@ interface BackendAuthResponse {
 
 const AUTH_STORAGE_KEY = 'bb_keycloak_tokens_v1';
 const USER_SESSION_STORAGE_KEY = 'bb_user_session_v1';
+const authEnvironment = environment as AuthEnvironment;
 
 const keycloak = new Keycloak({
-  url: environment.keycloakUrl?.trim() || 'http://localhost:9190',
-  realm: environment.keycloakRealm?.trim() || 'microservices',
-  clientId: environment.keycloakClientId?.trim() || 'angular-client',
+  url: authEnvironment.keycloakUrl?.trim() || 'http://localhost:9190',
+  realm: authEnvironment.keycloakRealm?.trim() || 'microservices',
+  clientId: authEnvironment.keycloakClientId?.trim() || 'angular-client',
 });
 
-const GOOGLE_IDP_HINT = environment.googleIdpHint?.trim() || 'google';
+const GOOGLE_IDP_HINT = authEnvironment.googleIdpHint?.trim() || 'google';
 
 let manualSessionActive = false;
 let manualRefreshPromise: Promise<void> | null = null;
