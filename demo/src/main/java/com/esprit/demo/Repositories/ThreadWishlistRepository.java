@@ -22,4 +22,8 @@ public interface ThreadWishlistRepository extends JpaRepository<ThreadWishlist, 
     @Modifying
     @Query("DELETE FROM ThreadWishlist w WHERE w.thread.id = :threadId")
     void deleteByThreadId(@Param("threadId") Long threadId);
+
+    /** Count how many users saved threads authored by a given user */
+    @Query("SELECT COUNT(w) FROM ThreadWishlist w WHERE w.thread.author.id = :authorId")
+    long countByThreadAuthorId(@Param("authorId") Long authorId);
 }

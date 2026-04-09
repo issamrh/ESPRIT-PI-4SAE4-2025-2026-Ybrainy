@@ -12,4 +12,7 @@ public interface UserXpEventRepository extends JpaRepository<UserXpEvent, Long> 
 
     /** Les 10 derniers événements XP */
     List<UserXpEvent> findTop10ByUserIdOrderByCreatedAtDesc(Long userId);
+
+    /** Les 30 derniers événements XP en ordre chronologique ASC (pour le graphe) */
+    List<UserXpEvent> findTop30ByUserIdOrderByCreatedAtAsc(Long userId);
 }

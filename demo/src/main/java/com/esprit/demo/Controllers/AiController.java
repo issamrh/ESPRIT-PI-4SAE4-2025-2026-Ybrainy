@@ -1,5 +1,7 @@
 package com.esprit.demo.Controllers;
 
+import com.esprit.demo.Dto.AiChatRequest;
+import com.esprit.demo.Dto.AiChatResponse;
 import com.esprit.demo.Dto.AiGeneratePostRequest;
 import com.esprit.demo.Dto.AiGenerateRequest;
 import com.esprit.demo.Dto.AiGenerateResponse;
@@ -56,6 +58,26 @@ public class AiController {
             log.error("AI post generation failed: {}", e.getMessage());
             return ResponseEntity.internalServerError()
                     .body(AiGenerateResponse.builder().body("AI generation failed: " + e.getMessage()).build());
+        }
+    }
+
+    /**
+     * yForumy AI assistant chat with forum DB context.
+     * POST /api/ai/chat
+     * Body: { "message": "...", "history": [{role, content}, ...] }
+     */
+    @PostMapping("/chat")
+    public ResponseEntity<AiChatResponse> chat(@RequestBody AiChatRequest request) {
+        log.info("yForumy chat: {}", request.getMessage());
+        try {
+            AiChatResponse response = aiGenerationService.chat(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("yForumy chat failed: {}", e.getMessage());
+            return ResponseEntity.ok(AiChatResponse.builder()
+                    .reply("Sorry, I encountered an error. Please try again.")
+                    .relatedThreads(java.util.Collections.emptyList())
+                    .build());
         }
     }
 }

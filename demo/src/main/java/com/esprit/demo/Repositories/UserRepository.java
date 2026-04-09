@@ -14,4 +14,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
      /** Top 10 utilisateurs par XP — classement global */
      List<User> findTop10ByOrderByXpDesc();
+
+     /** All users ordered by XP descending (for rank computation) */
+     List<User> findAllByOrderByXpDesc();
 }
