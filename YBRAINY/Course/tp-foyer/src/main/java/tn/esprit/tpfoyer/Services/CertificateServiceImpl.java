@@ -263,7 +263,7 @@ public class CertificateServiceImpl implements ICertificateService {
             headers.set("X-Title", "YBrainy");
 
             Map<String, Object> body = Map.of(
-                    "model", "stepfun/step-3.5-flash:free",
+                    "model", "google/gemma-3-4b-it:free",
                     "messages", List.of(Map.of("role", "user", "content", prompt))
             );
 

@@ -4,10 +4,6 @@ import { BackofficeDashboardComponent } from './backoffice/backoffice-dashboard.
 import { SignUpPageComponent } from './signup/signup.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { UsersComponent } from './backoffice/users/users.component';
-import { FinanceComponent } from './backoffice/finance/finance.component';
-import { CategoryListComponent } from './backoffice/category-list/category-list.component';
-import { PackListComponent } from './backoffice/pack-list/pack-list.component';
-import { PacksOrderComponent } from './backoffice/packs-order/packs-order.component';
 import { adminGuard } from './auth/admin.guard';
 
 export const routes: Routes = [
@@ -44,26 +40,6 @@ export const routes: Routes = [
   {
     path: 'dashboard/users',
     component: UsersComponent,
-    canActivate: [adminGuard],
-  },
-  {
-    path: 'dashboard/finance',
-    component: FinanceComponent,
-    canActivate: [adminGuard],
-  },
-  {
-    path: 'dashboard/categories',
-    component: CategoryListComponent,
-    canActivate: [adminGuard],
-  },
-  {
-    path: 'dashboard/packs',
-    component: PackListComponent,
-    canActivate: [adminGuard],
-  },
-  {
-    path: 'dashboard/packsorder',
-    component: PacksOrderComponent,
     canActivate: [adminGuard],
   },
   {

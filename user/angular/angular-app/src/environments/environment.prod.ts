@@ -4,4 +4,7 @@ export const environment = {
   apiUrl: 'https://api.ybrainy.com/api',
   financeApiUrl: 'https://api.ybrainy.com/api/finance',
   googleIdpHint: 'google',
+  keycloakUrl: 'http://localhost:9190',
+  keycloakRealm: 'microservices',
+  keycloakClientId: 'angular-client',
 };

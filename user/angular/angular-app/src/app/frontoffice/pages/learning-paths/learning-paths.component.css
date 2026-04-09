@@ -513,3 +513,19 @@
   transform: translateX(4px);
 }
 /* ═══ END EXAMPLE PATHS SECTION ═══ */
+.lp-enroll-success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin: 16px 48px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.lp-enroll-success a {
+  color: #10b981;
+  text-decoration: underline;
+}

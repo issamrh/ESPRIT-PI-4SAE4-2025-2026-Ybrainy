@@ -8,6 +8,8 @@ import traceback
 import requests
 import time
 
+np.random.seed(42)  # set once at module startup — not inside request handlers (thread-safe)
+
 _forecast_cache = {}
 _FORECAST_TTL = 3600  # 1 hour cache
 
@@ -82,13 +84,27 @@ def predict_conversion():
         data = request.get_json()
         # Features: TimeSpentOnCourse, CompletionRate, QuizScores,
         #           NumberOfVideosWatched, NumLogins, ForumReads
+        required_fields = [
+            'timeSpentOnCourse', 'completionRate', 'quizScores',
+            'numberOfVideosWatched', 'numLogins', 'forumReads'
+        ]
+        validated = {}
+        for field in required_fields:
+            raw = data.get(field, 0)
+            try:
+                validated[field] = float(raw)
+            except (TypeError, ValueError):
+                return jsonify({
+                    'error': f'Invalid value for {field}: expected number, got {repr(raw)}'
+                }), 400
+
         features = [
-            float(data.get('timeSpentOnCourse', 0)),
-            float(data.get('completionRate', 0)),
-            float(data.get('quizScores', 0)),
-            float(data.get('numberOfVideosWatched', 0)),
-            float(data.get('numLogins', 0)),
-            float(data.get('forumReads', 0))
+            validated['timeSpentOnCourse'],
+            validated['completionRate'],
+            validated['quizScores'],
+            validated['numberOfVideosWatched'],
+            validated['numLogins'],
+            validated['forumReads']
         ]
         X = np.array(features).reshape(1, -1)
         X_scaled = dso1_scaler.transform(X)
@@ -120,8 +136,14 @@ def recommend():
         resp.raise_for_status()
         real_courses = resp.json().get('content', [])
 
-        if not real_courses or dso2_knn is None:
-            raise ValueError("No courses or KNN model unavailable")
+        if dso2_knn is None:
+            raise ValueError("KNN model unavailable")
+        if not real_courses:
+            return jsonify({
+                'recommendations': [],
+                'basedOn': {'category': category, 'level': level},
+                'message': 'No courses available for recommendations'
+            })
 
         # Step 2: Encode real courses using the same features as training
         import pandas as pd
@@ -149,13 +171,15 @@ def recommend():
         X_real = dso2_scaler.transform(df_real_weighted.values)
 
         # Step 3: Build query vector for requested category+level
-        try:
+        if category in dso2_le_subj.classes_:
             cat_enc = dso2_le_subj.transform([category])[0]
-        except:
+        else:
+            print(f'[DSO2] Unknown category: {category!r} — defaulting to 0')
             cat_enc = 0
-        try:
+        if level in dso2_le_lvl.classes_:
             lvl_enc = dso2_le_lvl.transform([level])[0]
-        except:
+        else:
+            print(f'[DSO2] Unknown level: {level!r} — defaulting to 0')
             lvl_enc = 0
 
         query = np.array([[
@@ -219,7 +243,7 @@ def predict_quality():
         num_lessons       = float(data.get('numLessons', 10))
         cert_encoded      = float(data.get('certEncoded', 0))
         level_encoded     = float(data.get('levelEncoded', 0))
-        rating            = float(data.get('rating', 3.8))
+        rating            = max(0.0, min(5.0, float(data.get('rating', 0.0))))
         rating_count      = float(data.get('ratingCount', 0))
 
         features = [num_lectures, content_duration, lst_variety,
@@ -238,12 +262,12 @@ def predict_quality():
         variety_val = float(data.get('lessonTypeVariety', 2))
         pct_video_val = float(data.get('pctVideoLessons', 0.5))
         cert_val = float(data.get('certEncoded', 0))
-        rating_val = float(data.get('rating', 0.0))
+        rating_val = max(0.0, min(5.0, float(data.get('rating', 0.0))))
         rating_count_val = float(data.get('ratingCount', 0))
 
         factors = {
             'lessons': {
-                'score': round(min(num_lectures_val / 30.0, 1.0) * 100, 1),
+                'score': round(min(num_lectures_val / 30.0, 1.0), 3),
                 'value': int(num_lessons_val),
                 'target': 10,
                 'tip': None if num_lessons_val >= 10 else f'Add {int(10 - num_lessons_val)} more lessons (currently {int(num_lessons_val)})'
@@ -255,7 +279,7 @@ def predict_quality():
                 'tip': None if content_dur_val >= 5.0 else f'Increase total duration to at least 5 hours (currently {round(content_dur_val, 1)}h)'
             },
             'contentVariety': {
-                'score': round(min(variety_val / 4.0, 1.0) * 100, 1),
+                'score': round(min(variety_val / 4.0, 1.0), 3),
                 'value': int(variety_val),
                 'target': 3,
                 'tip': None if variety_val >= 3 else f'Add more content types — use at least 3 types (videos, PDFs, images)'
@@ -267,13 +291,13 @@ def predict_quality():
                 'tip': None if pct_video_val >= 0.5 else f'Increase video content to at least 50%'
             },
             'certificate': {
-                'score': float(cert_val) * 100,
+                'score': float(cert_val),
                 'value': bool(cert_val),
                 'target': 1,
                 'tip': None if cert_val else 'Enable certificate offering to boost quality score'
             },
             'rating': {
-                'score': round(max((rating_val - 2.0) / 3.0, 0.0) * 100, 1),
+                'score': round(max((rating_val - 2.0) / 3.0, 0.0), 3),
                 'value': round(rating_val, 1),
                 'target': 4.0,
                 'tip': None if rating_val >= 4.0 else (
@@ -284,12 +308,9 @@ def predict_quality():
             }
         }
 
-        overall_score = round((
-            min(num_lectures_val / 30.0, 1.0) * 0.30 +
-            max((rating_val - 2.0) / 3.0, 0.0) * 0.30 +
-            float(cert_val) * 0.20 +
-            min(variety_val / 4.0, 1.0) * 0.20
-        ) * 100)
+        # overallScore = RF probability × 100 — guaranteed consistent with qualityLabel
+        # HIGH always yields score > 50; LOW always yields score < 50
+        overall_score = round(float(proba[1]) * 100)
 
         tips = [f['tip'] for f in factors.values() if f.get('tip') is not None]
 
@@ -333,7 +354,6 @@ def forecast_demand():
             pass
 
         # Step 2: Build 60-month series blending real + synthetic
-        np.random.seed(42)
         t = np.arange(60)
         trend = 500 + t * 15
         seasonality = 80 * np.sin(2 * np.pi * t / 12)
@@ -360,17 +380,24 @@ def forecast_demand():
                     series[idx] = real_monthly[month]
         # else: use pure synthetic upward series (not enough real data yet)
 
-        # Step 3: Fit SARIMA(1,1,1)(1,1,1,12)
+        # Step 3: Fit SARIMA or plain ARIMA depending on real data availability
+        # SARIMA(1,1,1)(1,1,1,12) requires ≥24 months of real data for stable seasonal estimation
+        use_seasonal = len(real_monthly) >= 24
         try:
             from statsmodels.tsa.statespace.sarimax import SARIMAX
-            model = SARIMAX(series, order=(1,1,1),
-                          seasonal_order=(1,1,1,12),
-                          enforce_stationarity=False,
-                          enforce_invertibility=False)
+            if use_seasonal:
+                model = SARIMAX(series, order=(1,1,1),
+                              seasonal_order=(1,1,1,12),
+                              enforce_stationarity=False,
+                              enforce_invertibility=False)
+            else:
+                model = SARIMAX(series, order=(1,1,1),
+                              enforce_stationarity=False,
+                              enforce_invertibility=False)
             fitted = model.fit(disp=False)
             use_sarima = True
         except Exception as e:
-            print(f'[DSO4] SARIMA failed ({e}), falling back to ARIMA')
+            print(f'[DSO4] SARIMAX failed ({e}), falling back to pre-fitted ARIMA')
             fitted = dso4_model
             use_sarima = False
 
@@ -411,14 +438,21 @@ def forecast_demand():
         trend_val = predicted[-1] - predicted[0]
         trend_pct = round((trend_val / predicted[0]) * 100, 1) if predicted[0] else 0
 
+        if len(predicted) == 1:
+            # For a single-step forecast, compare against the real historical average
+            real_avg = sum(real_monthly.values()) / len(real_monthly) if real_monthly else predicted[0]
+            trend_direction = 'growing' if predicted[0] > real_avg else 'declining'
+        else:
+            trend_direction = 'growing' if trend_val > 0 else 'declining'
+
         result_dict = {
             'forecastSteps': steps,
             'predictedDemand': [round(x, 2) for x in predicted],
             'confidenceIntervals': [[round(lo, 2), round(hi, 2)] for lo, hi in ci],
-            'trendDirection': 'growing' if trend_val > 0 else 'declining',
+            'trendDirection': trend_direction,
             'trendPercentage': abs(trend_pct),
             'unit': 'enrollments/month',
-            'modelUsed': 'SARIMA(1,1,1)(1,1,1,12)' if use_sarima else 'ARIMA(1,1,1)',
+            'modelUsed': 'SARIMA(1,1,1)(1,1,1,12)' if (use_sarima and use_seasonal) else 'ARIMA(1,1,1)',
             'realDataPoints': len(real_monthly),
             'categoryForecast': category_forecast
         }

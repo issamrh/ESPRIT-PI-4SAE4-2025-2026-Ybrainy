@@ -205,8 +205,12 @@ public class CourseServiceImpl implements ICourseService {
                                     fileStorageService.deleteFile(c.getContentUrl());
                                 }
                             });
-                    // legacy
-                    fileStorageService.deleteFile(lesson.getContentUrl());
+                    // legacy — only delete if it is a real file path, not a URL
+                    String legacyUrl = lesson.getContentUrl();
+                    if (legacyUrl != null && !legacyUrl.startsWith("http://")
+                            && !legacyUrl.startsWith("https://")) {
+                        fileStorageService.deleteFile(legacyUrl);
+                    }
                 });
         // Delete quizzes for this course from Quiz Service
         try {

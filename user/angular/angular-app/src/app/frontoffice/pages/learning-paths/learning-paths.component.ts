@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LearningPath } from '../../models/course.models';
 import { CourseApiService } from '../../services/course-api.service';
 import { UserSessionService } from '../../../tracking/user-session.service';
@@ -20,16 +20,17 @@ export class AiLearningPathPageComponent implements OnInit {
   saving: boolean = false;
   enrolling: boolean = false;
   showSaved: boolean = false;
+  showEnrollSuccess: boolean = false;
 
   constructor(
     private api: CourseApiService,
     private userSession: UserSessionService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit(): void {
-    this.api.getSavedLearningPaths((this.userSession.get()?.userId ?? 0))
-      .subscribe({ next: (paths) => this.savedPaths = paths, error: () => {} });
+    this.loadSavedPaths();
     const cached = sessionStorage.getItem('ybrainy_generated_path');
     if (cached) {
       try {
@@ -37,6 +38,17 @@ export class AiLearningPathPageComponent implements OnInit {
         this.goal = this.generatedPath?.goal || '';
       } catch {}
     }
+    const enrolled = this.route.snapshot.queryParams['enrolled'];
+    const pathId = this.route.snapshot.queryParams['pathId'];
+    if (enrolled === 'true' && pathId) {
+      this.showEnrollSuccess = true;
+      this.loadSavedPaths();
+    }
+  }
+
+  loadSavedPaths(): void {
+    this.api.getSavedLearningPaths((this.userSession.get()?.userId ?? 0))
+      .subscribe({ next: (paths) => this.savedPaths = paths, error: () => {} });
   }
 
   generatePath(): void {

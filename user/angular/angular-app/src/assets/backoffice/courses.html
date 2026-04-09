@@ -40,6 +40,7 @@
 		// OpenRouter API key is stored in localStorage as ybrainy_openrouter_key
 		window.ANTHROPIC_SETUP_DONE = true;
     if (!localStorage.getItem('ybrainy_openrouter_key')) { localStorage.setItem('ybrainy_openrouter_key', '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'); }
+    if (!localStorage.getItem('ybrainy_openrouter_key_desc')) { localStorage.setItem('ybrainy_openrouter_key_desc', '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'); }
 	</script>
 </head>
 
@@ -1237,7 +1238,7 @@
 						</a>
 						<ul aria-expanded="false">
 							<li><a href="index.html">Dashboard Page</a></li>
-							<li><a href="javascript:void(0);" onclick="window.top.location.href='/dashboard/finance'">Finance</a></li>
+							<li><a href="finance.html">Finance</a></li>
 						</ul>
 
 					</li>
@@ -1265,11 +1266,17 @@
 						</ul>
 
 					</li>
-										<li><a href="javascript:void(0);" onclick="window.top.location.href='/dashboard/packs'">
+										<li><a class="has-arrow " href="javascript:void(0);" aria-expanded="false">
 							<i class="material-icons">shopping_cart</i>
 							<span class="nav-text">Shop</span>
 						</a>
-						</li>
+						<ul aria-expanded="false">
+							<li><a href="ecom-product-list.html">E-Learning Packs</a></li>
+							<li><a href="ecom-product-order.html">Order</a></li>
+							<li><a href="ecom-checkout.html">Checkout</a></li>
+							<li><a href="ecom-invoice.html">Invoice</a></li>
+							<li><a href="ecom-customers.html">Customers</a></li>
+						</ul>
 					</li>
 <li><a class="has-arrow " href="javascript:void(0);" aria-expanded="false">
 							<i class="material-symbols-outlined">school</i>
@@ -1384,6 +1391,25 @@
 						<div class="bo-stat-label">Forecast (next)</div>
 					</div>
 				</div>
+				<div id="conversionStatsBtn"
+				onclick="loadConversionStats()"
+				style="display:none;cursor:pointer;position:relative;overflow:hidden;background:linear-gradient(135deg,#1e1b4b,#312e81);border:1px solid rgba(99,102,241,0.4);border-radius:16px;padding:20px 24px;min-width:160px;transition:all 0.3s ease;box-shadow:0 0 20px rgba(99,102,241,0.15);"
+				onmouseover="this.style.boxShadow='0 0 40px rgba(99,102,241,0.4)';this.style.borderColor='rgba(99,102,241,0.8)';this.style.transform='translateY(-2px)'"
+				onmouseout="this.style.boxShadow='0 0 20px rgba(99,102,241,0.15)';this.style.borderColor='rgba(99,102,241,0.4)';this.style.transform='translateY(0)'">
+				<div style="position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(99,102,241,0.3),transparent);animation:pulse 2s infinite;"></div>
+				<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+					<div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:1.1rem;box-shadow:0 4px 12px rgba(99,102,241,0.4);">📈</div>
+					<span style="color:#a5b4fc;font-size:0.7rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;">ML Analytics</span>
+				</div>
+				<div style="font-size:1.4rem;font-weight:800;background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1.2;margin-bottom:4px;">Conversion</div>
+				<div style="color:#6366f1;font-size:0.72rem;font-weight:500;">Click to analyze →</div>
+			</div>
+			<style>
+			@keyframes pulse {
+				0%,100% { transform: scale(1); opacity:0.5; }
+				50% { transform: scale(1.3); opacity:0.8; }
+			}
+			</style>
 			</div>
 
 			<div id="forecastPanel" style="display:none; margin:0 0 24px; background:linear-gradient(135deg,rgba(102,126,234,0.08),rgba(118,75,162,0.08)); border:1px solid rgba(102,126,234,0.2); border-radius:16px; padding:20px 24px;">
@@ -1404,6 +1430,46 @@
 				<div style="font-size:0.85rem;font-weight:700;color:#374151;margin:16px 0 8px;">📊 Category Breakdown</div>
 				<div id="forecastCategories" style="display:none;margin-bottom:12px;"></div>
 				<div id="forecastModel" style="font-size:0.7rem;color:#9ca3af;margin-top:8px;"></div>
+			</div>
+
+			<div id="conversionStatsPanel" style="display:none; margin:16px 24px; background:#132035; border:1px solid rgba(255,255,255,0.09); border-radius:14px; padding:24px;">
+				<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+					<h3 style="color:#e2e8f0; margin:0; font-size:1.1rem;">📊 Student Conversion Analytics</h3>
+					<button onclick="document.getElementById('conversionStatsPanel').style.display='none'" style="background:none;border:none;color:#64748b;font-size:1.2rem;cursor:pointer;">✕</button>
+				</div>
+
+				<div id="conversionStatsContent" style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px;">
+					<div style="text-align:center; padding:16px; background:#0d1b2e; border-radius:10px; border:1px solid rgba(255,255,255,0.06)">
+						<div id="cs-total" style="font-size:2rem;font-weight:700;color:#6366f1">-</div>
+						<div style="color:#64748b;font-size:0.8rem;margin-top:4px">Total Students</div>
+					</div>
+					<div style="text-align:center; padding:16px; background:#0d1b2e; border-radius:10px; border:1px solid rgba(255,255,255,0.06)">
+						<div id="cs-converted" style="font-size:2rem;font-weight:700;color:#10b981">-</div>
+						<div style="color:#64748b;font-size:0.8rem;margin-top:4px">Paid Customers</div>
+					</div>
+					<div style="text-align:center; padding:16px; background:#0d1b2e; border-radius:10px; border:1px solid rgba(255,255,255,0.06)">
+						<div id="cs-free" style="font-size:2rem;font-weight:700;color:#f59e0b">-</div>
+						<div style="color:#64748b;font-size:0.8rem;margin-top:4px">Free-Only Students</div>
+					</div>
+					<div style="text-align:center; padding:16px; background:#0d1b2e; border-radius:10px; border:1px solid rgba(255,255,255,0.06)">
+						<div id="cs-rate" style="font-size:2rem;font-weight:700;color:#10b981">-</div>
+						<div style="color:#64748b;font-size:0.8rem;margin-top:4px">Conversion Rate %</div>
+					</div>
+					<div style="text-align:center; padding:16px; background:#0d1b2e; border-radius:10px; border:1px solid rgba(255,255,255,0.06)">
+						<div id="cs-prob" style="font-size:2rem;font-weight:700;color:#6366f1">-</div>
+						<div style="color:#64748b;font-size:0.8rem;margin-top:4px">Avg Conversion Probability %</div>
+					</div>
+					<div style="text-align:center; padding:16px; background:#0d1b2e; border-radius:10px; border:1px solid rgba(255,255,255,0.06)">
+						<div id="cs-high" style="font-size:2rem;font-weight:700;color:#f59e0b">-</div>
+						<div style="color:#64748b;font-size:0.8rem;margin-top:4px">High Potential Students</div>
+					</div>
+				</div>
+
+				<div id="cs-loading" style="text-align:center; color:#64748b; padding:20px; display:none;">⏳ Analyzing student data...</div>
+
+				<div style="margin-top:16px; padding:12px; background:#0d1b2e; border-radius:8px; color:#64748b; font-size:0.78rem;">
+					💡 <strong style="color:#94a3b8">High Potential</strong> = free-only students with ≥70% predicted conversion probability. Consider offering them a discount or premium trial.
+				</div>
 			</div>
 
 				<div class="card mb-4">
@@ -2349,6 +2415,7 @@
 	const QUIZ_BASE_URL = '/api/quizzes';
 	window.ANTHROPIC_SETUP_DONE = true;
     if (!localStorage.getItem('ybrainy_openrouter_key')) { localStorage.setItem('ybrainy_openrouter_key', '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'); }
+    if (!localStorage.getItem('ybrainy_openrouter_key_desc')) { localStorage.setItem('ybrainy_openrouter_key_desc', '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'); }
     function _getAuthHeaders(extra) {
         let tok = '';
         try { const r = localStorage.getItem("bb_keycloak_tokens_v1"); if(r){const p=JSON.parse(r); tok=p.accessToken||p.token||'';} } catch{}
@@ -2359,7 +2426,7 @@
         opts = opts || {};
         const method = (opts.method || 'GET').toUpperCase();
         const isFormData = opts.body instanceof FormData;
-        if (!url.includes('openrouter.ai') && method !== 'GET' && !isFormData) {
+        if (!url.includes('openrouter.ai') && !isFormData) {
             opts.headers = _getAuthHeaders(opts.headers || {});
         } else if (!url.includes('openrouter.ai') && method !== 'GET' && isFormData) {
             let tok = '';
@@ -2571,7 +2638,7 @@
 			const _putRole = _putSession.role;
 			const url = editingCourseId
 				? `${API_BASE_URL}/${editingCourseId}?requestingUserId=${_putUserId}&requestingRole=${_putRole}`
-				: API_BASE_URL;
+				: `${API_BASE_URL}?requestingUserId=${_putUserId}&requestingRole=${_putRole}`;
 			const method = editingCourseId ? 'PUT' : 'POST';
 			let _tok = '';
 			try {
@@ -2834,7 +2901,12 @@
 			let _cuFilter = null;
 			try { _cuFilter = JSON.parse(localStorage.getItem('bb_user_session_v1') || 'null'); } catch {}
 			if (_cuFilter && _cuFilter.role === 'INSTRUCTOR' && _cuFilter.userId) qs.set('instructorId', String(_cuFilter.userId));
-
+			const _convBtn = document.getElementById('conversionStatsBtn');
+			if (_convBtn) {
+				const _sess = JSON.parse(localStorage.getItem('bb_user_session_v1') || '{}');
+				_convBtn.style.display = _sess.role === 'ADMIN' ? 'flex' : 'none';
+			}
+			qs.set('_ts', String(Date.now()));
 			const response = await authFetch(`${API_BASE_URL}?${qs.toString()}`);
 			if (!response.ok) throw new Error(`HTTP ${response.status}`);
 			
@@ -2860,7 +2932,14 @@
 
 		// Update stats bar
 		try {
-			const allResp = await authFetch(`${API_BASE_URL}?size=1000`);
+			const _statsRole = JSON.parse(localStorage.getItem('bb_user_session_v1') || '{}');
+			const statsUrl = new URL(`${API_BASE_URL}`);
+			statsUrl.searchParams.set('size', '1000');
+			statsUrl.searchParams.set('_ts', String(Date.now()));
+			if (_statsRole.role === 'INSTRUCTOR' && _statsRole.userId) {
+				statsUrl.searchParams.set('instructorId', String(_statsRole.userId));
+			}
+			const allResp = await authFetch(statsUrl.toString());
 			if (allResp.ok) {
 				const allData = await allResp.json();
 				const all = allData.content || [];
@@ -3261,7 +3340,7 @@
 
 			const _delSession = JSON.parse(localStorage.getItem('bb_user_session_v1') || '{}');
 			const _delUserId = _delSession.userId || null;
-			const _delRole   = _delSession.role   || 'ADMIN';
+			const _delRole   = _delSession.role   || 'INSTRUCTOR';
 
 			if (!_delUserId) {
 				showToast('Session expired — please log out and log back in.', 'danger');
@@ -3290,6 +3369,35 @@
 		}
 	}
 
+	// ────────────── Conversion Analytics ──────────────
+	async function loadConversionStats() {
+		const panel = document.getElementById('conversionStatsPanel');
+		const loading = document.getElementById('cs-loading');
+		const content = document.getElementById('conversionStatsContent');
+
+		panel.style.display = 'block';
+		loading.style.display = 'block';
+		content.style.display = 'none';
+
+		try {
+			const resp = await authFetch('http://localhost:8088/api/ml/admin/conversion-stats');
+			if (!resp.ok) throw new Error('HTTP ' + resp.status);
+			const d = await resp.json();
+
+			document.getElementById('cs-total').textContent = d.totalStudents ?? '-';
+			document.getElementById('cs-converted').textContent = d.convertedStudents ?? '-';
+			document.getElementById('cs-free').textContent = d.freeOnlyStudents ?? '-';
+			document.getElementById('cs-rate').textContent = (d.conversionRate ?? '-') + '%';
+			document.getElementById('cs-prob').textContent = (d.avgConversionProbability ?? '-') + '%';
+			document.getElementById('cs-high').textContent = d.highPotentialCount ?? '-';
+
+			loading.style.display = 'none';
+			content.style.display = 'grid';
+		} catch (err) {
+			loading.textContent = '❌ Could not load stats: ' + err.message;
+		}
+	}
+
 	// ────────────── Toast helper ──────────────
 	function showToast(msg, type) {
 		const toastHtml = `<div class="position-fixed top-0 end-0 p-3" style="z-index:9999;">
@@ -3307,7 +3415,9 @@
 	loadCourses();
 
 	window.addEventListener('storage', function(e) {
-		if (e.key === 'ybrainy_mock_user') {
+		if (e.key === 'ybrainy_mock_user' ||
+			e.key === 'bb_user_session_v1' ||
+			e.key === 'ybrainy_user_mode') {
 			loadCourses();
 		}
 	});
@@ -3502,7 +3612,7 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
                 'X-Title': 'YBrainy'
               },
               body: JSON.stringify({
-                model: 'stepfun/step-3.5-flash:free',
+                model: 'google/gemma-3-4b-it:free',
                 max_tokens: 200,
                 messages: [{ role: 'user', content: summaryPrompt }]
               })
@@ -3516,7 +3626,7 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
             'X-Title': 'YBrainy'
           },
           body: JSON.stringify({
-            model: 'stepfun/step-3.5-flash:free',
+            model: 'google/gemma-3-4b-it:free',
             max_tokens: 300,
             messages: [{ role: 'user', content: roadmapPrompt }]
           })
@@ -3543,8 +3653,16 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
       // Update roadmap
       const roadmapEl = document.getElementById('aiRoadmap');
       if (!roadmapResp.ok) {
-        console.error('OpenRouter roadmap failed:', roadmapResp.status,
-                      await roadmapResp.text());
+        console.error('OpenRouter roadmap failed:', roadmapResp.status);
+        if (roadmapEl) {
+          roadmapEl.innerHTML = `
+            <div style="color:#f87171;font-size:0.82rem;padding:12px 0;">
+              ⚠️ AI roadmap unavailable right now. Here are your improvement tips:<br><br>
+              <ul style="margin:0;padding-left:18px;line-height:1.8;">
+                ${(q.tips || []).map(t => `<li>${t}</li>`).join('')}
+              </ul>
+            </div>`;
+        }
       }
       if (roadmapEl && roadmapResp.ok) {
         const rd = await roadmapResp.json();
@@ -3934,7 +4052,8 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
 		const btn = document.getElementById('aiGenerateBtn');
 		statusEl.style.color = '#e53e3e';
 		if (!topic) { statusEl.textContent = '⚠️ Please enter a topic.'; return; }
-		const apiKey = localStorage.getItem('ybrainy_openrouter_key') || '';
+		const apiKey = localStorage.getItem('ybrainy_openrouter_key_desc')
+			|| localStorage.getItem('ybrainy_openrouter_key') || '';
 		if (!apiKey) { statusEl.textContent = '⚠️ No OpenRouter API key. Add it in settings.'; return; }
 		const courseTitle = document.getElementById('quizModalCourseTitle')?.textContent?.trim() || '';
 		btn.disabled = true;
@@ -3949,7 +4068,7 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
 				{
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`, 'HTTP-Referer': 'http://localhost:4301', 'X-Title': 'YBrainy' },
-					body: JSON.stringify({ model: 'stepfun/step-3.5-flash:free', messages: [{ role: 'user', content: prompt }] }),
+					body: JSON.stringify({ model: 'google/gemma-3-4b-it:free', messages: [{ role: 'user', content: prompt }] }),
 				}
 			);
 			if (!res.ok) throw new Error('OpenRouter API error ' + res.status);
@@ -4002,11 +4121,12 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
 		btnText.textContent = 'Generating...';
 		const prompt = `Write a compelling 2-3 sentence course description for a course titled "${title}" in the ${category} category at ${level} level. Be specific and engaging. Return only the description text, no quotes or labels.`;
 		try {
-			const apiKey = localStorage.getItem('ybrainy_openrouter_key') || '';
+			const apiKey = localStorage.getItem('ybrainy_openrouter_key_desc')
+				|| localStorage.getItem('ybrainy_openrouter_key') || '';
 			if (!apiKey) { errEl.textContent = 'No OpenRouter API key. Add it in settings.'; btn.disabled = false; btnText.textContent = 'Generate with AI'; return; }
 			const res = await authFetch(
 				'https://openrouter.ai/api/v1/chat/completions',
-				{ method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`, 'HTTP-Referer': 'http://localhost:4301', 'X-Title': 'YBrainy' }, body: JSON.stringify({ model: 'stepfun/step-3.5-flash:free', messages: [{ role: 'user', content: prompt }] }) }
+				{ method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`, 'HTTP-Referer': 'http://localhost:4301', 'X-Title': 'YBrainy' }, body: JSON.stringify({ model: 'google/gemma-3-4b-it:free', messages: [{ role: 'user', content: prompt }] }) }
 			);
 			if (!res.ok) throw new Error('API error ' + res.status);
 			const data = await res.json();

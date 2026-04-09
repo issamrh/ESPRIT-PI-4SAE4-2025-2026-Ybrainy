@@ -21,8 +21,6 @@ import { CourseProgressComponent } from './pages/course-progress/course-progress
 import { CourseReviewsComponent } from './pages/course-reviews/course-reviews.component';
 import { AiLearningPathPageComponent } from './pages/learning-paths/learning-paths.component';
 import { StudentDashboardComponent } from './pages/student-dashboard/student-dashboard.component';
-import { FoPackListComponent } from './pages/packs/pack-list/pack-list.component';
-import { FoPackDetailComponent } from './pages/packs/pack-detail/pack-detail.component';
 
 const routes: Routes = [
   {
@@ -45,8 +43,6 @@ const routes: Routes = [
       { path: 'courses/:courseId/quiz', component: QuizPageComponent },
       { path: 'courses/:courseId/reviews', component: CourseReviewsComponent },
       { path: 'courses/:courseId', component: CourseDetailComponent },
-      { path: 'packs', component: FoPackListComponent },
-      { path: 'packs/:id', component: FoPackDetailComponent },
       { path: 'learning-paths', component: AiLearningPathPageComponent },
       { path: 'my-learning', component: StudentDashboardComponent },
       {

@@ -47,7 +47,16 @@ price_arr    = np.where(
     np.clip(np.random.lognormal(2.70, 0.80, N), 9.99, 199.99).round(2),
     0.0)
 
-num_lectures_arr     = np.clip(np.random.lognormal(3.50, 0.80, N).astype(int), 5, 300)
+# 70% Udemy-like (many lectures), 30% small-platform courses (4-20 lectures)
+# The 30% ensures the model sees and learns the 4-20 lesson range that matches
+# the real YBrainy platform, preventing the scaler from pushing real courses
+# into extreme outlier territory (z < -0.8).
+_small_mask = np.random.random(N) < 0.30
+num_lectures_arr = np.where(
+    _small_mask,
+    np.random.randint(4, 21, N),                                      # 4-20 lectures (real-platform range)
+    np.clip(np.random.lognormal(3.50, 0.80, N).astype(int), 5, 300)  # Udemy-calibrated range
+)
 approx_duration_arr  = np.clip(
     (num_lectures_arr * np.random.lognormal(2.5, 0.45, N)).astype(int), 10, 12000)
 offers_cert_arr      = np.random.choice([True, False], N, p=[0.45, 0.55])
@@ -65,13 +74,12 @@ rating_arr  = np.clip(np.random.normal(rating_base, 0.15), 0.0, 5.0).round(1)
 rating_count_arr = np.clip(
     np.random.lognormal(4.5, 1.2, N).astype(int), 0, 50000)
 
-# Lesson aggregates per course (from lesson generation — approximated here)
-num_lessons_arr = np.where(
-    np.isin(category_arr, ['PROGRAMMING','SCIENCE']),
-    np.random.randint(10, 22, N),
-    np.where(np.isin(category_arr, ['BUSINESS','MARKETING','DESIGN']),
-             np.random.randint(6, 16, N),
-             np.random.randint(3, 12, N)))
+# Lesson aggregates per course — derived from num_lectures with slight jitter
+# This matches real inference where numLessons ≈ numLectures (both = lessons.size())
+num_lessons_arr = np.clip(
+    num_lectures_arr + np.random.randint(-1, 2, size=N),
+    1, None
+).astype(int)
 
 lesson_type_variety_arr = np.random.randint(1, 5, N)
 pct_video_arr           = np.clip(np.random.beta(2.5, 1.5, N), 0.1, 1.0).round(3)
@@ -84,7 +92,7 @@ quality_score = (
     (rating_arr - 2.0) / 3.0 * 0.30 +
     np.where(offers_cert_arr, 1.0, 0.0) * 0.20 +
     lesson_type_variety_arr / 4.0 * 0.20)
-quality_label_arr = (quality_score > 0.5).astype(int)
+quality_label_arr = (quality_score > 0.50).astype(int)  # natural midpoint; 9-lesson+cert+rating≥4.5 (formula=0.64) safely above threshold
 
 level_enc_arr = np.array([{'BEGINNER':0,'INTERMEDIATE':1,'ADVANCED':2}[l] for l in level_arr])
 

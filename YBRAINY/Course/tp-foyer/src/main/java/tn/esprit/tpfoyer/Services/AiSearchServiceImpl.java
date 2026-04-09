@@ -54,7 +54,7 @@ public class AiSearchServiceImpl implements IAiSearchService {
             message.put("content", prompt);
 
             Map<String, Object> body = new HashMap<>();
-            body.put("model", "stepfun/step-3.5-flash:free");
+            body.put("model", "meta-llama/llama-3.1-8b-instruct:free");
             body.put("messages", List.of(message));
 
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);

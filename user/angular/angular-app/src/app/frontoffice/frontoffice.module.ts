@@ -9,7 +9,6 @@ import { FrontofficeRoutingModule } from './frontoffice-routing.module';
 import { LayoutComponent } from './layout/layout.component';
 import { HeaderComponent } from './header/header.component';
 import { FooterComponent } from './footer/footer.component';
-import { CartOverlayComponent } from './cart-overlay/cart-overlay.component';
 
 // Page components
 import { HomeComponent } from './home/home.component';
@@ -30,8 +29,6 @@ import { CourseProgressComponent } from './pages/course-progress/course-progress
 import { CourseReviewsComponent } from './pages/course-reviews/course-reviews.component';
 import { AiLearningPathPageComponent } from './pages/learning-paths/learning-paths.component';
 import { StudentDashboardComponent } from './pages/student-dashboard/student-dashboard.component';
-import { FoPackListComponent } from './pages/packs/pack-list/pack-list.component';
-import { FoPackDetailComponent } from './pages/packs/pack-detail/pack-detail.component';
 
 // Section components
 import { HeroSectionComponent } from './home/hero-section/hero-section.component';
@@ -51,7 +48,6 @@ import { PrefooterCtaComponent } from './home/prefooter-cta/prefooter-cta.compon
     LayoutComponent,
     HeaderComponent,
     FooterComponent,
-    CartOverlayComponent,
     HomeComponent,
     ServicesComponent,
     ServiceDetailComponent,
@@ -70,8 +66,6 @@ import { PrefooterCtaComponent } from './home/prefooter-cta/prefooter-cta.compon
     CourseReviewsComponent,
     AiLearningPathPageComponent,
     StudentDashboardComponent,
-    FoPackListComponent,
-    FoPackDetailComponent,
     HeroSectionComponent,
     TrustLogosComponent,
     WhyYbrainyComponent,

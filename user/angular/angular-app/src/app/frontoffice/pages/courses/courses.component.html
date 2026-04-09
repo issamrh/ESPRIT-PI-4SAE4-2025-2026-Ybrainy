@@ -556,13 +556,13 @@
             <span class="cl-level-badge" [ngClass]="levelClass(course.level)">
               {{ levelLabel(course.level) }}
             </span>
-            <span *ngIf="courseQualityMap[course.id]"
+            <span *ngIf="courseQualityMap[course.id] as quality"
                   class="cl-quality-chip"
-                  [class.cl-quality-high]="courseQualityMap[course.id].isHighQuality"
-                  [class.cl-quality-low]="!courseQualityMap[course.id].isHighQuality"
-                  [title]="courseQualityMap[course.id].qualityLabel + ' quality · ' + (courseQualityMap[course.id].confidencePercentage | number:'1.0-0') + '% confidence'">
-              <span *ngIf="courseQualityMap[course.id].isHighQuality">⚡ Verified Quality</span>
-              <span *ngIf="!courseQualityMap[course.id].isHighQuality">📋 Standard</span>
+                  [class.cl-quality-high]="quality.isHighQuality"
+                  [class.cl-quality-low]="!quality.isHighQuality"
+                  [title]="quality.qualityLabel + ' quality · ' + (quality.confidencePercentage | number:'1.0-0') + '% confidence'">
+              <span *ngIf="quality.isHighQuality">⚡ Verified Quality</span>
+              <span *ngIf="!quality.isHighQuality">📋 Standard</span>
             </span>
 
             <h3 class="cl-card-title">{{ course.title }}</h3>

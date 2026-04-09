@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { InteractionTrackingService } from './tracking/interaction-tracking.service';
-import { getDisplayName, isAuthenticated } from './auth/keycloak.service';
+import { Router } from '@angular/router';
+import { getDisplayName, getRealmRoles, isAuthenticated } from './auth/keycloak.service';
 
 @Component({
   selector: 'app-root',
@@ -13,8 +14,15 @@ import { getDisplayName, isAuthenticated } from './auth/keycloak.service';
 export class AppComponent {
   title = 'angular-app';
 
-  constructor(tracking: InteractionTrackingService) {
+  constructor(tracking: InteractionTrackingService, router: Router) {
     tracking.init();
+
+    if (isAuthenticated()) {
+      const roles = getRealmRoles().map((r) => r.toUpperCase());
+      if (roles.includes('ADMIN') && !window.location.pathname.startsWith('/dashboard')) {
+        router.navigateByUrl('/dashboard');
+      }
+    }
 
     if (isAuthenticated() && !sessionStorage.getItem('welcomeShown')) {
       sessionStorage.setItem('welcomeShown', '1');

@@ -36,6 +36,12 @@
   </div>
 
   <!-- SECTION 2 — Generated path result -->
+  <div class="lp-enroll-success" *ngIf="showEnrollSuccess">
+    Payment successful! You are now enrolled in all courses
+    in this learning path. Check <a routerLink="/my-learning">My Learning</a>
+    to start learning.
+  </div>
+
   <div *ngIf="generatedPath" class="lp-result">
 
     <div class="lp-result-header">
