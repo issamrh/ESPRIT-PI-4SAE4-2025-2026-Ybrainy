@@ -32,8 +32,8 @@ public class EventRestControllers {
 
     @PostMapping("/generate-description")
     public DescriptionGenerationResponse generateDescription(@RequestBody DescriptionGenerationRequest request) {
-        String description = eventServices.generateDescription(request.name(), request.type());
-        return new DescriptionGenerationResponse(description);
+        var result = eventServices.generateDescription(request.name(), request.type());
+        return new DescriptionGenerationResponse(result.description(), result.generatedByAi());
     }
 
     @GetMapping("/all")

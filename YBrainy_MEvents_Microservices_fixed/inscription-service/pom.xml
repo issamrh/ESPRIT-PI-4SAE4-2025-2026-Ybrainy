@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>inscription-service</artifactId>
-    <n>inscription-service</n>
+    <name>inscription-service</name>
     <description>Microservice responsible for Inscription management</description>
 
     <dependencies>

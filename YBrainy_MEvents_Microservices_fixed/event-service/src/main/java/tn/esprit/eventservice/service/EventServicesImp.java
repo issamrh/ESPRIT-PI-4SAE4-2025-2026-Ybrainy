@@ -60,8 +60,8 @@ public class EventServicesImp implements IEventServices {
     }
 
     @Override
-    public String generateDescription(String name, String type) {
-        return eventDescriptionGenerationService.generateDescription(name, type).description();
+    public EventDescriptionGenerationService.GeneratedDescriptionResult generateDescription(String name, String type) {
+        return eventDescriptionGenerationService.generateDescription(name, type);
     }
 
     @Override

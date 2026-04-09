@@ -11,11 +11,9 @@ import tn.esprit.eventservice.entity.EventType;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Locale;
 
@@ -26,11 +24,11 @@ public class EventDescriptionGenerationService {
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
 
-    @Value("${ybrainy.ai.gemini.api-key:}")
-    private String geminiApiKey;
+    @Value("${ybrainy.ai.groq.api-key:}")
+    private String groqApiKey;
 
-    @Value("${ybrainy.ai.gemini.model:gemini-2.0-flash}")
-    private String geminiModel;
+    @Value("${ybrainy.ai.groq.model:llama-3.3-70b-versatile}")
+    private String groqModel;
 
     public EventDescriptionGenerationService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
@@ -46,56 +44,56 @@ public class EventDescriptionGenerationService {
         }
 
         EventType eventType = parseType(rawType);
-        if (geminiApiKey == null || geminiApiKey.isBlank()) {
+        if (groqApiKey == null || groqApiKey.isBlank()) {
             return new GeneratedDescriptionResult(buildFallbackDescription(sanitizedName, eventType), false);
         }
 
         try {
-            String aiDescription = requestGeminiDescription(sanitizedName, eventType);
+            String aiDescription = requestGroqDescription(sanitizedName, eventType);
             if (aiDescription != null && !aiDescription.isBlank()) {
+                log.info("Groq description generated successfully for eventName={}", sanitizedName);
                 return new GeneratedDescriptionResult(aiDescription, true);
             }
         } catch (Exception exception) {
-            log.warn("Gemini description generation failed for eventName={}: {}", sanitizedName, exception.getMessage());
+            log.warn("Groq description generation failed for eventName={}: {}", sanitizedName, exception.getMessage(), exception);
         }
 
         return new GeneratedDescriptionResult(buildFallbackDescription(sanitizedName, eventType), false);
     }
 
-    private String requestGeminiDescription(String eventName, EventType eventType)
+    private String requestGroqDescription(String eventName, EventType eventType)
             throws IOException, InterruptedException {
         String prompt = buildPrompt(eventName, eventType);
         ObjectNode root = objectMapper.createObjectNode();
-        ArrayNode contents = root.putArray("contents");
-        ObjectNode contentNode = objectMapper.createObjectNode();
-        ArrayNode parts = contentNode.putArray("parts");
-        parts.add(objectMapper.createObjectNode().put("text", prompt));
-        contents.add(contentNode);
-        root.set("generationConfig", objectMapper.createObjectNode()
-                .put("temperature", 0.8)
-                .put("topP", 0.95)
-                .put("maxOutputTokens", 180));
+        root.put("model", groqModel);
+        ArrayNode messages = root.putArray("messages");
+        messages.add(objectMapper.createObjectNode()
+                .put("role", "system")
+                .put("content", "You write concise, polished event descriptions for the YBrainy platform."));
+        messages.add(objectMapper.createObjectNode()
+                .put("role", "user")
+                .put("content", prompt));
+        root.put("temperature", 0.8);
+        root.put("max_tokens", 180);
         String payload = objectMapper.writeValueAsString(root);
 
-        String endpoint = "https://generativelanguage.googleapis.com/v1beta/models/"
-                + URLEncoder.encode(geminiModel, StandardCharsets.UTF_8)
-                + ":generateContent?key="
-                + URLEncoder.encode(geminiApiKey, StandardCharsets.UTF_8);
+        String endpoint = "https://api.groq.com/openai/v1/chat/completions";
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(endpoint))
                 .timeout(Duration.ofSeconds(20))
+                .header("Authorization", "Bearer " + groqApiKey)
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(payload))
                 .build();
 
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            throw new IOException("Gemini HTTP " + response.statusCode() + " - " + response.body());
+            throw new IOException("Groq HTTP " + response.statusCode() + " - " + response.body());
         }
 
         JsonNode jsonRoot = objectMapper.readTree(response.body());
-        JsonNode textNode = jsonRoot.path("candidates").path(0).path("content").path("parts").path(0).path("text");
+        JsonNode textNode = jsonRoot.path("choices").path(0).path("message").path("content");
         String text = textNode.isMissingNode() ? "" : textNode.asText("");
         return sanitizeGeneratedText(text);
     }

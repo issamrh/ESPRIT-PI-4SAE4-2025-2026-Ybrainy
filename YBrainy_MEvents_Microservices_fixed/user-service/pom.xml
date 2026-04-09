@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>user-service</artifactId>
-    <n>user-service</n>
+    <name>user-service</name>
     <description>Microservice responsible for User management</description>
 
     <dependencies>

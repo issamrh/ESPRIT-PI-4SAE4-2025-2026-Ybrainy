@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>event-service</artifactId>
-    <n>event-service</n>
+    <name>event-service</name>
     <description>Microservice responsible for Event management</description>
 
     <dependencies>
