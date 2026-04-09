@@ -4,9 +4,11 @@ import { PackService } from '../../services/pack.service';
 import { CategoryService } from '../../services/category.service';
 import { FinanceService, ScraperRunStatus } from '../../services/finance.service';
 import { RecommendationService } from '../../services/recommendation.service';
+import { PackConversionService } from '../../services/pack-conversion.service';
 import { Pack, PackLevel, PackStatus, PageResponse } from '../../models/pack.model';
 import { PackCategory } from '../../models/pack-category.model';
 import { RecommendationSummary } from '../../models/recommendation.model';
+import { PackConversionScore, PackConversionSummary } from '../../models/pack-conversion.model';
 
 @Component({
   selector: 'app-pack-list',
@@ -68,6 +70,13 @@ export class PackListComponent implements OnInit, AfterViewInit {
   recommendationsLimit = 10;
   recommendationsSummary: RecommendationSummary | null = null;
 
+  // Conversion score modal
+  conversionModalOpen = false;
+  conversionLoading = false;
+  conversionError = '';
+  conversionLimit = 10;
+  conversionSummary: PackConversionSummary | null = null;
+
   // AI content generation
   contentGenerating = false;
   contentGenerationError = '';
@@ -78,7 +87,8 @@ export class PackListComponent implements OnInit, AfterViewInit {
     private packService: PackService,
     private categoryService: CategoryService,
     private financeService: FinanceService,
-    private recommendationService: RecommendationService
+    private recommendationService: RecommendationService,
+    private packConversionService: PackConversionService
   ) { }
 
   ngOnInit(): void {
@@ -265,6 +275,15 @@ export class PackListComponent implements OnInit, AfterViewInit {
     this.recommendationsModalOpen = false;
   }
 
+  openConversionModal(): void {
+    this.conversionModalOpen = true;
+    this.fetchConversionSummary();
+  }
+
+  closeConversionModal(): void {
+    this.conversionModalOpen = false;
+  }
+
   fetchRecommendations(): void {
     this.recommendationsLoading = true;
     this.recommendationsError = '';
@@ -278,6 +297,23 @@ export class PackListComponent implements OnInit, AfterViewInit {
         this.recommendationsLoading = false;
         this.recommendationsSummary = null;
         this.recommendationsError = err?.error?.message || err?.message || 'Failed to load recommendations.';
+      }
+    });
+  }
+
+  fetchConversionSummary(): void {
+    this.conversionLoading = true;
+    this.conversionError = '';
+
+    this.packConversionService.getSummary(this.conversionLimit).subscribe({
+      next: (summary) => {
+        this.conversionSummary = summary;
+        this.conversionLoading = false;
+      },
+      error: (err) => {
+        this.conversionLoading = false;
+        this.conversionSummary = null;
+        this.conversionError = err?.error?.message || err?.message || 'Failed to load conversion insights.';
       }
     });
   }
@@ -460,6 +496,10 @@ export class PackListComponent implements OnInit, AfterViewInit {
 
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
+    if (this.conversionModalOpen) {
+      this.closeConversionModal();
+      return;
+    }
     if (this.isDeleteModalOpen) {
       this.closeDeleteModal();
       return;
@@ -556,6 +596,46 @@ export class PackListComponent implements OnInit, AfterViewInit {
     if (normalized === 'HIGH') return 'bg-danger';
     if (normalized === 'MEDIUM') return 'bg-warning text-dark';
     return 'bg-secondary';
+  }
+
+  getConversionRatePercent(rate: number | null | undefined): number {
+    return Math.round((Number(rate || 0) * 100) * 100) / 100;
+  }
+
+  getConversionRateWidth(rate: number | null | undefined): number {
+    const value = this.getConversionRatePercent(rate);
+    return Math.max(4, Math.min(value, 100));
+  }
+
+  getConversionBadgeClass(rate: number | null | undefined): string {
+    const value = Number(rate || 0);
+    if (value >= 0.6) return 'pack-conversion-pill--hot';
+    if (value >= 0.45) return 'pack-conversion-pill--warm';
+    if (value >= 0.3) return 'pack-conversion-pill--steady';
+    return 'pack-conversion-pill--watch';
+  }
+
+  getConversionMood(rate: number | null | undefined): string {
+    const value = Number(rate || 0);
+    if (value >= 0.6) return 'Hot Pick';
+    if (value >= 0.45) return 'Strong Match';
+    if (value >= 0.3) return 'Promising';
+    return 'Watch List';
+  }
+
+  getConversionBarClass(index: number): string {
+    if (index === 0) return 'pack-conversion-bar--gold';
+    if (index === 1) return 'pack-conversion-bar--teal';
+    if (index === 2) return 'pack-conversion-bar--violet';
+    return 'pack-conversion-bar--neutral';
+  }
+
+  get topConversionPacks(): PackConversionScore[] {
+    return this.conversionSummary?.topConversionPacks || [];
+  }
+
+  get conversionPodium(): PackConversionScore[] {
+    return this.topConversionPacks.slice(0, 3);
   }
 
   get pages(): number[] {

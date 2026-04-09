@@ -16,6 +16,8 @@ export class StudentDashboardComponent implements OnInit, AfterViewInit {
   activeTab: 'all' | 'active' | 'completed' = 'all';
   conversionInsight: ConversionInsight | null = null;
   conversionLoading = false;
+  certDownloading = false;
+  certError = '';
 
   constructor(
     private api: CourseApiService,
@@ -72,16 +74,25 @@ export class StudentDashboardComponent implements OnInit, AfterViewInit {
     if (!course.certificateId) return;
     try {
       const studentId = this.requireAuth();
-      this.api.downloadCertificate(course.courseId, studentId).subscribe(blob => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'YBrainy-Certificate.pdf';
-        a.click();
-        URL.revokeObjectURL(url);
+      this.certDownloading = true;
+      this.certError = '';
+      this.api.downloadCertificate(course.courseId, studentId).subscribe({
+        next: (blob) => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `YBrainy-Certificate-${course.courseTitle}.pdf`;
+          a.click();
+          URL.revokeObjectURL(url);
+          this.certDownloading = false;
+        },
+        error: () => {
+          this.certError = 'Could not download certificate. Please try again.';
+          this.certDownloading = false;
+        }
       });
     } catch {
-      return; // redirected to login
+      this.certDownloading = false;
     }
   }
 

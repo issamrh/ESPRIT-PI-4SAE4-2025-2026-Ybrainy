@@ -331,16 +331,7 @@
                   </button>
                 </div>
 
-                <div class="dropdown-divider"></div>
-
-                <button type="button" class="dropdown-item" (click)="openCartOverlay('cart')">
-                  My Cart
-                </button>
-                <button type="button" class="dropdown-item" (click)="openCartOverlay('history')">
-                  Cart History
-                </button>
-
-                <div class="dropdown-divider"></div>
+                <div class="dropdown-divider" *ngIf="availableModes.length > 1"></div>
 
                 <a routerLink="/profile" class="dropdown-item" (click)="showModeDropdown = false">
                   Settings

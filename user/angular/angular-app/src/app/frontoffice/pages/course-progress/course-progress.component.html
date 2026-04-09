@@ -81,7 +81,7 @@
       </div>
 
       <!-- Certificate download -->
-      <div *ngIf="progress?.enrollmentStatus === 'COMPLETED' && course?.offersCertificate" class="fo-cp-cert-section">
+      <div *ngIf="progress?.enrollmentStatus === 'COMPLETED'" class="fo-cp-cert-section">
         <div class="fo-cp-cert-title">🏆 Course Completed!</div>
         <p class="fo-cp-cert-desc">Congratulations! You have completed this course and earned a certificate.</p>
         <button class="fo-cp-cert-btn" type="button" [disabled]="certDownloading" (click)="downloadCertificate()">

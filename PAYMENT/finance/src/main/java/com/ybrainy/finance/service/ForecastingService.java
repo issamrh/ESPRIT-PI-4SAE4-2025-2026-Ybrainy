@@ -28,7 +28,7 @@ public class ForecastingService {
 
     private final ObjectMapper objectMapper;
 
-    @Value("${forecasting.output-directory:D:/4eme/project pi/spring/PIDEV-YBrainy-E-leraning-certifications-Platform/forcasting/outputs}")
+    @Value("${forecasting.output-directory:../forcasting/outputs}")
     private String forecastingOutputDirectory;
 
     @Value("${forecasting.dashboard-file-name:dashboard_data.json}")
@@ -84,11 +84,22 @@ public class ForecastingService {
     }
 
     private Path resolveOutputDirectory() {
-        Path outputDir = Paths.get(forecastingOutputDirectory).toAbsolutePath().normalize();
-        if (!Files.isDirectory(outputDir)) {
-            throw new BusinessRuleException("Forecast output directory not found: " + outputDir);
+        Path workingDir = Paths.get("").toAbsolutePath().normalize();
+        List<Path> candidates = List.of(
+                Paths.get(forecastingOutputDirectory),
+                Paths.get(forecastingOutputDirectory).toAbsolutePath(),
+                workingDir.resolve("..").resolve("forcasting").resolve("outputs"),
+                workingDir.resolve("forcasting").resolve("outputs")
+        );
+
+        for (Path candidate : candidates) {
+            Path normalized = candidate.toAbsolutePath().normalize();
+            if (Files.isDirectory(normalized)) {
+                return normalized;
+            }
         }
-        return outputDir;
+
+        throw new BusinessRuleException("Forecast output directory not found. Checked: " + candidates);
     }
 
     private Path resolveRequiredFile(Path directory, String fileName) {

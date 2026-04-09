@@ -56,6 +56,9 @@ public class CertificateServiceImpl implements ICertificateService {
     @Value("${app.file.upload-dir}")
     private String uploadDir;
 
+    @Value("${app.frontend.url:http://localhost:4200}")
+    private String frontendUrl;
+
     // ── Colors ────────────────────────────────────────────────────────
     private static final DeviceRgb PRIMARY_DARK_BLUE = new DeviceRgb(26, 54, 93);
     private static final DeviceRgb ACCENT_BLUE       = new DeviceRgb(43, 108, 176);
@@ -100,7 +103,10 @@ public class CertificateServiceImpl implements ICertificateService {
             }
             String certId = enrollment.getCertificateId();
 
-            // Step 3 — Generate AI remarks
+            // Step 3 — Resolve real student name
+            String studentName = resolveStudentName(studentId);
+
+            // Step 4 — Generate AI remarks
             String aiRemarks = generateAiRemarks(
                     course.getTitle(),
                     course.getCategory().name(),
@@ -108,15 +114,30 @@ public class CertificateServiceImpl implements ICertificateService {
                     quizScore
             );
 
-            // Step 4 — Generate PDF
+            // Step 5 — Generate PDF
             String completionDate = enrollment.getCompletedAt() != null
                     ? enrollment.getCompletedAt().toLocalDate()
                             .format(DateTimeFormatter.ofPattern("MMMM dd, yyyy"))
-                    : LocalDate.now().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy"));
+                    : enrollment.getEnrollmentDate() != null
+                            ? enrollment.getEnrollmentDate().toLocalDate()
+                                    .format(DateTimeFormatter.ofPattern("MMMM dd, yyyy"))
+                            : LocalDate.now().format(DateTimeFormatter.ofPattern("MMMM dd, yyyy"));
             String certDir = uploadDir + "/certificates/";
             new File(certDir).mkdirs();
             String filePath = certDir + "cert_" + studentId + "_" + courseId + ".pdf";
-            generatePdf(filePath, course, studentId, certId, hoursSpent, quizScore, aiRemarks, completionDate);
+
+            // Return cached file if it already exists (skips AI call + PDF rebuild)
+            File existingFile = new File(filePath);
+            if (existingFile.exists() && existingFile.length() > 0) {
+                log.info("[Certificate] Returning cached PDF for student {} course {}", studentId, courseId);
+                Resource cachedResource = new FileSystemResource(existingFile);
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"YBrainy-Certificate.pdf\"")
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .body(cachedResource);
+            }
+
+            generatePdf(filePath, course, studentId, studentName, certId, hoursSpent, quizScore, aiRemarks, completionDate);
 
             Resource resource = new FileSystemResource(filePath);
             return ResponseEntity.ok()
@@ -174,7 +195,7 @@ public class CertificateServiceImpl implements ICertificateService {
         return VerificationResponseDTO.builder()
                 .valid(true)
                 .certificateId(certificateId)
-                .studentName("Student #" + enrollment.getStudentId())
+                .studentName(resolveStudentName(enrollment.getStudentId()))
                 .studentId(enrollment.getStudentId())
                 .courseTitle(course != null ? course.getTitle() : "Unknown Course")
                 .completionDate(completionDate)
@@ -187,8 +208,42 @@ public class CertificateServiceImpl implements ICertificateService {
     // ── Helpers ───────────────────────────────────────────────────────
 
     private Double getBestQuizScore(Long studentId, Long courseId) {
-        // Quiz data now lives in quiz-service; return null here
+        try {
+            ResponseEntity<Map> response = restTemplate.getForEntity(
+                    "http://localhost:8083/api/quizzes/best-score?studentId="
+                            + studentId + "&courseId=" + courseId,
+                    Map.class
+            );
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Object score = response.getBody().get("bestScore");
+                if (score instanceof Number) {
+                    double val = ((Number) score).doubleValue();
+                    return val > 0 ? val : null;
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[Certificate] Could not get quiz score for student {} course {}: {}",
+                    studentId, courseId, e.getMessage());
+        }
         return null;
+    }
+
+    private String resolveStudentName(Long studentId) {
+        try {
+            ResponseEntity<Map> response = restTemplate.getForEntity(
+                    "http://localhost:8088/api/users/internal/" + studentId,
+                    Map.class
+            );
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                String firstName = (String) response.getBody().getOrDefault("firstName", "");
+                String lastName  = (String) response.getBody().getOrDefault("lastName", "");
+                String fullName  = (firstName + " " + lastName).trim();
+                if (!fullName.isEmpty()) return fullName;
+            }
+        } catch (Exception e) {
+            log.warn("[Certificate] Could not resolve name for student {}: {}", studentId, e.getMessage());
+        }
+        return "Student #" + studentId;
     }
 
     private String generateAiRemarks(String courseTitle, String category, int hoursSpent, Double quizScore) {
@@ -225,8 +280,9 @@ public class CertificateServiceImpl implements ICertificateService {
         }
     }
 
-    private void generatePdf(String filePath, Course course, Long studentId, String certId,
-                              int hoursSpent, Double quizScore, String aiRemarks, String completionDate) throws Exception {
+    private void generatePdf(String filePath, Course course, Long studentId, String studentName,
+                              String certId, int hoursSpent, Double quizScore,
+                              String aiRemarks, String completionDate) throws Exception {
 
         PdfWriter writer = new PdfWriter(filePath);
         PdfDocument pdfDoc = new PdfDocument(writer);
@@ -280,7 +336,7 @@ public class CertificateServiceImpl implements ICertificateService {
                 .setTextAlignment(TextAlignment.CENTER)
                 .setMarginTop(10f));
 
-        doc.add(new Paragraph("Student #" + studentId)
+        doc.add(new Paragraph(studentName)
                 .setFont(bold).setFontSize(26)
                 .setFontColor(PRIMARY_DARK_BLUE)
                 .setTextAlignment(TextAlignment.CENTER));
@@ -344,7 +400,7 @@ public class CertificateServiceImpl implements ICertificateService {
                 .setFontColor(TEXT_GRAY)
                 .setTextAlignment(TextAlignment.CENTER));
 
-        doc.add(new Paragraph("Verify at: localhost:4301/verify/" + certId)
+        doc.add(new Paragraph("Verify at: " + frontendUrl + "/verify/" + certId)
                 .setFont(italic).setFontSize(8)
                 .setFontColor(ACCENT_BLUE)
                 .setTextAlignment(TextAlignment.CENTER));
@@ -393,7 +449,7 @@ public class CertificateServiceImpl implements ICertificateService {
                 .setFont(bold).setFontSize(18)
                 .setFontColor(PRIMARY_DARK_BLUE));
 
-        doc.add(new Paragraph(course.getTitle() + "  ·  Student #" + studentId)
+        doc.add(new Paragraph(course.getTitle() + "  ·  " + studentName)
                 .setFont(italic).setFontSize(11)
                 .setFontColor(TEXT_GRAY));
 

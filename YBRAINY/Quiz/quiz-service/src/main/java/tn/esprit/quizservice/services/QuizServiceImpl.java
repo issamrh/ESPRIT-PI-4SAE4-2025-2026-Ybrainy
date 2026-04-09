@@ -356,4 +356,11 @@ public class QuizServiceImpl implements IQuizService {
                         .collect(Collectors.toList()))
                 .build();
     }
+
+    @Override
+    public Double getBestScoreForStudentAndCourse(Long studentId, Long courseId) {
+        return quizAttemptRepository
+                .findBestScoreByStudentIdAndCourseId(studentId, courseId)
+                .orElse(null);
+    }
 }

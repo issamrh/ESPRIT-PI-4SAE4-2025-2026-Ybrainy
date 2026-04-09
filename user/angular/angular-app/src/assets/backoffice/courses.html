@@ -1269,6 +1269,7 @@
 							<i class="material-icons">shopping_cart</i>
 							<span class="nav-text">Shop</span>
 						</a>
+						</li>
 					</li>
 <li><a class="has-arrow " href="javascript:void(0);" aria-expanded="false">
 							<i class="material-symbols-outlined">school</i>
@@ -3253,13 +3254,36 @@
 		if (!confirm('Delete this course and all its lessons?')) return;
 		try {
 			let _dtok = '';
-		try { const _dr = localStorage.getItem("bb_keycloak_tokens_v1"); if (_dr) { const _dp = JSON.parse(_dr); _dtok = _dp.accessToken || _dp.token || ''; } } catch {}
-		const _delSession = JSON.parse(localStorage.getItem('bb_user_session_v1') || '{}');
-		const _delUserId = _delSession.userId;
-		const _delRole = _delSession.role;
-		const response = await authFetch(`${API_BASE_URL}/${id}?requestingUserId=${_delUserId}&requestingRole=${_delRole}`, { method: 'DELETE', headers: _dtok ? { 'Authorization': 'Bearer ' + _dtok } : {} });
-			if (!response.ok) throw new Error(`HTTP ${response.status}`);
-			showToast('Course deleted', 'warning');
+			try {
+				const _dr = localStorage.getItem("bb_keycloak_tokens_v1");
+				if (_dr) { const _dp = JSON.parse(_dr); _dtok = _dp.accessToken || _dp.token || ''; }
+			} catch {}
+
+			const _delSession = JSON.parse(localStorage.getItem('bb_user_session_v1') || '{}');
+			const _delUserId = _delSession.userId || null;
+			const _delRole   = _delSession.role   || 'ADMIN';
+
+			if (!_delUserId) {
+				showToast('Session expired — please log out and log back in.', 'danger');
+				return;
+			}
+
+			const url = `${API_BASE_URL}/${id}?requestingUserId=${_delUserId}&requestingRole=${_delRole}`;
+			const response = await authFetch(url, {
+				method: 'DELETE',
+				headers: _dtok ? { 'Authorization': 'Bearer ' + _dtok } : {}
+			});
+
+			if (!response.ok) {
+				let errMsg = `HTTP ${response.status}`;
+				try {
+					const errBody = await response.json();
+					errMsg = errBody.message || errMsg;
+				} catch {}
+				throw new Error(errMsg);
+			}
+
+			showToast('Course deleted successfully', 'warning');
 			try { loadCourses(); } catch(e) { console.warn('Reload failed:', e); }
 		} catch (err) {
 			showToast('Error deleting course: ' + err.message, 'danger');

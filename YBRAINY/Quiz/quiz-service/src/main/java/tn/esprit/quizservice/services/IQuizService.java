@@ -23,4 +23,5 @@ public interface IQuizService {
     QuizDTO updateQuiz(Long quizId, QuizRequestDTO dto);
     QuestionDTO updateQuestion(Long questionId, QuestionRequestDTO dto);
     List<LeaderboardEntryDTO> getLeaderboard(Long quizId);
+    Double getBestScoreForStudentAndCourse(Long studentId, Long courseId);
 }

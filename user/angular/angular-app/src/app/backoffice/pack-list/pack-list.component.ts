@@ -6,9 +6,13 @@ import { PackService } from '../../services/pack.service';
 import { CategoryService } from '../../services/category.service';
 import { FinanceService, ScraperRunStatus } from '../../services/finance.service';
 import { RecommendationService } from '../../services/recommendation.service';
+import { PackConversionService } from '../../services/pack-conversion.service';
+import { PackPricingService } from '../../services/pack-pricing.service';
 import { Pack, PackLevel, PackStatus, PageResponse } from '../../models/pack.model';
 import { PackCategory } from '../../models/pack-category.model';
 import { RecommendationSummary } from '../../models/recommendation.model';
+import { PackConversionScore, PackConversionSummary } from '../../models/pack-conversion.model';
+import { PackPricingRecommendation, PackPricingSummary } from '../../models/pack-pricing.model';
 import { RuntimePageStyleService } from '../runtime-page-style.service';
 
 @Component({
@@ -76,6 +80,20 @@ export class PackListComponent implements OnInit, AfterViewInit, OnDestroy {
   recommendationsLimit = 10;
   recommendationsSummary: RecommendationSummary | null = null;
 
+  // Conversion score modal
+  conversionModalOpen = false;
+  conversionLoading = false;
+  conversionError = '';
+  conversionLimit = 10;
+  conversionSummary: PackConversionSummary | null = null;
+
+  // Dynamic pricing modal
+  pricingModalOpen = false;
+  pricingLoading = false;
+  pricingError = '';
+  pricingLimit = 10;
+  pricingSummary: PackPricingSummary | null = null;
+
   // AI content generation
   contentGenerating = false;
   contentGenerationError = '';
@@ -87,6 +105,8 @@ export class PackListComponent implements OnInit, AfterViewInit, OnDestroy {
     private categoryService: CategoryService,
     private financeService: FinanceService,
     private recommendationService: RecommendationService,
+    private packConversionService: PackConversionService,
+    private packPricingService: PackPricingService,
     private pageStyles: RuntimePageStyleService
   ) {
     this.detachPageStyles = this.pageStyles.attach(['assets/backoffice/pages/pack-list-page.css']);
@@ -280,6 +300,24 @@ export class PackListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.recommendationsModalOpen = false;
   }
 
+  openConversionModal(): void {
+    this.conversionModalOpen = true;
+    this.fetchConversionSummary();
+  }
+
+  closeConversionModal(): void {
+    this.conversionModalOpen = false;
+  }
+
+  openPricingModal(): void {
+    this.pricingModalOpen = true;
+    this.fetchPricingSummary();
+  }
+
+  closePricingModal(): void {
+    this.pricingModalOpen = false;
+  }
+
   fetchRecommendations(): void {
     this.recommendationsLoading = true;
     this.recommendationsError = '';
@@ -293,6 +331,40 @@ export class PackListComponent implements OnInit, AfterViewInit, OnDestroy {
         this.recommendationsLoading = false;
         this.recommendationsSummary = null;
         this.recommendationsError = err?.error?.message || err?.message || 'Failed to load recommendations.';
+      }
+    });
+  }
+
+  fetchConversionSummary(): void {
+    this.conversionLoading = true;
+    this.conversionError = '';
+
+    this.packConversionService.getSummary(this.conversionLimit).subscribe({
+      next: (summary) => {
+        this.conversionSummary = summary;
+        this.conversionLoading = false;
+      },
+      error: (err) => {
+        this.conversionLoading = false;
+        this.conversionSummary = null;
+        this.conversionError = err?.error?.message || err?.message || 'Failed to load conversion insights.';
+      }
+    });
+  }
+
+  fetchPricingSummary(): void {
+    this.pricingLoading = true;
+    this.pricingError = '';
+
+    this.packPricingService.getSummary(this.pricingLimit).subscribe({
+      next: (summary) => {
+        this.pricingSummary = summary;
+        this.pricingLoading = false;
+      },
+      error: (err) => {
+        this.pricingLoading = false;
+        this.pricingSummary = null;
+        this.pricingError = err?.error?.message || err?.message || 'Failed to load dynamic pricing insights.';
       }
     });
   }
@@ -475,6 +547,14 @@ export class PackListComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
+    if (this.pricingModalOpen) {
+      this.closePricingModal();
+      return;
+    }
+    if (this.conversionModalOpen) {
+      this.closeConversionModal();
+      return;
+    }
     if (this.isDeleteModalOpen) {
       this.closeDeleteModal();
       return;
@@ -573,6 +653,111 @@ export class PackListComponent implements OnInit, AfterViewInit, OnDestroy {
     if (normalized === 'HIGH') return 'bg-danger';
     if (normalized === 'MEDIUM') return 'bg-warning text-dark';
     return 'bg-secondary';
+  }
+
+  getConversionRatePercent(rate: number | null | undefined): number {
+    return Math.round((Number(rate || 0) * 100) * 100) / 100;
+  }
+
+  getConversionRateWidth(rate: number | null | undefined): number {
+    const value = this.getConversionRatePercent(rate);
+    return Math.max(4, Math.min(value, 100));
+  }
+
+  getConversionBadgeClass(rate: number | null | undefined): string {
+    const value = Number(rate || 0);
+    if (value >= 0.6) return 'pack-conversion-pill--hot';
+    if (value >= 0.45) return 'pack-conversion-pill--warm';
+    if (value >= 0.3) return 'pack-conversion-pill--steady';
+    return 'pack-conversion-pill--watch';
+  }
+
+  getConversionMood(rate: number | null | undefined): string {
+    const value = Number(rate || 0);
+    if (value >= 0.6) return 'Hot Pick';
+    if (value >= 0.45) return 'Strong Match';
+    if (value >= 0.3) return 'Promising';
+    return 'Watch List';
+  }
+
+  getConversionBarClass(index: number): string {
+    if (index === 0) return 'pack-conversion-bar--gold';
+    if (index === 1) return 'pack-conversion-bar--teal';
+    if (index === 2) return 'pack-conversion-bar--violet';
+    return 'pack-conversion-bar--neutral';
+  }
+
+  get topConversionPacks(): PackConversionScore[] {
+    return this.conversionSummary?.topConversionPacks || [];
+  }
+
+  get conversionPodium(): PackConversionScore[] {
+    return this.topConversionPacks.slice(0, 3);
+  }
+
+  getPricingConfidencePercent(confidence: number | null | undefined): number {
+    return Math.round((Number(confidence || 0) * 100) * 100) / 100;
+  }
+
+  getPricingActionClass(action: string | null | undefined): string {
+    const normalized = (action || '').toLowerCase();
+    if (normalized === 'increase') return 'pack-pricing-action--increase';
+    if (normalized === 'decrease') return 'pack-pricing-action--decrease';
+    return 'pack-pricing-action--hold';
+  }
+
+  getPricingActionLabel(action: string | null | undefined): string {
+    const normalized = (action || '').toLowerCase();
+    if (normalized === 'increase') return 'Raise Price';
+    if (normalized === 'decrease') return 'Lower Price';
+    return 'Hold Price';
+  }
+
+  getPricingActionIcon(action: string | null | undefined): string {
+    const normalized = (action || '').toLowerCase();
+    if (normalized === 'increase') return 'trending_up';
+    if (normalized === 'decrease') return 'trending_down';
+    return 'horizontal_rule';
+  }
+
+  getPricingLiftClass(value: number | null | undefined): string {
+    return Number(value || 0) >= 0 ? 'pack-pricing-lift--positive' : 'pack-pricing-lift--negative';
+  }
+
+  getPricingConfidenceClass(confidence: number | null | undefined): string {
+    const value = Number(confidence || 0);
+    if (value >= 0.72) return 'pack-pricing-confidence--high';
+    if (value >= 0.6) return 'pack-pricing-confidence--medium';
+    return 'pack-pricing-confidence--low';
+  }
+
+  getPricingBandClass(band: string | null | undefined): string {
+    const normalized = (band || '').toLowerCase();
+    if (normalized.includes('margin')) return 'pack-pricing-band--margin';
+    if (normalized.includes('balanced')) return 'pack-pricing-band--balanced';
+    if (normalized.includes('conversion')) return 'pack-pricing-band--conversion';
+    return 'pack-pricing-band--aggressive';
+  }
+
+  getPriceDelta(currentPrice: number | null | undefined, recommendedPrice: number | null | undefined): number {
+    return Math.round((Number(recommendedPrice || 0) - Number(currentPrice || 0)) * 100) / 100;
+  }
+
+  getDiscountRangeLabel(minPct: number | null | undefined, maxPct: number | null | undefined): string {
+    const minValue = Number(minPct || 0);
+    const maxValue = Number(maxPct || 0);
+    if (Math.abs(minValue - maxValue) < 0.01) {
+      return `${minValue.toFixed(1)}%`;
+    }
+    return `${minValue.toFixed(1)}% - ${maxValue.toFixed(1)}%`;
+  }
+
+  get topPricingRecommendations(): PackPricingRecommendation[] {
+    return this.pricingSummary?.topPricingRecommendations || [];
+  }
+
+  get pricingSpotlight(): PackPricingRecommendation[] {
+    return this.topPricingRecommendations.slice(0, 3);
   }
 
   get pages(): number[] {

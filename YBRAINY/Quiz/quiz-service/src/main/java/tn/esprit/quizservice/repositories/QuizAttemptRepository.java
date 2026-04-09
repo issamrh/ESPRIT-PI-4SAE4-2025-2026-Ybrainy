@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> {
@@ -18,4 +19,7 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
 
     @Query("SELECT a FROM QuizAttempt a WHERE a.studentId = :studentId AND a.quiz.id IN :quizIds ORDER BY a.score DESC")
     List<QuizAttempt> findByStudentIdAndQuizIds(@Param("studentId") Long studentId, @Param("quizIds") List<Long> quizIds);
+
+    @Query("SELECT MAX(a.score) FROM QuizAttempt a WHERE a.studentId = :studentId AND a.quiz.courseId = :courseId")
+    Optional<Double> findBestScoreByStudentIdAndCourseId(@Param("studentId") Long studentId, @Param("courseId") Long courseId);
 }

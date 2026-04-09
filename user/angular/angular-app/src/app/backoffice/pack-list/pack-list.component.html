@@ -285,6 +285,12 @@
                 <button type="button" class="btn btn-outline-warning btn-sm me-2" (click)="openRecommendationsModal()">
                   <i class="material-icons align-middle me-1" style="font-size:18px">auto_awesome</i>Recommendations
                 </button>
+                <button type="button" class="btn btn-sm pack-conversion-trigger me-2" (click)="openConversionModal()">
+                  <i class="material-icons align-middle me-1" style="font-size:18px">insights</i>Conversion AI
+                </button>
+                <button type="button" class="btn btn-sm pack-pricing-trigger me-2" (click)="openPricingModal()">
+                  <i class="material-icons align-middle me-1" style="font-size:18px">sell</i>Dynamic Pricing AI
+                </button>
                 <a routerLink="/dashboard/packsorder" class="btn btn-outline-info btn-sm me-2">
                   <i class="material-icons align-middle me-1" style="font-size:18px">receipt_long</i>Order
                 </a>
@@ -560,6 +566,453 @@
               <small class="text-primary">Target: {{ action.targetMetric }}</small>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Conversion Score Modal -->
+<div class="pack-conversion-overlay" *ngIf="conversionModalOpen" (click)="closeConversionModal()">
+  <div class="pack-conversion-modal-card" role="dialog" aria-modal="true" aria-labelledby="conversionTitle"
+    (click)="$event.stopPropagation()">
+    <div class="pack-conversion-headline">
+      <div class="pack-conversion-title-wrap">
+        <span class="pack-conversion-icon-wrap">
+          <i class="material-icons">show_chart</i>
+        </span>
+        <div>
+          <h4 id="conversionTitle">Pack Conversion AI Window</h4>
+          <p>Purchase probability signals blended from pack pricing, learner behavior, and scraper market demand.</p>
+        </div>
+      </div>
+
+      <div class="pack-conversion-head-actions">
+        <label class="mb-0 d-flex align-items-center gap-2 pack-conversion-limit">
+          <span class="text-muted">Top</span>
+          <input type="number" class="form-control form-control-sm" min="1" max="10" [(ngModel)]="conversionLimit">
+        </label>
+        <button type="button" class="btn btn-sm pack-conversion-refresh" (click)="fetchConversionSummary()"
+          [disabled]="conversionLoading">
+          <i class="material-icons align-middle me-1" style="font-size:16px">refresh</i>Refresh
+        </button>
+        <button type="button" class="btn-close" (click)="closeConversionModal()" aria-label="Close"></button>
+      </div>
+    </div>
+
+    <div class="pack-conversion-body">
+      <div *ngIf="conversionLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3 mb-0 text-muted">Reading the latest conversion output...</p>
+      </div>
+
+      <div *ngIf="conversionError" class="alert alert-danger mb-0">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ conversionError }}
+      </div>
+
+      <div *ngIf="!conversionLoading && !conversionError && conversionSummary">
+        <section class="pack-conversion-hero" *ngIf="conversionSummary.champion as champion">
+          <div class="pack-conversion-hero-copy">
+            <span class="pack-conversion-eyebrow">Best current opportunity</span>
+            <h5>{{ champion.title }}</h5>
+            <p>
+              This pack is the current leader by predicted conversion, combining market demand,
+              price fit, discount strength, and synthetic behavior signals.
+            </p>
+
+            <div class="pack-conversion-chip-row">
+              <span class="pack-conversion-pill" [ngClass]="getConversionBadgeClass(champion.predictedConversionRate)">
+                {{ getConversionMood(champion.predictedConversionRate) }}
+              </span>
+              <span class="pack-conversion-soft-chip">{{ champion.categoryName }}</span>
+              <span class="pack-conversion-soft-chip">{{ champion.level }}</span>
+              <span class="pack-conversion-soft-chip">{{ champion.primarySkill }}</span>
+            </div>
+          </div>
+
+          <div class="pack-conversion-hero-metrics">
+            <div class="pack-conversion-score-orb">
+              <strong>{{ getConversionRatePercent(champion.predictedConversionRate) | number:'1.0-2' }}%</strong>
+              <span>Purchase probability</span>
+            </div>
+            <div class="pack-conversion-hero-stat">
+              <label>Expected Revenue</label>
+              <strong>${{ champion.expectedRevenue | number:'1.0-0' }}</strong>
+            </div>
+            <div class="pack-conversion-hero-stat">
+              <label>Demand Score</label>
+              <strong>{{ champion.marketDemandScore | number:'1.2-3' }}</strong>
+            </div>
+            <div class="pack-conversion-hero-stat">
+              <label>Discount</label>
+              <strong>{{ champion.discountPct | number:'1.0-1' }}%</strong>
+            </div>
+          </div>
+        </section>
+
+        <div class="row g-3 mt-1" *ngIf="conversionSummary.modelMetrics as metrics">
+          <div class="col-md-6 col-xl-3">
+            <div class="pack-conversion-metric-card">
+              <small>Model Quality</small>
+              <h4>{{ (metrics.rocAuc || 0) | number:'1.2-3' }}</h4>
+              <p>ROC AUC across the evaluation split.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-xl-3">
+            <div class="pack-conversion-metric-card">
+              <small>Accuracy</small>
+              <h4>{{ getConversionRatePercent(metrics.accuracy) | number:'1.0-2' }}%</h4>
+              <p>Classification accuracy on held-out rows.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-xl-3">
+            <div class="pack-conversion-metric-card">
+              <small>Training Rows</small>
+              <h4>{{ metrics.trainingRows | number:'1.0-0' }}</h4>
+              <p>User-pack behavior rows used to train the model.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-xl-3">
+            <div class="pack-conversion-metric-card">
+              <small>Positive Rate</small>
+              <h4>{{ getConversionRatePercent(metrics.positiveRate) | number:'1.0-2' }}%</h4>
+              <p>Share of purchase outcomes in the generated dataset.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pack-conversion-podium d-none" *ngIf="conversionPodium.length">
+          <article class="pack-conversion-podium-card" *ngFor="let item of conversionPodium; let i = index">
+            <div class="pack-conversion-podium-rank">#{{ item.conversionRank }}</div>
+            <h6>{{ item.title }}</h6>
+            <p>{{ item.categoryName }} • {{ item.level }}</p>
+            <div class="pack-conversion-podium-progress">
+              <div class="pack-conversion-podium-bar" [ngClass]="getConversionBarClass(i)"
+                [style.width.%]="getConversionRateWidth(item.predictedConversionRate)"></div>
+            </div>
+            <div class="pack-conversion-podium-stats">
+              <span>{{ getConversionRatePercent(item.predictedConversionRate) | number:'1.0-2' }}%</span>
+              <span>${{ item.expectedRevenue | number:'1.0-0' }}</span>
+            </div>
+          </article>
+        </div>
+
+        <div class="table-responsive pack-conversion-table-wrap mt-3">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+              <h6 class="mb-1">Leaderboard</h6>
+              <small class="text-muted">The packs your dashboard should spotlight first.</small>
+            </div>
+            <span class="pack-conversion-generated-at">
+              Generated: {{ conversionSummary.generatedAt | date:'dd/MM/yyyy HH:mm' }}
+            </span>
+          </div>
+
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Pack</th>
+                <th>Conversion</th>
+                <th>Revenue</th>
+                <th>Demand</th>
+                <th>Price</th>
+                <th>Discount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="!topConversionPacks.length">
+                <td colspan="7" class="text-center text-muted py-4">No conversion packs available yet.</td>
+              </tr>
+              <tr *ngFor="let item of topConversionPacks; let i = index">
+                <td>
+                  <span class="pack-conversion-rank-chip">#{{ item.conversionRank || i + 1 }}</span>
+                </td>
+                <td class="pack-conversion-pack-cell">
+                  <strong>{{ item.title }}</strong>
+                  <small>{{ item.categoryName }} • {{ item.level }} • {{ item.durationHours }}h</small>
+                </td>
+                <td class="pack-conversion-rate-cell">
+                  <div class="pack-conversion-inline-score">
+                    <strong>{{ getConversionRatePercent(item.predictedConversionRate) | number:'1.0-2' }}%</strong>
+                    <span class="pack-conversion-pill" [ngClass]="getConversionBadgeClass(item.predictedConversionRate)">
+                      {{ getConversionMood(item.predictedConversionRate) }}
+                    </span>
+                  </div>
+                  <div class="pack-conversion-inline-progress">
+                    <div class="pack-conversion-inline-progress-bar"
+                      [ngClass]="getConversionBarClass(i)"
+                      [style.width.%]="getConversionRateWidth(item.predictedConversionRate)"></div>
+                  </div>
+                </td>
+                <td>
+                  <strong>${{ item.expectedRevenue | number:'1.0-0' }}</strong>
+                  <small>{{ item.expectedBuyers | number:'1.0-0' }} expected buyers</small>
+                </td>
+                <td>
+                  <strong>{{ item.marketDemandScore | number:'1.2-3' }}</strong>
+                  <small>{{ item.marketCourseCount }} market matches</small>
+                </td>
+                <td>
+                  <strong>${{ item.salePrice | number:'1.2-2' }}</strong>
+                  <small *ngIf="item.originalPrice && item.originalPrice > (item.salePrice || 0)">
+                    Was ${{ item.originalPrice | number:'1.2-2' }}
+                  </small>
+                </td>
+                <td>
+                  <strong>{{ item.discountPct | number:'1.0-1' }}%</strong>
+                  <small>off</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dynamic Pricing Modal -->
+<div class="pack-pricing-overlay" *ngIf="pricingModalOpen" (click)="closePricingModal()">
+  <div class="pack-pricing-modal-card" role="dialog" aria-modal="true" aria-labelledby="pricingTitle"
+    (click)="$event.stopPropagation()">
+    <div class="pack-pricing-headline">
+      <div class="pack-pricing-title-wrap">
+        <span class="pack-pricing-icon-wrap">
+          <i class="material-icons">sell</i>
+        </span>
+        <div>
+          <h4 id="pricingTitle">Dynamic Pricing AI Window</h4>
+          <p>Best sale price, discount range, and revenue lift recommendations derived from scraper demand signals.</p>
+        </div>
+      </div>
+
+      <div class="pack-pricing-head-actions">
+        <label class="mb-0 d-flex align-items-center gap-2 pack-pricing-limit">
+          <span class="text-muted">Top</span>
+          <input type="number" class="form-control form-control-sm" min="1" max="10" [(ngModel)]="pricingLimit">
+        </label>
+        <button type="button" class="btn btn-sm pack-pricing-refresh" (click)="fetchPricingSummary()"
+          [disabled]="pricingLoading">
+          <i class="material-icons align-middle me-1" style="font-size:16px">refresh</i>Refresh
+        </button>
+        <button type="button" class="btn-close" (click)="closePricingModal()" aria-label="Close"></button>
+      </div>
+    </div>
+
+    <div class="pack-pricing-body">
+      <div *ngIf="pricingLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3 mb-0 text-muted">Reading the latest pricing output...</p>
+      </div>
+
+      <div *ngIf="pricingError" class="alert alert-danger mb-0">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ pricingError }}
+      </div>
+
+      <div *ngIf="!pricingLoading && !pricingError && pricingSummary">
+        <section class="pack-pricing-hero" *ngIf="pricingSummary.champion as champion">
+          <div class="pack-pricing-hero-copy">
+            <span class="pack-pricing-eyebrow">Highest pricing upside</span>
+            <h5>{{ champion.title }}</h5>
+            <p>
+              This pack shows the strongest expected revenue lift when its current offer is replaced
+              with the model's recommended sale price and discount range.
+            </p>
+
+            <div class="pack-pricing-chip-row">
+              <span class="pack-pricing-action-chip" [ngClass]="getPricingActionClass(champion.priceAction)">
+                <i class="material-icons">{{ getPricingActionIcon(champion.priceAction) }}</i>
+                {{ getPricingActionLabel(champion.priceAction) }}
+              </span>
+              <span class="pack-pricing-band-chip" [ngClass]="getPricingBandClass(champion.recommendedBand)">
+                {{ champion.recommendedBand }}
+              </span>
+              <span class="pack-pricing-soft-chip">{{ champion.categoryName }}</span>
+              <span class="pack-pricing-soft-chip">{{ champion.level }}</span>
+              <span class="pack-pricing-soft-chip">{{ champion.primarySkill }}</span>
+            </div>
+          </div>
+
+          <div class="pack-pricing-hero-metrics">
+            <div class="pack-pricing-orb">
+              <strong>{{ champion.revenueLiftPct | number:'1.0-1' }}%</strong>
+              <span>Revenue lift</span>
+            </div>
+            <div class="pack-pricing-hero-stat">
+              <label>Current Price</label>
+              <strong>${{ champion.currentSalePrice | number:'1.2-2' }}</strong>
+            </div>
+            <div class="pack-pricing-hero-stat">
+              <label>Recommended Price</label>
+              <strong>${{ champion.recommendedSalePrice | number:'1.2-2' }}</strong>
+            </div>
+            <div class="pack-pricing-hero-stat">
+              <label>Discount Range</label>
+              <strong>{{ getDiscountRangeLabel(champion.discountRangeMinPct, champion.discountRangeMaxPct) }}</strong>
+            </div>
+            <div class="pack-pricing-hero-stat">
+              <label>Pricing Confidence</label>
+              <strong>{{ getPricingConfidencePercent(champion.pricingConfidence) | number:'1.0-1' }}%</strong>
+            </div>
+          </div>
+        </section>
+
+        <div class="row g-3 mt-1">
+          <div class="col-md-6 col-xl-3" *ngIf="pricingSummary.portfolioSummary as portfolio">
+            <div class="pack-pricing-metric-card">
+              <small>Portfolio Lift</small>
+              <h4>{{ portfolio.revenueUpliftPct | number:'1.0-1' }}%</h4>
+              <p>${{ portfolio.currentExpectedRevenueTotal | number:'1.0-0' }} to ${{ portfolio.recommendedExpectedRevenueTotal | number:'1.0-0' }}</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-xl-3" *ngIf="pricingSummary.portfolioSummary as portfolio">
+            <div class="pack-pricing-metric-card">
+              <small>Action Mix</small>
+              <h4>{{ portfolio.packsToIncreasePrice || 0 }}/{{ portfolio.packsToDecreasePrice || 0 }}/{{ portfolio.packsToHoldPrice || 0 }}</h4>
+              <p>Increase / decrease / hold decisions across packs.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-xl-3" *ngIf="pricingSummary.modelMetrics as metrics">
+            <div class="pack-pricing-metric-card">
+              <small>Model Quality</small>
+              <h4>{{ (metrics.rocAuc || 0) | number:'1.2-3' }}</h4>
+              <p>ROC AUC for the simulated pricing decision model.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-xl-3" *ngIf="pricingSummary.modelMetrics as metrics">
+            <div class="pack-pricing-metric-card">
+              <small>Discount Grid</small>
+              <h4>{{ metrics.discountGridPct.length }}</h4>
+              <p>Candidate discount levels evaluated for every pack.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pack-pricing-story-grid d-none">
+          <article class="pack-pricing-note-card">
+            <div class="pack-pricing-note-icon">
+              <i class="material-icons">psychology</i>
+            </div>
+            <div>
+              <h6>How to read this</h6>
+              <p>{{ pricingSummary.assumption }}</p>
+            </div>
+          </article>
+
+          <article class="pack-pricing-note-card">
+            <div class="pack-pricing-note-icon">
+              <i class="material-icons">dataset</i>
+            </div>
+            <div>
+              <h6>Data sources</h6>
+              <p>Courses file: {{ pricingSummary.coursesFile || 'N/A' }}</p>
+              <p class="mb-0">Trend file: {{ pricingSummary.skillTrendsFile || 'N/A' }}</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="pack-pricing-spotlight d-none" *ngIf="pricingSpotlight.length">
+          <article class="pack-pricing-spotlight-card" *ngFor="let item of pricingSpotlight">
+            <div class="pack-pricing-spotlight-top">
+              <span class="pack-pricing-rank-chip">#{{ item.pricingRank }}</span>
+              <span class="pack-pricing-action-chip" [ngClass]="getPricingActionClass(item.priceAction)">
+                <i class="material-icons">{{ getPricingActionIcon(item.priceAction) }}</i>
+                {{ getPricingActionLabel(item.priceAction) }}
+              </span>
+            </div>
+            <h6>{{ item.title }}</h6>
+            <p>{{ item.categoryName }} • {{ item.level }} • {{ item.recommendedBand }}</p>
+            <div class="pack-pricing-spotlight-prices">
+              <div>
+                <label>Current</label>
+                <strong>${{ item.currentSalePrice | number:'1.2-2' }}</strong>
+              </div>
+              <i class="material-icons">arrow_forward</i>
+              <div>
+                <label>Recommended</label>
+                <strong>${{ item.recommendedSalePrice | number:'1.2-2' }}</strong>
+              </div>
+            </div>
+            <div class="pack-pricing-spotlight-stats">
+              <span [ngClass]="getPricingLiftClass(item.revenueLiftPct)">
+                {{ item.revenueLiftPct | number:'1.0-1' }}% revenue
+              </span>
+              <span>{{ getPricingConfidencePercent(item.pricingConfidence) | number:'1.0-1' }}% confidence</span>
+            </div>
+          </article>
+        </div>
+
+        <div class="table-responsive pack-pricing-table-wrap mt-3">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+              <h6 class="mb-1">Recommended Price Table</h6>
+              <small class="text-muted">Current offer, recommended offer, and the revenue upside your admins should act on.</small>
+            </div>
+            <span class="pack-pricing-generated-at">
+              Generated: {{ pricingSummary.generatedAt | date:'dd/MM/yyyy HH:mm' }}
+            </span>
+          </div>
+
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Pack</th>
+                <th>Action</th>
+                <th>Current</th>
+                <th>Recommended</th>
+                <th>Discount Range</th>
+                <th>Revenue Lift</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="!topPricingRecommendations.length">
+                <td colspan="8" class="text-center text-muted py-4">No pricing recommendations available yet.</td>
+              </tr>
+              <tr *ngFor="let item of topPricingRecommendations">
+                <td>
+                  <span class="pack-pricing-rank-chip">#{{ item.pricingRank }}</span>
+                </td>
+                <td class="pack-pricing-pack-cell">
+                  <strong>{{ item.title }}</strong>
+                  <small>{{ item.categoryName }} • {{ item.level }} • {{ item.scenarioCount }} scenarios</small>
+                </td>
+                <td>
+                  <span class="pack-pricing-action-chip" [ngClass]="getPricingActionClass(item.priceAction)">
+                    <i class="material-icons">{{ getPricingActionIcon(item.priceAction) }}</i>
+                    {{ getPricingActionLabel(item.priceAction) }}
+                  </span>
+                </td>
+                <td>
+                  <strong>${{ item.currentSalePrice | number:'1.2-2' }}</strong>
+                  <small>{{ item.currentDiscountPct | number:'1.0-1' }}% off</small>
+                </td>
+                <td>
+                  <strong>${{ item.recommendedSalePrice | number:'1.2-2' }}</strong>
+                  <small [ngClass]="getPricingLiftClass(getPriceDelta(item.currentSalePrice, item.recommendedSalePrice))">
+                    {{ getPriceDelta(item.currentSalePrice, item.recommendedSalePrice) > 0 ? '+' : '' }}${{ getPriceDelta(item.currentSalePrice, item.recommendedSalePrice) | number:'1.2-2' }}
+                  </small>
+                </td>
+                <td>
+                  <span class="pack-pricing-band-chip" [ngClass]="getPricingBandClass(item.recommendedBand)">
+                    {{ getDiscountRangeLabel(item.discountRangeMinPct, item.discountRangeMaxPct) }}
+                  </span>
+                  <small>{{ item.recommendedBand }}</small>
+                </td>
+                <td>
+                  <strong [ngClass]="getPricingLiftClass(item.revenueLiftPct)">{{ item.revenueLiftPct | number:'1.0-1' }}%</strong>
+                  <small>${{ item.baselineExpectedRevenue | number:'1.0-0' }} → ${{ item.recommendedExpectedRevenue | number:'1.0-0' }}</small>
+                </td>
+                <td>
+                  <span class="pack-pricing-confidence-chip" [ngClass]="getPricingConfidenceClass(item.pricingConfidence)">
+                    {{ getPricingConfidencePercent(item.pricingConfidence) | number:'1.0-1' }}%
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

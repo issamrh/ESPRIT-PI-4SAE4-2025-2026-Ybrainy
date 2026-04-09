@@ -35,6 +35,16 @@ public class UserController {
     private final AuthorizationHelper authorizationHelper;
     private final AvatarStorageService avatarStorageService;
 
+    /** Internal service-to-service lookup — no JWT required. Gateway permits this path. */
+    @GetMapping("/internal/{id}")
+    public ResponseEntity<UserDto> getUserByIdInternal(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(userService.getUserById(id));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get user by ID", description = "Retrieves a user by their ID")
     @PreAuthorize("hasRole('ADMIN') or @authz.isSelfUserId(authentication, #id)")

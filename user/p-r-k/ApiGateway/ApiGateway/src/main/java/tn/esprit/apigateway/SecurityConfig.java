@@ -36,6 +36,8 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.POST, "/api/courses/*/lessons/*/complete").permitAll()
                         .pathMatchers(HttpMethod.PATCH, "/api/courses/*/lessons/*/time").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/certificates/student/**").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/students/**").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/users/internal/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/ml/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/quizzes/**").permitAll()
                         .pathMatchers(HttpMethod.POST, "/api/quizzes/**").permitAll()

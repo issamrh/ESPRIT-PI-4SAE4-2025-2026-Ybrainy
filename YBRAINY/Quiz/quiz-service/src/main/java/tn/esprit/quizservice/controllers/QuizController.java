@@ -145,6 +145,22 @@ public class QuizController {
         ));
     }
 
+    @GetMapping("/best-score")
+    public ResponseEntity<?> getBestScore(
+            @RequestParam Long studentId,
+            @RequestParam Long courseId) {
+        try {
+            Double best = quizService.getBestScoreForStudentAndCourse(studentId, courseId);
+            return ResponseEntity.ok(Map.of(
+                    "studentId", studentId,
+                    "courseId", courseId,
+                    "bestScore", best != null ? best : 0.0
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.ok(Map.of("bestScore", 0.0));
+        }
+    }
+
     @GetMapping("/student/{studentId}/avg-score")
     public ResponseEntity<Map<String, Double>> getStudentAvgScore(@PathVariable Long studentId) {
         List<QuizAttempt> attempts = attemptRepository.findAll().stream()

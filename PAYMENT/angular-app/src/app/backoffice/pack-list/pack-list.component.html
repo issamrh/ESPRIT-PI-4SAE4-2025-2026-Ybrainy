@@ -285,6 +285,9 @@
                 <button type="button" class="btn btn-outline-warning btn-sm me-2" (click)="openRecommendationsModal()">
                   <i class="material-icons align-middle me-1" style="font-size:18px">auto_awesome</i>Recommendations
                 </button>
+                <button type="button" class="btn btn-sm pack-conversion-trigger me-2" (click)="openConversionModal()">
+                  <i class="material-icons align-middle me-1" style="font-size:18px">insights</i>Conversion AI
+                </button>
                 <a routerLink="/dashboard/packsorder" class="btn btn-outline-info btn-sm me-2">
                   <i class="material-icons align-middle me-1" style="font-size:18px">receipt_long</i>Order
                 </a>
@@ -463,8 +466,8 @@
           <i class="material-icons">auto_awesome</i>
         </span>
         <div>
-          <h4 id="recommendationsTitle">Recommended Products To Sell</h4>
-          <p>AI recommendations from scraper output to improve platform performance.</p>
+          <h4 id="recommendationsTitle">Financial Forecast Recommendations</h4>
+          <p>AI recommendations trained from forecasting outputs to keep profit and margin positive.</p>
         </div>
       </div>
       <button type="button" class="btn-close" (click)="closeRecommendationsModal()" aria-label="Close"></button>
@@ -504,25 +507,89 @@
           </span>
         </div>
 
+        <div class="pack-reco-actions mt-3" *ngIf="recommendationsSummary.topRecommendations?.length">
+          <h6 class="mb-2">Recommended Actions</h6>
+          <div class="pack-reco-action-list">
+            <div class="pack-reco-action-item" *ngFor="let rec of recommendationsSummary.topRecommendations">
+              <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-1">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="badge badge-sm bg-primary">#{{ rec.recommendationRank }}</span>
+                  <span class="badge badge-sm" [ngClass]="getPriorityBadgeClass(rec.priority)">{{ rec.priority || 'MEDIUM' }}</span>
+                  <strong>{{ rec.month }} - {{ rec.title }}</strong>
+                </div>
+                <small class="text-primary">Target: {{ rec.targetMetric }}</small>
+              </div>
+              <p class="mb-1 text-muted"><strong>Why:</strong> {{ rec.recommendationReason }}</p>
+              <p class="mb-1 text-muted"><strong>What to do:</strong> {{ rec.how }}</p>
+              <p class="mb-1 text-muted"><strong>Expected outcome:</strong> {{ rec.expectedOutcome }}</p>
+              <small class="text-success"><strong>Success signal:</strong> {{ rec.successSignal }}</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="row g-3 mt-1" *ngIf="recommendationsSummary.executiveMetrics?.length">
+          <div class="col-md-6 col-xl-4" *ngFor="let metric of recommendationsSummary.executiveMetrics">
+            <div class="card h-100 border-0 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                  <small class="text-uppercase text-muted">{{ metric.metric }}</small>
+                  <span class="badge badge-sm" [ngClass]="getPriorityBadgeClass(metric.status)">{{ metric.status }}</span>
+                </div>
+                <h5 class="mb-2">{{ metric.value }}</h5>
+                <p class="mb-0 text-muted small">{{ metric.notes }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mt-3" *ngIf="recommendationsSummary.topRecommendations?.length">
+          <div class="card-body">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+              <h6 class="mb-0">Recommendation Impact Path</h6>
+              <small class="text-muted">How each recommendation changes the forecast margin for its month</small>
+            </div>
+            <div class="mb-3" *ngFor="let rec of recommendationsSummary.topRecommendations">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+                <strong>{{ rec.month }}</strong>
+                <small class="text-muted">
+                  {{ rec.marginBefore | number:'1.0-2' }}% -> {{ rec.marginAfter | number:'1.0-2' }}%
+                </small>
+              </div>
+              <div class="progress mb-1" style="height: 10px;">
+                <div class="progress-bar bg-warning" role="progressbar" [style.width.%]="rec.marginBefore"></div>
+              </div>
+              <div class="progress" style="height: 10px;">
+                <div class="progress-bar bg-success" role="progressbar" [style.width.%]="rec.marginAfter"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="table-responsive pack-reco-table-wrap mt-3">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+            <h6 class="mb-0">Recommendation Evidence</h6>
+            <small class="text-muted">Supporting scores behind each recommended action</small>
+          </div>
           <table class="table table-sm mb-0">
             <thead>
               <tr>
                 <th>#</th>
-                <th>Product / Course</th>
-                <th>Skill</th>
+                <th>Month</th>
+                <th>Recommendation</th>
+                <th>Focus Area</th>
                 <th>Score</th>
                 <th>Confidence</th>
                 <th>Impact</th>
-                <th>Link</th>
+                <th>Projected Profit</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngIf="!recommendationsSummary.topRecommendations?.length">
-                <td colspan="7" class="text-center text-muted py-3">No recommendations available.</td>
+                <td colspan="8" class="text-center text-muted py-3">No recommendations available.</td>
               </tr>
               <tr *ngFor="let rec of recommendationsSummary.topRecommendations">
                 <td><strong>{{ rec.recommendationRank }}</strong></td>
+                <td>{{ rec.month || 'N/A' }}</td>
                 <td class="pack-reco-title-cell">{{ rec.title }}</td>
                 <td>{{ rec.skillCategory }}</td>
                 <td>{{ rec.hybridFinalScore | number:'1.3-3' }}</td>
@@ -537,9 +604,8 @@
                   </span>
                 </td>
                 <td>
-                  <a *ngIf="rec.url" [href]="rec.url" target="_blank" rel="noopener" class="btn btn-xs btn-outline-primary">
-                    Open
-                  </a>
+                  <span *ngIf="rec.profitAfter != null">${{ rec.profitAfter | number:'1.0-0' }}</span>
+                  <span *ngIf="rec.profitAfter == null" class="text-muted">N/A</span>
                 </td>
               </tr>
             </tbody>
@@ -547,7 +613,7 @@
         </div>
 
         <div class="pack-reco-actions mt-3">
-          <h6 class="mb-2">Improvement Actions</h6>
+          <h6 class="mb-2">Recommendation Summary</h6>
           <div class="pack-reco-action-list">
             <div class="pack-reco-action-item" *ngFor="let action of recommendationsSummary.improvementActions">
               <div class="d-flex align-items-center gap-2 mb-1">
@@ -560,6 +626,249 @@
               <small class="text-primary">Target: {{ action.targetMetric }}</small>
             </div>
           </div>
+        </div>
+
+        <div class="pack-reco-actions mt-3" *ngIf="recommendationsSummary.userPlaybook?.length">
+          <h6 class="mb-2">Follow This Playbook</h6>
+          <div class="pack-reco-action-list">
+            <div class="pack-reco-action-item" *ngFor="let step of recommendationsSummary.userPlaybook">
+              <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-1">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge badge-sm bg-primary">Step {{ step.step }}</span>
+                  <span class="badge badge-sm" [ngClass]="getPriorityBadgeClass(step.priority)">{{ step.priority }}</span>
+                  <strong>{{ step.window }} - {{ step.action }}</strong>
+                </div>
+                <small class="text-primary">Target: {{ step.targetMetric }}</small>
+              </div>
+              <p class="mb-1 text-muted"><strong>Why:</strong> {{ step.why }}</p>
+              <p class="mb-1 text-muted"><strong>How:</strong> {{ step.how }}</p>
+              <p class="mb-1 text-muted"><strong>Expected impact:</strong> {{ step.expectedImpact }}</p>
+              <small class="text-success"><strong>Success signal:</strong> {{ step.successSignal }}</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Conversion Score Modal -->
+<div class="pack-conversion-overlay" *ngIf="conversionModalOpen" (click)="closeConversionModal()">
+  <div class="pack-conversion-modal-card" role="dialog" aria-modal="true" aria-labelledby="conversionTitle"
+    (click)="$event.stopPropagation()">
+    <div class="pack-conversion-headline">
+      <div class="pack-conversion-title-wrap">
+        <span class="pack-conversion-icon-wrap">
+          <i class="material-icons">show_chart</i>
+        </span>
+        <div>
+          <h4 id="conversionTitle">Pack Conversion AI Window</h4>
+          <p>Purchase probability signals blended from pack pricing, learner behavior, and scraper market demand.</p>
+        </div>
+      </div>
+
+      <div class="pack-conversion-head-actions">
+        <label class="mb-0 d-flex align-items-center gap-2 pack-conversion-limit">
+          <span class="text-muted">Top</span>
+          <input type="number" class="form-control form-control-sm" min="1" max="10" [(ngModel)]="conversionLimit">
+        </label>
+        <button type="button" class="btn btn-sm pack-conversion-refresh" (click)="fetchConversionSummary()"
+          [disabled]="conversionLoading">
+          <i class="material-icons align-middle me-1" style="font-size:16px">refresh</i>Refresh
+        </button>
+        <button type="button" class="btn-close" (click)="closeConversionModal()" aria-label="Close"></button>
+      </div>
+    </div>
+
+    <div class="pack-conversion-body">
+      <div *ngIf="conversionLoading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3 mb-0 text-muted">Reading the latest conversion output...</p>
+      </div>
+
+      <div *ngIf="conversionError" class="alert alert-danger mb-0">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ conversionError }}
+      </div>
+
+      <div *ngIf="!conversionLoading && !conversionError && conversionSummary">
+        <section class="pack-conversion-hero" *ngIf="conversionSummary.champion as champion">
+          <div class="pack-conversion-hero-copy">
+            <span class="pack-conversion-eyebrow">Best current opportunity</span>
+            <h5>{{ champion.title }}</h5>
+            <p>
+              This pack is the current leader by predicted conversion, combining market demand,
+              price fit, discount strength, and synthetic behavior signals.
+            </p>
+
+            <div class="pack-conversion-chip-row">
+              <span class="pack-conversion-pill" [ngClass]="getConversionBadgeClass(champion.predictedConversionRate)">
+                {{ getConversionMood(champion.predictedConversionRate) }}
+              </span>
+              <span class="pack-conversion-soft-chip">{{ champion.categoryName }}</span>
+              <span class="pack-conversion-soft-chip">{{ champion.level }}</span>
+              <span class="pack-conversion-soft-chip">{{ champion.primarySkill }}</span>
+            </div>
+          </div>
+
+          <div class="pack-conversion-hero-metrics">
+            <div class="pack-conversion-score-orb">
+              <strong>{{ getConversionRatePercent(champion.predictedConversionRate) | number:'1.0-2' }}%</strong>
+              <span>Purchase probability</span>
+            </div>
+            <div class="pack-conversion-hero-stat">
+              <label>Expected Revenue</label>
+              <strong>${{ champion.expectedRevenue | number:'1.0-0' }}</strong>
+            </div>
+            <div class="pack-conversion-hero-stat">
+              <label>Demand Score</label>
+              <strong>{{ champion.marketDemandScore | number:'1.2-3' }}</strong>
+            </div>
+            <div class="pack-conversion-hero-stat">
+              <label>Discount</label>
+              <strong>{{ champion.discountPct | number:'1.0-1' }}%</strong>
+            </div>
+          </div>
+        </section>
+
+        <div class="row g-3 mt-1" *ngIf="conversionSummary.modelMetrics as metrics">
+          <div class="col-md-6 col-xl-3">
+            <div class="pack-conversion-metric-card">
+              <small>Model Quality</small>
+              <h4>{{ (metrics.rocAuc || 0) | number:'1.2-3' }}</h4>
+              <p>ROC AUC across the evaluation split.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-xl-3">
+            <div class="pack-conversion-metric-card">
+              <small>Accuracy</small>
+              <h4>{{ getConversionRatePercent(metrics.accuracy) | number:'1.0-2' }}%</h4>
+              <p>Classification accuracy on held-out rows.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-xl-3">
+            <div class="pack-conversion-metric-card">
+              <small>Training Rows</small>
+              <h4>{{ metrics.trainingRows | number:'1.0-0' }}</h4>
+              <p>User-pack behavior rows used to train the model.</p>
+            </div>
+          </div>
+          <div class="col-md-6 col-xl-3">
+            <div class="pack-conversion-metric-card">
+              <small>Positive Rate</small>
+              <h4>{{ getConversionRatePercent(metrics.positiveRate) | number:'1.0-2' }}%</h4>
+              <p>Share of purchase outcomes in the generated dataset.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="pack-conversion-story-grid">
+          <article class="pack-conversion-note-card">
+            <div class="pack-conversion-note-icon">
+              <i class="material-icons">psychology</i>
+            </div>
+            <div>
+              <h6>What this output means</h6>
+              <p>{{ conversionSummary.assumption }}</p>
+            </div>
+          </article>
+
+          <article class="pack-conversion-note-card">
+            <div class="pack-conversion-note-icon">
+              <i class="material-icons">database</i>
+            </div>
+            <div>
+              <h6>Data sources</h6>
+              <p>Courses file: {{ conversionSummary.coursesFile || 'N/A' }}</p>
+              <p class="mb-0">Trend file: {{ conversionSummary.skillTrendsFile || 'N/A' }}</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="pack-conversion-podium" *ngIf="conversionPodium.length">
+          <article class="pack-conversion-podium-card" *ngFor="let item of conversionPodium; let i = index">
+            <div class="pack-conversion-podium-rank">#{{ item.conversionRank }}</div>
+            <h6>{{ item.title }}</h6>
+            <p>{{ item.categoryName }} • {{ item.level }}</p>
+            <div class="pack-conversion-podium-progress">
+              <div class="pack-conversion-podium-bar" [ngClass]="getConversionBarClass(i)"
+                [style.width.%]="getConversionRateWidth(item.predictedConversionRate)"></div>
+            </div>
+            <div class="pack-conversion-podium-stats">
+              <span>{{ getConversionRatePercent(item.predictedConversionRate) | number:'1.0-2' }}%</span>
+              <span>${{ item.expectedRevenue | number:'1.0-0' }}</span>
+            </div>
+          </article>
+        </div>
+
+        <div class="table-responsive pack-conversion-table-wrap mt-3">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+              <h6 class="mb-1">Leaderboard</h6>
+              <small class="text-muted">The packs your dashboard should spotlight first.</small>
+            </div>
+            <span class="pack-conversion-generated-at">
+              Generated: {{ conversionSummary.generatedAt | date:'dd/MM/yyyy HH:mm' }}
+            </span>
+          </div>
+
+          <table class="table align-middle mb-0">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Pack</th>
+                <th>Conversion</th>
+                <th>Revenue</th>
+                <th>Demand</th>
+                <th>Price</th>
+                <th>Discount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="!topConversionPacks.length">
+                <td colspan="7" class="text-center text-muted py-4">No conversion packs available yet.</td>
+              </tr>
+              <tr *ngFor="let item of topConversionPacks; let i = index">
+                <td>
+                  <span class="pack-conversion-rank-chip">#{{ item.conversionRank || i + 1 }}</span>
+                </td>
+                <td class="pack-conversion-pack-cell">
+                  <strong>{{ item.title }}</strong>
+                  <small>{{ item.categoryName }} • {{ item.level }} • {{ item.durationHours }}h</small>
+                </td>
+                <td class="pack-conversion-rate-cell">
+                  <div class="pack-conversion-inline-score">
+                    <strong>{{ getConversionRatePercent(item.predictedConversionRate) | number:'1.0-2' }}%</strong>
+                    <span class="pack-conversion-pill" [ngClass]="getConversionBadgeClass(item.predictedConversionRate)">
+                      {{ getConversionMood(item.predictedConversionRate) }}
+                    </span>
+                  </div>
+                  <div class="pack-conversion-inline-progress">
+                    <div class="pack-conversion-inline-progress-bar"
+                      [ngClass]="getConversionBarClass(i)"
+                      [style.width.%]="getConversionRateWidth(item.predictedConversionRate)"></div>
+                  </div>
+                </td>
+                <td>
+                  <strong>${{ item.expectedRevenue | number:'1.0-0' }}</strong>
+                  <small>{{ item.expectedBuyers | number:'1.0-0' }} expected buyers</small>
+                </td>
+                <td>
+                  <strong>{{ item.marketDemandScore | number:'1.2-3' }}</strong>
+                  <small>{{ item.marketCourseCount }} market matches</small>
+                </td>
+                <td>
+                  <strong>${{ item.salePrice | number:'1.2-2' }}</strong>
+                  <small *ngIf="item.originalPrice && item.originalPrice > (item.salePrice || 0)">
+                    Was ${{ item.originalPrice | number:'1.2-2' }}
+                  </small>
+                </td>
+                <td>
+                  <strong>{{ item.discountPct | number:'1.0-1' }}%</strong>
+                  <small>off</small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

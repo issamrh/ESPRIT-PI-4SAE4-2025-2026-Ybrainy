@@ -34,6 +34,11 @@
                 "glob": "**/*",
                 "input": "../../../payment/forcasting/outputs",
                 "output": "/assets/forecasting"
+              },
+              {
+                "glob": "**/*",
+                "input": "../../../payment/forcasting recommendations/outputs",
+                "output": "/assets/forecasting-recommendations"
               }
             ],
             "styles": [
@@ -122,6 +127,11 @@
                 "glob": "**/*",
                 "input": "../../../payment/forcasting/outputs",
                 "output": "/assets/forecasting"
+              },
+              {
+                "glob": "**/*",
+                "input": "../../../payment/forcasting recommendations/outputs",
+                "output": "/assets/forecasting-recommendations"
               }
             ],
             "styles": [

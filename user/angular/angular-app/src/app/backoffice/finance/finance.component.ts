@@ -5,7 +5,11 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { firstValueFrom } from 'rxjs';
 import { FinanceService } from '../../services/finance.service';
 import { ExportService } from '../../services/export.service';
+import { RecommendationService } from '../../services/recommendation.service';
+import { FinanceScenarioService } from '../../services/finance-scenario.service';
 import { Income, Expense, ExpenseCategory, ExpenseStatus, TwelveDataQuote, TwelveDataTimeSeries } from '../../models/finance.model';
+import { RecommendationSummary } from '../../models/recommendation.model';
+import { FinanceScenarioRanking, FinanceScenarioSummary } from '../../models/finance-scenario.model';
 import { RuntimePageStyleService } from '../runtime-page-style.service';
 
 interface ForecastSnapshot {
@@ -137,6 +141,35 @@ interface FinanceInsightSnapshot {
     slices: FinanceInsightSlice[];
 }
 
+interface RecommendationQuickStat {
+    label: string;
+    value: string;
+    detail: string;
+    tone: 'success' | 'warning' | 'danger' | 'neutral';
+}
+
+interface ScenarioProjectionBreakdown {
+    label: string;
+    amount: number;
+    share: number;
+    hint: string;
+}
+
+interface ScenarioProjectionSnapshot {
+    projectedIncome: number;
+    projectedExpenses: number;
+    projectedProfit: number;
+    projectedMargin: number;
+    incomeDelta: number;
+    expenseDelta: number;
+    profitDelta: number;
+    marginDeltaPts: number;
+    riskLevel: string;
+    healthScore: number;
+    narrative: string;
+    categoryBreakdown: ScenarioProjectionBreakdown[];
+}
+
 @Component({
     selector: 'app-finance',
     standalone: true,
@@ -174,6 +207,7 @@ export class FinanceComponent implements OnInit, AfterViewInit, OnDestroy {
 
     incomeForm: FormGroup;
     expenseForm: FormGroup;
+    scenarioForm: FormGroup;
 
     expenseCategories = Object.values(ExpenseCategory);
     expenseStatuses = Object.values(ExpenseStatus);
@@ -262,6 +296,41 @@ export class FinanceComponent implements OnInit, AfterViewInit, OnDestroy {
     forecastRevenueMix: ForecastRevenueMixRow[] = [];
     forecastLowReliabilityModels: ForecastModelScore[] = [];
 
+    // Recommendation window state
+    readonly recommendationAssetBase = 'assets/forecasting-recommendations';
+    readonly recommendationCharts: ForecastImageCard[] = [
+        {
+            title: 'Margin Before vs After',
+            fileName: 'financial_recommendation_margin_path.png',
+            helper: 'Shows how the recommended actions improve monthly margin across the forecast horizon.'
+        },
+        {
+            title: 'Projected Profit Uplift',
+            fileName: 'financial_recommendation_profit_uplift.png',
+            helper: 'Highlights the months where following the plan can lift profit the most.'
+        },
+        {
+            title: 'Urgency by Month',
+            fileName: 'financial_recommendation_urgency.png',
+            helper: 'Helps admins see which months need the fastest decisions.'
+        }
+    ];
+    showRecommendationModal = false;
+    recommendationLoading = false;
+    recommendationError: string | null = null;
+    recommendationSummary: RecommendationSummary | null = null;
+    recommendationLimit = 6;
+    recommendationQuickStats: RecommendationQuickStat[] = [];
+    recommendationAdminChecklist: string[] = [];
+
+    // Scenario simulator window state
+    showScenarioModal = false;
+    scenarioLoading = false;
+    scenarioError: string | null = null;
+    scenarioSummary: FinanceScenarioSummary | null = null;
+    scenarioQuickStats: RecommendationQuickStat[] = [];
+    customScenarioProjection: ScenarioProjectionSnapshot | null = null;
+
     // Finance insight modal state
     readonly financeInsightColors = ['#2563eb', '#8b5cf6', '#0ea5e9', '#22c55e', '#f97316', '#e11d48', '#facc15', '#14b8a6'];
     showInsightModal = false;
@@ -273,6 +342,8 @@ export class FinanceComponent implements OnInit, AfterViewInit, OnDestroy {
     constructor(
         private http: HttpClient,
         private financeService: FinanceService,
+        private recommendationService: RecommendationService,
+        private financeScenarioService: FinanceScenarioService,
         private exportService: ExportService,
         private fb: FormBuilder,
         private pageStyles: RuntimePageStyleService
@@ -296,6 +367,20 @@ export class FinanceComponent implements OnInit, AfterViewInit, OnDestroy {
             status: [ExpenseStatus.PENDING, Validators.required],
             expenseDate: [new Date().toISOString().slice(0, 16), Validators.required]
         });
+
+        this.scenarioForm = this.fb.group({
+            baselineIncome: [253441.97, [Validators.required, Validators.min(1)]],
+            baselineExpenses: [184857.66, [Validators.required, Validators.min(0)]],
+            marketingBudgetChangePct: [10, [Validators.required, Validators.min(-10), Validators.max(25)]],
+            dynamicPricingRolloutPct: [70, [Validators.required, Validators.min(0), Validators.max(100)]],
+            newPackLaunches: [3, [Validators.required, Validators.min(0), Validators.max(4)]],
+            costControlPct: [2, [Validators.required, Validators.min(0), Validators.max(12)]],
+            salaryOptimizationPct: [1, [Validators.required, Validators.min(0), Validators.max(8)]],
+            marketDemandShockPct: [8, [Validators.required, Validators.min(-12), Validators.max(18)]],
+            supportAutomationPct: [4, [Validators.required, Validators.min(0), Validators.max(10)]],
+            focusTopMarketPct: [12, [Validators.required, Validators.min(0), Validators.max(12)]]
+        });
+        this.scenarioForm.valueChanges.subscribe(() => this.updateCustomScenarioProjection());
 
         this.twelveDataForm = this.fb.group({
             symbol: ['AAPL', [Validators.required, Validators.minLength(1), Validators.maxLength(20)]],
@@ -646,6 +731,12 @@ export class FinanceComponent implements OnInit, AfterViewInit, OnDestroy {
         if (this.showForecastModal) {
             this.closeForecastModal();
         }
+        if (this.showRecommendationModal) {
+            this.closeRecommendationModal();
+        }
+        if (this.showScenarioModal) {
+            this.closeScenarioModal();
+        }
         if (this.showTwelveDataModal) {
             this.closeTwelveDataModal();
         }
@@ -890,6 +981,16 @@ export class FinanceComponent implements OnInit, AfterViewInit, OnDestroy {
         void this.loadForecastingOutputs();
     }
 
+    openRecommendationModal(): void {
+        this.showRecommendationModal = true;
+        void this.loadRecommendationOutputs();
+    }
+
+    openScenarioModal(): void {
+        this.showScenarioModal = true;
+        void this.loadScenarioOutputs();
+    }
+
     openIncomeSourceStats(): void {
         this.financeInsight = this.buildInsightSnapshot(this.filteredIncomes, {
             title: 'Income Source Type Statistics',
@@ -922,16 +1023,40 @@ export class FinanceComponent implements OnInit, AfterViewInit, OnDestroy {
         void this.loadForecastingOutputs();
     }
 
+    refreshRecommendations(): void {
+        void this.loadRecommendationOutputs();
+    }
+
+    refreshScenarioSimulator(): void {
+        void this.loadScenarioOutputs();
+    }
+
     closeForecastModal(): void {
         this.showForecastModal = false;
+    }
+
+    closeRecommendationModal(): void {
+        this.showRecommendationModal = false;
+    }
+
+    closeScenarioModal(): void {
+        this.showScenarioModal = false;
     }
 
     openForecastAsset(fileName: string): void {
         window.open(this.forecastAssetUrl(fileName), '_blank', 'noopener');
     }
 
+    openRecommendationAsset(fileName: string): void {
+        window.open(this.recommendationAssetUrl(fileName), '_blank', 'noopener');
+    }
+
     forecastAssetUrl(fileName: string): string {
         return `${this.forecastAssetBase}/${fileName}`;
+    }
+
+    recommendationAssetUrl(fileName: string): string {
+        return `${this.recommendationAssetBase}/${fileName}`;
     }
 
     formatForecastMonth(month: string): string {
@@ -979,6 +1104,499 @@ export class FinanceComponent implements OnInit, AfterViewInit, OnDestroy {
 
     getForecastActionClass(tone: ForecastActionCard['tone']): string {
         return `forecast-action-card forecast-action-card--${tone}`;
+    }
+
+    getRecommendationPriorityClass(priority: string | null | undefined): string {
+        const value = (priority || '').toUpperCase();
+        if (value === 'HIGH') {
+            return 'forecast-pill forecast-pill--danger';
+        }
+        if (value === 'MEDIUM') {
+            return 'forecast-pill forecast-pill--warning';
+        }
+        return 'forecast-pill forecast-pill--success';
+    }
+
+    getRecommendationImpactClass(impact: string | null | undefined): string {
+        const value = (impact || '').toUpperCase();
+        if (value === 'IMMEDIATE') {
+            return 'forecast-pill forecast-pill--danger';
+        }
+        if (value === 'STRONG') {
+            return 'forecast-pill forecast-pill--warning';
+        }
+        return 'forecast-pill forecast-pill--success';
+    }
+
+    getRecommendationStatCardClass(tone: RecommendationQuickStat['tone']): string {
+        return `recommendation-summary-card recommendation-summary-card--${tone}`;
+    }
+
+    getRecommendationHeadline(summary: RecommendationSummary): string {
+        const topRecommendation = summary.topRecommendations[0];
+        if (!topRecommendation?.title) {
+            return 'Use the recommendations below to protect positive financial outcomes.';
+        }
+
+        const actionMonth = topRecommendation.month ? this.formatForecastMonth(topRecommendation.month) : 'the next forecast month';
+        const marginDelta = this.getRecommendationMarginDelta(topRecommendation);
+
+        if (marginDelta != null) {
+            return `${actionMonth}: ${topRecommendation.title} can improve margin by ${marginDelta.toFixed(2)} pts.`;
+        }
+
+        return `${actionMonth}: ${topRecommendation.title} is the first move to keep the outlook positive.`;
+    }
+
+    getRecommendationSupportText(summary: RecommendationSummary): string {
+        const revenueDriver = summary.forecastContext?.topRevenueSource
+            ? this.humanizeForecastLabel(summary.forecastContext.topRevenueSource)
+            : 'the strongest revenue stream';
+        const watchCategory = summary.forecastContext?.watchCategory
+            ? this.humanizeForecastLabel(summary.forecastContext.watchCategory)
+            : 'the highest-risk cost category';
+
+        return `This view tells admins where to act first, which cost area to watch, and what numbers should improve if the recommendation is followed. Keep ${revenueDriver} growing while closely reviewing ${watchCategory}.`;
+    }
+
+    getRecommendationProfitDelta(rec: RecommendationSummary['topRecommendations'][number]): number | null {
+        if (rec.profitBefore == null || rec.profitAfter == null) {
+            return null;
+        }
+        return rec.profitAfter - rec.profitBefore;
+    }
+
+    getRecommendationMarginDelta(rec: RecommendationSummary['topRecommendations'][number]): number | null {
+        if (rec.marginBefore == null || rec.marginAfter == null) {
+            return null;
+        }
+        return rec.marginAfter - rec.marginBefore;
+    }
+
+    getRecommendationTargetMetricLabel(metric: string | null | undefined): string {
+        if (!metric) {
+            return 'core finance KPI';
+        }
+        return this.humanizeForecastLabel(metric);
+    }
+
+    getRecommendationWindowLabel(summary: RecommendationSummary): string {
+        const horizon = summary.forecastContext?.forecastHorizon;
+        if (!horizon?.from || !horizon?.to) {
+            return 'Current forecast cycle';
+        }
+
+        return `${this.formatForecastMonth(horizon.from)} to ${this.formatForecastMonth(horizon.to)}`;
+    }
+
+    getScenarioHeadline(summary: FinanceScenarioSummary): string {
+        const recommended = summary.recommendedScenario;
+        if (!recommended?.scenarioName) {
+            return 'Compare finance scenarios before committing budget decisions.';
+        }
+
+        const profitUplift = `${recommended.profitUpliftPct > 0 ? '+' : ''}${recommended.profitUpliftPct.toFixed(2)}%`;
+        return `${recommended.scenarioName} is the strongest path right now, with ${profitUplift} projected profit uplift over the baseline.`;
+    }
+
+    getScenarioSupportText(summary: FinanceScenarioSummary): string {
+        const topSkill = summary.marketSummary?.topSkillCategory
+            ? this.humanizeForecastLabel(summary.marketSummary.topSkillCategory)
+            : 'your strongest market';
+        const watchCategory = summary.recommendationContext?.watchCategory
+            ? this.humanizeForecastLabel(summary.recommendationContext.watchCategory)
+            : 'your highest-risk cost category';
+
+        return `Use this simulator to compare growth and defense plans, anchor decisions to ${topSkill}, and keep a close watch on ${watchCategory}.`;
+    }
+
+    getScenarioProfitDelta(row: FinanceScenarioRanking): number {
+        return row.projectedProfitTotal - (this.scenarioSummary?.baselineSummary?.baselineProfitTotal || 0);
+    }
+
+    getScenarioMonthlyProfitDelta(row: { baselineProfit: number; projectedProfit: number }): number {
+        return row.projectedProfit - row.baselineProfit;
+    }
+
+    getScenarioMarginDelta(row: FinanceScenarioRanking): number {
+        return row.projectedMarginPct - (this.scenarioSummary?.baselineSummary?.baselineMarginAvg || 0);
+    }
+
+    applyRecommendedScenarioPreset(): void {
+        if (!this.scenarioSummary) {
+            return;
+        }
+
+        const baseline = this.scenarioSummary.baselineSummary;
+        const recommended = this.scenarioSummary.recommendedScenario;
+        this.scenarioForm.patchValue({
+            baselineIncome: baseline.baselineIncomeTotal,
+            baselineExpenses: baseline.baselineExpensesTotal,
+            marketingBudgetChangePct: recommended.marketingBudgetChangePct,
+            dynamicPricingRolloutPct: recommended.dynamicPricingRolloutPct,
+            newPackLaunches: recommended.newPackLaunches,
+            costControlPct: recommended.costControlPct,
+            salaryOptimizationPct: recommended.salaryOptimizationPct,
+            marketDemandShockPct: recommended.marketDemandShockPct,
+            supportAutomationPct: recommended.supportAutomationPct,
+            focusTopMarketPct: recommended.focusTopMarketPct
+        });
+    }
+
+    resetScenarioForm(): void {
+        const baselineIncome = this.scenarioSummary?.baselineSummary?.baselineIncomeTotal ?? 253441.97;
+        const baselineExpenses = this.scenarioSummary?.baselineSummary?.baselineExpensesTotal ?? 184857.66;
+
+        this.scenarioForm.patchValue({
+            baselineIncome,
+            baselineExpenses,
+            marketingBudgetChangePct: 0,
+            dynamicPricingRolloutPct: 0,
+            newPackLaunches: 0,
+            costControlPct: 0,
+            salaryOptimizationPct: 0,
+            marketDemandShockPct: 0,
+            supportAutomationPct: 0,
+            focusTopMarketPct: 0
+        });
+    }
+
+    runCustomScenario(): void {
+        this.updateCustomScenarioProjection();
+    }
+
+    getScenarioHealthClass(score: number): string {
+        if (score >= 75) {
+            return 'scenario-score scenario-score--strong';
+        }
+        if (score >= 55) {
+            return 'scenario-score scenario-score--steady';
+        }
+        return 'scenario-score scenario-score--fragile';
+    }
+
+    getScenarioScoreWidth(score: number): string {
+        return `${Math.max(6, Math.min(100, score))}%`;
+    }
+
+    private buildRecommendationQuickStats(summary: RecommendationSummary): RecommendationQuickStat[] {
+        const topRecommendation = summary.topRecommendations[0];
+        const avgProfitUplift = this.findRecommendationMetric(summary, 'avg_profit_uplift')?.value;
+        const modelAccuracy = this.findRecommendationMetric(summary, 'model_accuracy')?.value;
+        const riskBefore = this.findRecommendationMetric(summary, 'months_at_risk_before')?.value;
+        const watchCategory = summary.forecastContext?.watchCategory
+            ? this.humanizeForecastLabel(summary.forecastContext.watchCategory)
+            : 'Not identified';
+
+        return [
+            {
+                label: 'Forecast window',
+                value: this.getRecommendationWindowLabel(summary),
+                detail: `${summary.forecastContext?.forecastHorizon?.monthsAhead ?? summary.topRecommendations.length} months covered by this recommendation set.`,
+                tone: 'neutral'
+            },
+            {
+                label: 'Best first move',
+                value: topRecommendation?.title || 'Review top-ranked action',
+                detail: topRecommendation?.month
+                    ? `Start with ${this.formatForecastMonth(topRecommendation.month)} and monitor ${this.getRecommendationTargetMetricLabel(topRecommendation.targetMetric)} weekly.`
+                    : 'Start with the highest-priority recommendation in the list below.',
+                tone: this.mapRecommendationTone(topRecommendation?.priority || topRecommendation?.impactBand)
+            },
+            {
+                label: 'Average profit uplift',
+                value: avgProfitUplift || 'Check chart below',
+                detail: 'Expected monthly profit improvement when the plan is followed as recommended.',
+                tone: 'success'
+            },
+            {
+                label: 'Risk to watch',
+                value: watchCategory,
+                detail: riskBefore
+                    ? `${riskBefore} month(s) are still flagged as risky before action.`
+                    : 'Review the weakest months first to avoid negative downside outcomes.',
+                tone: 'warning'
+            },
+            {
+                label: 'Model confidence',
+                value: modelAccuracy || 'See executive metrics',
+                detail: 'Recommendation quality on holdout validation scenarios.',
+                tone: 'success'
+            },
+            {
+                label: 'Revenue driver',
+                value: summary.forecastContext?.topRevenueSource
+                    ? this.humanizeForecastLabel(summary.forecastContext.topRevenueSource)
+                    : 'Review strongest channel',
+                detail: 'Protect this stream while making the recommended changes.',
+                tone: 'neutral'
+            }
+        ];
+    }
+
+    private buildRecommendationChecklist(summary: RecommendationSummary): string[] {
+        const topRecommendation = summary.topRecommendations[0];
+        const checklist: string[] = [];
+
+        if (topRecommendation?.month && topRecommendation.title) {
+            checklist.push(
+                `Start with ${this.formatForecastMonth(topRecommendation.month)} and assign an owner for "${topRecommendation.title}".`
+            );
+        }
+
+        if (summary.forecastContext?.watchCategory) {
+            checklist.push(
+                `Review ${this.humanizeForecastLabel(summary.forecastContext.watchCategory)} spending every week until the risk window passes.`
+            );
+        }
+
+        if (topRecommendation?.targetMetric) {
+            checklist.push(
+                `Track ${this.getRecommendationTargetMetricLabel(topRecommendation.targetMetric)} weekly and compare it with the expected outcome shown on the action card.`
+            );
+        }
+
+        if (summary.forecastContext?.topRevenueSource) {
+            checklist.push(
+                `Protect ${this.humanizeForecastLabel(summary.forecastContext.topRevenueSource)} while applying these changes so growth stays positive.`
+            );
+        }
+
+        return checklist.slice(0, 4);
+    }
+
+    private buildScenarioQuickStats(summary: FinanceScenarioSummary): RecommendationQuickStat[] {
+        const recommended = summary.recommendedScenario;
+        const baseline = summary.baselineSummary;
+        const bestSkill = summary.marketSummary?.topSkillCategory
+            ? this.humanizeForecastLabel(summary.marketSummary.topSkillCategory)
+            : 'Top market';
+        const riskBefore = summary.recommendationContext?.monthsAtRiskBefore ?? 0;
+        const riskAfter = summary.recommendationContext?.monthsAtRiskAfter ?? 0;
+
+        return [
+            {
+                label: 'Recommended path',
+                value: recommended?.scenarioName || 'Review scenarios',
+                detail: `${baseline.monthsHorizon} forecast months compared side by side.`,
+                tone: recommended?.riskLevel === 'HIGH' ? 'danger' : recommended?.riskLevel === 'MEDIUM' ? 'warning' : 'success'
+            },
+            {
+                label: 'Profit uplift',
+                value: `${recommended?.profitUpliftPct > 0 ? '+' : ''}${recommended?.profitUpliftPct.toFixed(2)}%`,
+                detail: 'Difference versus the forecast baseline across the full horizon.',
+                tone: recommended?.profitUpliftPct >= 0 ? 'success' : 'danger'
+            },
+            {
+                label: 'Margin change',
+                value: `${recommended?.marginUpliftPts > 0 ? '+' : ''}${recommended?.marginUpliftPts.toFixed(2)} pts`,
+                detail: 'Average margin gain delivered by the recommended scenario.',
+                tone: recommended?.marginUpliftPts >= 0 ? 'success' : 'warning'
+            },
+            {
+                label: 'Best scraper market',
+                value: bestSkill,
+                detail: `${summary.marketSummary.trackedSkills} tracked skill lanes from the latest scraper run.`,
+                tone: 'neutral'
+            },
+            {
+                label: 'Pricing leverage',
+                value: `+${summary.pricingSummary.portfolioRevenueUpliftPct.toFixed(2)}%`,
+                detail: `${summary.pricingSummary.packsToIncreasePrice} packs can support price increases from the pricing model.`,
+                tone: 'success'
+            },
+            {
+                label: 'Risk window',
+                value: `${riskBefore} -> ${riskAfter}`,
+                detail: 'Months at risk before and after the recommendation program context.',
+                tone: riskAfter > riskBefore ? 'danger' : 'warning'
+            }
+        ];
+    }
+
+    private updateCustomScenarioProjection(): void {
+        const summary = this.scenarioSummary;
+        if (!summary) {
+            return;
+        }
+
+        const formValue = this.scenarioForm.getRawValue();
+        const baselineIncome = this.coerceScenarioNumber(formValue.baselineIncome, summary.baselineSummary.baselineIncomeTotal, 1);
+        const baselineExpenses = this.coerceScenarioNumber(formValue.baselineExpenses, summary.baselineSummary.baselineExpensesTotal, 0);
+        const marketingChange = this.coerceScenarioNumber(formValue.marketingBudgetChangePct, 0, -10, 25);
+        const dynamicRollout = this.coerceScenarioNumber(formValue.dynamicPricingRolloutPct, 0, 0, 100);
+        const newPacks = Math.round(this.coerceScenarioNumber(formValue.newPackLaunches, 0, 0, 4));
+        const costControl = this.coerceScenarioNumber(formValue.costControlPct, 0, 0, 12);
+        const salaryOptimization = this.coerceScenarioNumber(formValue.salaryOptimizationPct, 0, 0, 8);
+        const demandShock = this.coerceScenarioNumber(formValue.marketDemandShockPct, 0, -12, 18);
+        const supportAutomation = this.coerceScenarioNumber(formValue.supportAutomationPct, 0, 0, 10);
+        const focusTopMarket = this.coerceScenarioNumber(formValue.focusTopMarketPct, 0, 0, 12);
+
+        const baselineProfit = baselineIncome - baselineExpenses;
+        const baselineMargin = baselineIncome > 0 ? (baselineProfit / baselineIncome) * 100 : 0;
+        const baselineRiskGap = Math.max(25 - baselineMargin, 0);
+        const globalMarketSignal = summary.marketSummary.globalMarketSignal || 0.5;
+        const topOpportunityScore = summary.marketSummary.topOpportunityScore || 0.5;
+        const pricingUpliftPct = summary.pricingSummary.portfolioRevenueUpliftPct || 0;
+        const recommendationMarginBoost = summary.recommendationContext.avgMarginUpliftPts || 0;
+
+        const pricingGain = (dynamicRollout / 100) * (pricingUpliftPct / 100) * (0.45 + 0.2 * globalMarketSignal);
+        const marketingGain = (marketingChange / 100) * (0.72 + 0.34 * globalMarketSignal - 0.012 * baselineRiskGap);
+        const launchGain = newPacks * (0.011 + 0.007 * topOpportunityScore + 0.002 * globalMarketSignal);
+        const focusGain = (focusTopMarket / 100) * (0.28 * topOpportunityScore + 0.06 * globalMarketSignal);
+        const demandGain = (demandShock / 100) * (0.82 + 0.25 * globalMarketSignal);
+        const automationGain = (supportAutomation / 100) * 0.06;
+        const recommendationGain = Math.max(recommendationMarginBoost, 0) / 100 * 0.35;
+        const synergyGain = (dynamicRollout / 100) * Math.max(marketingChange, 0) / 100 * 0.09;
+        const inefficiencyPenalty =
+            (Math.max(marketingChange - 12, 0) / 100)
+            * Math.max(0, 0.10 - 0.08 * globalMarketSignal + baselineRiskGap / 300);
+        const demandPenalty = Math.max(-demandShock, 0) / 100 * Math.max(marketingChange, 0) / 100 * 0.12;
+
+        let incomeMultiplier = 1
+            + pricingGain
+            + marketingGain
+            + launchGain
+            + focusGain
+            + demandGain
+            + automationGain
+            + recommendationGain
+            + synergyGain
+            - inefficiencyPenalty
+            - demandPenalty;
+        incomeMultiplier = this.clampScenarioNumber(incomeMultiplier, 0.72, 1.85);
+
+        const projectedIncome = baselineIncome * incomeMultiplier;
+
+        const categoryWeights = {
+            salaries: 0.52,
+            marketing: 0.14,
+            infrastructure: 0.12,
+            software: 0.05,
+            content: 0.11,
+            support: 0.06
+        };
+
+        const marketingExpense = baselineExpenses * categoryWeights.marketing
+            * this.clampScenarioNumber(1 + marketingChange / 100 + newPacks * 0.025, 0.60, 1.70);
+        const salaryExpense = baselineExpenses * categoryWeights.salaries
+            * this.clampScenarioNumber(1 - salaryOptimization / 100 + newPacks * 0.01 - supportAutomation / 400, 0.74, 1.22);
+        const infrastructureExpense = baselineExpenses * categoryWeights.infrastructure
+            * this.clampScenarioNumber(1 + newPacks * 0.015 + Math.max(demandShock, 0) / 250 - costControl / 250, 0.78, 1.30);
+        const softwareExpense = baselineExpenses * categoryWeights.software
+            * this.clampScenarioNumber(1 + newPacks * 0.012 - costControl / 180 - supportAutomation / 250, 0.70, 1.18);
+        const contentExpense = baselineExpenses * categoryWeights.content
+            * this.clampScenarioNumber(1 + newPacks * 0.05 + focusTopMarket / 160 - costControl / 220, 0.76, 1.52);
+        const supportExpense = baselineExpenses * categoryWeights.support
+            * this.clampScenarioNumber(
+                1 + newPacks * 0.018 + Math.max(demandShock, 0) / 180 - supportAutomation / 100 - costControl / 300,
+                0.55,
+                1.25
+            );
+
+        let projectedExpenses =
+            salaryExpense
+            + marketingExpense
+            + infrastructureExpense
+            + softwareExpense
+            + contentExpense
+            + supportExpense;
+        projectedExpenses *= 1 + (dynamicRollout / 100) * 0.005 + Math.max(demandShock, 0) / 100 * 0.02;
+
+        const projectedProfit = projectedIncome - projectedExpenses;
+        const projectedMargin = projectedIncome > 0 ? (projectedProfit / projectedIncome) * 100 : 0;
+
+        let riskLevel = 'LOW';
+        if (projectedProfit < 0 || projectedMargin < 18 || (demandShock < -8 && marketingChange > 8)) {
+            riskLevel = 'HIGH';
+        } else if (projectedMargin < 28 || projectedProfit < baselineProfit * 0.9 || baselineRiskGap > 0) {
+            riskLevel = 'MEDIUM';
+        }
+
+        const incomeDelta = projectedIncome - baselineIncome;
+        const expenseDelta = projectedExpenses - baselineExpenses;
+        const profitDelta = projectedProfit - baselineProfit;
+        const marginDeltaPts = projectedMargin - baselineMargin;
+        const profitRatio = baselineProfit !== 0 ? projectedProfit / baselineProfit : 1;
+        const rawHealthScore = 52 + (projectedMargin * 1.1) + (profitRatio * 12) - (riskLevel === 'HIGH' ? 28 : riskLevel === 'MEDIUM' ? 10 : 0);
+        const healthScore = this.clampScenarioNumber(rawHealthScore, 0, 100);
+
+        const narrative =
+            riskLevel === 'LOW' && profitDelta > 0
+                ? 'This custom setup keeps the plan healthy. Revenue is outpacing added cost, so admins can scale with confidence.'
+                : riskLevel === 'MEDIUM'
+                    ? 'This setup can work, but the safety buffer is thinner. Watch payroll, support load, and weekly revenue conversion closely.'
+                    : 'This setup is aggressive for the current baseline. Tighten costs or reduce downside demand shock before committing.';
+
+        const breakdownSource = [
+            {
+                label: 'Salaries',
+                amount: salaryExpense,
+                hint: 'Sensitive to hiring pace and contractor load.'
+            },
+            {
+                label: 'Marketing',
+                amount: marketingExpense,
+                hint: 'Moves fastest when you push growth.'
+            },
+            {
+                label: 'Infrastructure',
+                amount: infrastructureExpense,
+                hint: 'Rises with scale, launches, and traffic.'
+            },
+            {
+                label: 'Software',
+                amount: softwareExpense,
+                hint: 'Tools and automation stack.'
+            },
+            {
+                label: 'Content',
+                amount: contentExpense,
+                hint: 'Course creation and launch support.'
+            },
+            {
+                label: 'Support',
+                amount: supportExpense,
+                hint: 'Learner operations and service load.'
+            }
+        ];
+        const categoryBreakdown = breakdownSource.map((item) => ({
+            ...item,
+            share: projectedExpenses > 0 ? (item.amount / projectedExpenses) * 100 : 0
+        }));
+
+        this.customScenarioProjection = {
+            projectedIncome,
+            projectedExpenses,
+            projectedProfit,
+            projectedMargin,
+            incomeDelta,
+            expenseDelta,
+            profitDelta,
+            marginDeltaPts,
+            riskLevel,
+            healthScore,
+            narrative,
+            categoryBreakdown
+        };
+    }
+
+    private findRecommendationMetric(summary: RecommendationSummary, metricName: string) {
+        return summary.executiveMetrics.find(metric => (metric.metric || '').toLowerCase() === metricName.toLowerCase());
+    }
+
+    private mapRecommendationTone(value: string | null | undefined): RecommendationQuickStat['tone'] {
+        const tone = (value || '').toUpperCase();
+        if (tone === 'HIGH' || tone === 'IMMEDIATE') {
+            return 'danger';
+        }
+        if (tone === 'MEDIUM' || tone === 'STRONG') {
+            return 'warning';
+        }
+        if (tone === 'LOW') {
+            return 'success';
+        }
+        return 'neutral';
     }
 
     private buildInsightSnapshot<T>(
@@ -1100,6 +1718,66 @@ export class FinanceComponent implements OnInit, AfterViewInit, OnDestroy {
         } finally {
             this.forecastLoading = false;
         }
+    }
+
+    private async loadRecommendationOutputs(): Promise<void> {
+        if (this.recommendationLoading) {
+            return;
+        }
+
+        this.recommendationLoading = true;
+        this.recommendationError = null;
+
+        try {
+            this.recommendationSummary = await firstValueFrom(
+                this.recommendationService.getSummary(this.recommendationLimit)
+            );
+            this.recommendationQuickStats = this.buildRecommendationQuickStats(this.recommendationSummary);
+            this.recommendationAdminChecklist = this.buildRecommendationChecklist(this.recommendationSummary);
+        } catch (error) {
+            console.error('Error loading recommendation outputs', error);
+            this.recommendationQuickStats = [];
+            this.recommendationAdminChecklist = [];
+            this.recommendationError =
+                'Recommendation outputs are not available yet. Generate the latest recommendation files, then reload this window.';
+        } finally {
+            this.recommendationLoading = false;
+        }
+    }
+
+    private async loadScenarioOutputs(): Promise<void> {
+        if (this.scenarioLoading) {
+            return;
+        }
+
+        this.scenarioLoading = true;
+        this.scenarioError = null;
+
+        try {
+            this.scenarioSummary = await firstValueFrom(this.financeScenarioService.getSummary());
+            this.scenarioQuickStats = this.buildScenarioQuickStats(this.scenarioSummary);
+            this.applyRecommendedScenarioPreset();
+            this.updateCustomScenarioProjection();
+        } catch (error) {
+            console.error('Error loading scenario simulator outputs', error);
+            this.scenarioSummary = null;
+            this.scenarioQuickStats = [];
+            this.customScenarioProjection = null;
+            this.scenarioError =
+                'Scenario simulator outputs are not available yet. Generate the latest finance scenario files, then reload this window.';
+        } finally {
+            this.scenarioLoading = false;
+        }
+    }
+
+    private coerceScenarioNumber(value: unknown, fallback: number, min?: number, max?: number): number {
+        const parsed = Number(value);
+        const safeValue = Number.isFinite(parsed) ? parsed : fallback;
+        return this.clampScenarioNumber(safeValue, min ?? -Infinity, max ?? Infinity);
+    }
+
+    private clampScenarioNumber(value: number, min: number, max: number): number {
+        return Math.max(min, Math.min(max, value));
     }
 
     private buildForecastActions(

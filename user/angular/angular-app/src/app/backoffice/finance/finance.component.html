@@ -419,6 +419,12 @@
                                 <button type="button" class="btn forecast-open-btn" (click)="openForecastModal()">
                                     <i class="fa fa-line-chart me-2"></i> Forecast Window
                                 </button>
+                                <button type="button" class="btn forecast-open-btn" (click)="openRecommendationModal()">
+                                    <i class="fa fa-lightbulb-o me-2"></i> Recommendation Output
+                                </button>
+                                <button type="button" class="btn forecast-open-btn scenario-open-btn" (click)="openScenarioModal()">
+                                    <i class="fa fa-sliders me-2"></i> Scenario Simulator
+                                </button>
                                 <button type="button" class="btn finance-overview-toggle-btn"
                                     (click)="toggleStaticVisuals()">
                                     <i class="fa me-2" [ngClass]="showStaticVisuals ? 'fa-eye-slash' : 'fa-eye'"></i>
@@ -938,9 +944,596 @@
                 </div>
             </div>
 
+            <!-- Scenario Simulator Window -->
+            <div class="forecast-window-backdrop" *ngIf="showScenarioModal" (click)="closeScenarioModal()"></div>
+            <div class="forecast-window forecast-window--scenario scenario-window" *ngIf="showScenarioModal" role="dialog" aria-modal="true"
+                aria-labelledby="scenarioWindowTitle">
+                <div class="forecast-window__dialog scenario-window__dialog" (click)="$event.stopPropagation()">
+                    <div class="forecast-window__header">
+                        <div>
+                            <span class="forecast-window__eyebrow">AI Scenario Simulator</span>
+                            <h4 id="scenarioWindowTitle" class="forecast-window__title">Compare finance paths before you commit</h4>
+                            <p class="forecast-window__subtitle" *ngIf="scenarioSummary as summary; else scenarioWindowIntro">
+                                Explore the best scenario for {{ formatForecastMonth(summary.baselineSummary.forecastFrom) }} to
+                                {{ formatForecastMonth(summary.baselineSummary.forecastTo) }} using forecast, pricing, recommendation, and scraper signals together.
+                            </p>
+                            <ng-template #scenarioWindowIntro>
+                                <p class="forecast-window__subtitle">
+                                    Test growth and defense paths for the next six months, then see which one gives admins the best tradeoff between profit and risk.
+                                </p>
+                            </ng-template>
+                        </div>
+                        <div class="forecast-window__header-actions">
+                            <button type="button" class="btn btn-light" (click)="refreshScenarioSimulator()"
+                                [disabled]="scenarioLoading">
+                                <i class="fa fa-refresh me-2"></i> Refresh
+                            </button>
+                            <button type="button" class="btn btn-outline-dark" (click)="closeScenarioModal()">
+                                <i class="fa fa-times me-2"></i> Close
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="forecast-window__body">
+                        <div class="forecast-window__state" *ngIf="scenarioLoading">
+                            <div class="spinner-border text-primary mb-3" role="status"></div>
+                            <h5 class="mb-2">Loading scenario simulator...</h5>
+                            <p class="mb-0 text-muted">Comparing the current baseline against the strongest growth and defense paths.</p>
+                        </div>
+
+                        <div class="alert alert-danger border-0 shadow-sm" *ngIf="scenarioError && !scenarioLoading">
+                            <div class="d-flex align-items-start gap-3">
+                                <i class="fa fa-exclamation-triangle forecast-window__alert-icon"></i>
+                                <div>
+                                    <h6 class="mb-1">Scenario simulator data is unavailable</h6>
+                                    <p class="mb-0">{{ scenarioError }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <ng-container *ngIf="scenarioSummary as summary">
+                            <div class="forecast-window__hero scenario-window__hero">
+                                <div class="forecast-window__hero-copy">
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                        <span class="forecast-pill forecast-pill--neutral" *ngIf="summary.generatedAt">
+                                            Generated {{ summary.generatedAt | date:'MMM d, y, h:mm a' }}
+                                        </span>
+                                        <span class="forecast-pill forecast-pill--neutral">
+                                            Top market: {{ humanizeForecastLabel(summary.marketSummary.topSkillCategory) }}
+                                        </span>
+                                        <span class="forecast-pill forecast-pill--neutral">
+                                            Pricing lift: +{{ summary.pricingSummary.portfolioRevenueUpliftPct | number:'1.1-2' }}%
+                                        </span>
+                                        <span [ngClass]="getForecastRiskClass(summary.recommendedScenario.riskLevel)">
+                                            Recommended risk: {{ summary.recommendedScenario.riskLevel }}
+                                        </span>
+                                    </div>
+                                    <h5 class="forecast-window__hero-title">
+                                        {{ getScenarioHeadline(summary) }}
+                                    </h5>
+                                    <p class="forecast-window__hero-text">
+                                        {{ getScenarioSupportText(summary) }}
+                                    </p>
+
+                                    <div class="scenario-window__controls">
+                                        <span class="scenario-window__controls-title">Recommended controls</span>
+                                        <div class="scenario-window__control-grid">
+                                            <span class="scenario-window__control-pill">Marketing {{ summary.recommendedScenario.marketingBudgetChangePct > 0 ? '+' : '' }}{{ summary.recommendedScenario.marketingBudgetChangePct | number:'1.0-1' }}%</span>
+                                            <span class="scenario-window__control-pill">Pricing rollout {{ summary.recommendedScenario.dynamicPricingRolloutPct | number:'1.0-0' }}%</span>
+                                            <span class="scenario-window__control-pill">{{ summary.recommendedScenario.newPackLaunches }} new packs</span>
+                                            <span class="scenario-window__control-pill">Cost control {{ summary.recommendedScenario.costControlPct | number:'1.0-1' }}%</span>
+                                            <span class="scenario-window__control-pill">Demand shock {{ summary.recommendedScenario.marketDemandShockPct > 0 ? '+' : '' }}{{ summary.recommendedScenario.marketDemandShockPct | number:'1.0-1' }}%</span>
+                                            <span class="scenario-window__control-pill">Top market focus {{ summary.recommendedScenario.focusTopMarketPct | number:'1.0-1' }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="scenario-window__hero-panel forecast-window__hero-panel">
+                                    <span class="scenario-window__hero-panel-label">Recommended scenario</span>
+                                    <h6 class="scenario-window__hero-panel-title">{{ summary.recommendedScenario.scenarioName }}</h6>
+                                    <p class="scenario-window__hero-panel-text">{{ summary.recommendedScenario.description }}</p>
+
+                                    <div class="scenario-window__hero-stats forecast-window__hero-panel-stats">
+                                        <div class="scenario-window__hero-stat forecast-window__hero-panel-stat">
+                                            <span>Profit total</span>
+                                            <strong>{{ summary.recommendedScenario.projectedProfitTotal | currency:'USD':'symbol':'1.0-0' }}</strong>
+                                        </div>
+                                        <div class="scenario-window__hero-stat forecast-window__hero-panel-stat">
+                                            <span>Margin</span>
+                                            <strong>{{ summary.recommendedScenario.projectedMarginPct | number:'1.1-2' }}%</strong>
+                                        </div>
+                                        <div class="scenario-window__hero-stat forecast-window__hero-panel-stat">
+                                            <span>Profit vs baseline</span>
+                                            <strong>{{ getScenarioProfitDelta(summary.recommendedScenario) > 0 ? '+' : '' }}{{ getScenarioProfitDelta(summary.recommendedScenario) | currency:'USD':'symbol':'1.0-0' }}</strong>
+                                        </div>
+                                        <div class="scenario-window__hero-stat forecast-window__hero-panel-stat">
+                                            <span>Risk</span>
+                                            <strong>{{ summary.recommendedScenario.riskLevel }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <section class="forecast-window__section">
+                                <div class="forecast-window__section-head">
+                                    <div>
+                                        <h5 class="mb-1">Custom scenario lab</h5>
+                                        <p class="mb-0 text-muted">Let the admin enter baseline income and expenses, move the strategy levers, and instantly see projected profit and risk.</p>
+                                    </div>
+                                </div>
+
+                                <div class="row g-4">
+                                    <div class="col-xl-5">
+                                        <form class="scenario-form-card" [formGroup]="scenarioForm" (ngSubmit)="runCustomScenario()">
+                                            <div class="scenario-form-card__head">
+                                                <div>
+                                                    <span class="scenario-form-card__eyebrow">Interactive inputs</span>
+                                                    <h6 class="mb-1">Build your own finance path</h6>
+                                                    <p class="mb-0 text-muted">Change the baseline and the strategy mix to see a custom projection.</p>
+                                                </div>
+                                                <div class="scenario-form-card__actions">
+                                                    <button type="button" class="btn btn-sm btn-outline-dark" (click)="resetScenarioForm()">Reset</button>
+                                                    <button type="button" class="btn btn-sm btn-dark" (click)="applyRecommendedScenarioPreset()">Use AI Default</button>
+                                                </div>
+                                            </div>
+
+                                            <div class="scenario-form-grid">
+                                                <label class="scenario-input-card">
+                                                    <span class="scenario-input-card__label">Baseline income</span>
+                                                    <input type="number" class="form-control" formControlName="baselineIncome" min="1" step="100">
+                                                </label>
+                                                <label class="scenario-input-card">
+                                                    <span class="scenario-input-card__label">Baseline expenses</span>
+                                                    <input type="number" class="form-control" formControlName="baselineExpenses" min="0" step="100">
+                                                </label>
+                                            </div>
+
+                                            <div class="scenario-slider-list">
+                                                <label class="scenario-slider-card">
+                                                    <div class="scenario-slider-card__top">
+                                                        <span>Marketing budget</span>
+                                                        <strong>{{ scenarioForm.value.marketingBudgetChangePct > 0 ? '+' : '' }}{{ scenarioForm.value.marketingBudgetChangePct }}%</strong>
+                                                    </div>
+                                                    <input type="range" min="-10" max="25" step="1" formControlName="marketingBudgetChangePct">
+                                                </label>
+
+                                                <label class="scenario-slider-card">
+                                                    <div class="scenario-slider-card__top">
+                                                        <span>Dynamic pricing rollout</span>
+                                                        <strong>{{ scenarioForm.value.dynamicPricingRolloutPct }}%</strong>
+                                                    </div>
+                                                    <input type="range" min="0" max="100" step="5" formControlName="dynamicPricingRolloutPct">
+                                                </label>
+
+                                                <label class="scenario-slider-card">
+                                                    <div class="scenario-slider-card__top">
+                                                        <span>New pack launches</span>
+                                                        <strong>{{ scenarioForm.value.newPackLaunches }}</strong>
+                                                    </div>
+                                                    <input type="range" min="0" max="4" step="1" formControlName="newPackLaunches">
+                                                </label>
+
+                                                <label class="scenario-slider-card">
+                                                    <div class="scenario-slider-card__top">
+                                                        <span>Cost control</span>
+                                                        <strong>{{ scenarioForm.value.costControlPct }}%</strong>
+                                                    </div>
+                                                    <input type="range" min="0" max="12" step="1" formControlName="costControlPct">
+                                                </label>
+
+                                                <label class="scenario-slider-card">
+                                                    <div class="scenario-slider-card__top">
+                                                        <span>Salary optimization</span>
+                                                        <strong>{{ scenarioForm.value.salaryOptimizationPct }}%</strong>
+                                                    </div>
+                                                    <input type="range" min="0" max="8" step="1" formControlName="salaryOptimizationPct">
+                                                </label>
+
+                                                <label class="scenario-slider-card">
+                                                    <div class="scenario-slider-card__top">
+                                                        <span>Market demand shock</span>
+                                                        <strong>{{ scenarioForm.value.marketDemandShockPct > 0 ? '+' : '' }}{{ scenarioForm.value.marketDemandShockPct }}%</strong>
+                                                    </div>
+                                                    <input type="range" min="-12" max="18" step="1" formControlName="marketDemandShockPct">
+                                                </label>
+
+                                                <label class="scenario-slider-card">
+                                                    <div class="scenario-slider-card__top">
+                                                        <span>Support automation</span>
+                                                        <strong>{{ scenarioForm.value.supportAutomationPct }}%</strong>
+                                                    </div>
+                                                    <input type="range" min="0" max="10" step="1" formControlName="supportAutomationPct">
+                                                </label>
+
+                                                <label class="scenario-slider-card">
+                                                    <div class="scenario-slider-card__top">
+                                                        <span>Top market focus</span>
+                                                        <strong>{{ scenarioForm.value.focusTopMarketPct }}%</strong>
+                                                    </div>
+                                                    <input type="range" min="0" max="12" step="1" formControlName="focusTopMarketPct">
+                                                </label>
+                                            </div>
+
+                                            <button type="submit" class="btn btn-dark w-100 mt-3">
+                                                <i class="fa fa-play me-2"></i> Run simulation
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <div class="col-xl-7" *ngIf="customScenarioProjection as projection">
+                                        <div class="scenario-projection-card">
+                                            <div class="scenario-projection-card__head">
+                                                <div>
+                                                    <span class="scenario-form-card__eyebrow">Live projection</span>
+                                                    <h6 class="mb-1">Projected outcome from your custom inputs</h6>
+                                                    <p class="mb-0 text-muted">{{ projection.narrative }}</p>
+                                                </div>
+                                                <div [ngClass]="getScenarioHealthClass(projection.healthScore)">
+                                                    <span>Health score</span>
+                                                    <strong>{{ projection.healthScore | number:'1.0-0' }}/100</strong>
+                                                    <div class="scenario-score__track">
+                                                        <div class="scenario-score__fill" [style.width]="getScenarioScoreWidth(projection.healthScore)"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="scenario-projection-kpis">
+                                                <article class="scenario-projection-kpi">
+                                                    <span>Projected income</span>
+                                                    <strong>{{ projection.projectedIncome | currency:'USD':'symbol':'1.0-0' }}</strong>
+                                                    <small>{{ projection.incomeDelta > 0 ? '+' : '' }}{{ projection.incomeDelta | currency:'USD':'symbol':'1.0-0' }} vs baseline</small>
+                                                </article>
+                                                <article class="scenario-projection-kpi">
+                                                    <span>Projected expenses</span>
+                                                    <strong>{{ projection.projectedExpenses | currency:'USD':'symbol':'1.0-0' }}</strong>
+                                                    <small>{{ projection.expenseDelta > 0 ? '+' : '' }}{{ projection.expenseDelta | currency:'USD':'symbol':'1.0-0' }} vs baseline</small>
+                                                </article>
+                                                <article class="scenario-projection-kpi">
+                                                    <span>Projected profit</span>
+                                                    <strong>{{ projection.projectedProfit | currency:'USD':'symbol':'1.0-0' }}</strong>
+                                                    <small>{{ projection.profitDelta > 0 ? '+' : '' }}{{ projection.profitDelta | currency:'USD':'symbol':'1.0-0' }} vs baseline</small>
+                                                </article>
+                                                <article class="scenario-projection-kpi">
+                                                    <span>Projected margin</span>
+                                                    <strong>{{ projection.projectedMargin | number:'1.1-2' }}%</strong>
+                                                    <small>{{ projection.marginDeltaPts > 0 ? '+' : '' }}{{ projection.marginDeltaPts | number:'1.1-2' }} pts vs baseline</small>
+                                                </article>
+                                            </div>
+
+                                            <div class="scenario-projection-status">
+                                                <span [ngClass]="getForecastRiskClass(projection.riskLevel)">Risk: {{ projection.riskLevel }}</span>
+                                                <span class="scenario-projection-status__note">This custom path updates instantly from the admin inputs above.</span>
+                                            </div>
+
+                                            <div class="scenario-breakdown-list">
+                                                <article class="scenario-breakdown-item" *ngFor="let item of projection.categoryBreakdown">
+                                                    <div class="scenario-breakdown-item__top">
+                                                        <strong>{{ item.label }}</strong>
+                                                        <span>{{ item.amount | currency:'USD':'symbol':'1.0-0' }}</span>
+                                                    </div>
+                                                    <div class="scenario-breakdown-item__bar">
+                                                        <div class="scenario-breakdown-item__fill" [style.width.%]="item.share"></div>
+                                                    </div>
+                                                    <div class="scenario-breakdown-item__meta">
+                                                        <span>{{ item.share | number:'1.0-1' }}% of projected expenses</span>
+                                                        <span>{{ item.hint }}</span>
+                                                    </div>
+                                                </article>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="forecast-window__section" *ngIf="summary.scenarioRankings.length">
+                                <div class="forecast-window__section-head">
+                                    <div>
+                                        <h5 class="mb-1">Ranked scenario options</h5>
+                                        <p class="mb-0 text-muted">Compare the strongest growth, pricing, and defense paths before choosing the one to operationalize.</p>
+                                    </div>
+                                </div>
+                                <div class="scenario-ranking-grid">
+                                    <article class="scenario-ranking-card" *ngFor="let row of summary.scenarioRankings | slice:0:4">
+                                        <div class="scenario-ranking-card__top">
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <span class="forecast-pill forecast-pill--neutral">#{{ row.scenarioRank }}</span>
+                                                <span [ngClass]="getForecastRiskClass(row.riskLevel)">{{ row.riskLevel }}</span>
+                                            </div>
+                                            <span class="scenario-ranking-card__delta">
+                                                {{ row.profitUpliftPct > 0 ? '+' : '' }}{{ row.profitUpliftPct | number:'1.1-2' }}%
+                                            </span>
+                                        </div>
+                                        <h6 class="scenario-ranking-card__title">{{ row.scenarioName }}</h6>
+                                        <p class="scenario-ranking-card__text">{{ row.description }}</p>
+
+                                        <div class="scenario-ranking-card__metrics">
+                                            <div class="scenario-ranking-card__metric">
+                                                <span>Profit</span>
+                                                <strong>{{ row.projectedProfitTotal | currency:'USD':'symbol':'1.0-0' }}</strong>
+                                            </div>
+                                            <div class="scenario-ranking-card__metric">
+                                                <span>Margin</span>
+                                                <strong>{{ row.projectedMarginPct | number:'1.1-2' }}%</strong>
+                                            </div>
+                                            <div class="scenario-ranking-card__metric">
+                                                <span>Income</span>
+                                                <strong>{{ row.projectedIncomeTotal | currency:'USD':'symbol':'1.0-0' }}</strong>
+                                            </div>
+                                            <div class="scenario-ranking-card__metric">
+                                                <span>Expenses</span>
+                                                <strong>{{ row.projectedExpensesTotal | currency:'USD':'symbol':'1.0-0' }}</strong>
+                                            </div>
+                                        </div>
+
+                                        <div class="scenario-ranking-card__footer">
+                                            <span>Margin change {{ getScenarioMarginDelta(row) > 0 ? '+' : '' }}{{ getScenarioMarginDelta(row) | number:'1.1-2' }} pts</span>
+                                            <span>{{ row.highRiskMonths }} high-risk months</span>
+                                        </div>
+                                    </article>
+                                </div>
+                            </section>
+
+                            <section class="forecast-window__section" *ngIf="summary.recommendedMonthlyPath.length">
+                                <div class="forecast-window__section-head">
+                                    <div>
+                                        <h5 class="mb-1">Recommended monthly path</h5>
+                                        <p class="mb-0 text-muted">Use this table to see how the best scenario changes the monthly outcome compared with the forecast baseline.</p>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table forecast-table recommendation-evidence-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Month</th>
+                                                <th>Baseline Profit</th>
+                                                <th>Scenario Profit</th>
+                                                <th>Profit Delta</th>
+                                                <th>Margin</th>
+                                                <th>Risk</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let month of summary.recommendedMonthlyPath">
+                                                <td>{{ formatForecastMonth(month.month) }}</td>
+                                                <td>{{ month.baselineProfit | currency:'USD':'symbol':'1.0-0' }}</td>
+                                                <td>{{ month.projectedProfit | currency:'USD':'symbol':'1.0-0' }}</td>
+                                                <td>
+                                                    {{ getScenarioMonthlyProfitDelta(month) > 0 ? '+' : '' }}{{ getScenarioMonthlyProfitDelta(month) | currency:'USD':'symbol':'1.0-0' }}
+                                                </td>
+                                                <td>{{ month.projectedMargin | number:'1.1-2' }}%</td>
+                                                <td><span [ngClass]="getForecastRiskClass(month.riskLevel)">{{ month.riskLevel }}</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendation Window -->
+            <div class="forecast-window-backdrop" *ngIf="showRecommendationModal" (click)="closeRecommendationModal()"></div>
+            <div class="forecast-window forecast-window--recommendation recommendation-window" *ngIf="showRecommendationModal" role="dialog" aria-modal="true"
+                aria-labelledby="recommendationWindowTitle">
+                <div class="forecast-window__dialog recommendation-window__dialog" (click)="$event.stopPropagation()">
+                    <div class="forecast-window__header">
+                        <div>
+                            <span class="forecast-window__eyebrow">AI Finance Recommendations</span>
+                            <h4 id="recommendationWindowTitle" class="forecast-window__title">Recommendation output for the forecast horizon</h4>
+                            <p class="forecast-window__subtitle" *ngIf="recommendationSummary as summary; else recommendationIntro">
+                                Action plan built from the latest forecasting outputs. Focus on what to do, why it matters, and the outcome expected for each month.
+                            </p>
+                            <ng-template #recommendationIntro>
+                                <p class="forecast-window__subtitle">
+                                    Review the generated recommendations that help admins keep revenue healthy and protect positive outcomes.
+                                </p>
+                            </ng-template>
+                        </div>
+                        <div class="forecast-window__header-actions">
+                            <button type="button" class="btn btn-light" (click)="refreshRecommendations()"
+                                [disabled]="recommendationLoading">
+                                <i class="fa fa-refresh me-2"></i> Refresh
+                            </button>
+                            <button type="button" class="btn btn-outline-dark" (click)="closeRecommendationModal()">
+                                <i class="fa fa-times me-2"></i> Close
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="forecast-window__body">
+                        <div class="forecast-window__state" *ngIf="recommendationLoading">
+                            <div class="spinner-border text-primary mb-3" role="status"></div>
+                            <h5 class="mb-2">Loading recommendation outputs...</h5>
+                            <p class="mb-0 text-muted">Pulling the latest recommendation summary and action plan into the finance dashboard.</p>
+                        </div>
+
+                        <div class="alert alert-danger border-0 shadow-sm" *ngIf="recommendationError && !recommendationLoading">
+                            <div class="d-flex align-items-start gap-3">
+                                <i class="fa fa-exclamation-triangle forecast-window__alert-icon"></i>
+                                <div>
+                                    <h6 class="mb-1">Recommendation data is unavailable</h6>
+                                    <p class="mb-0">{{ recommendationError }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <ng-container *ngIf="recommendationSummary as summary">
+                            <div class="forecast-window__hero recommendation-window__hero">
+                                <div class="forecast-window__hero-copy">
+                                    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                                        <span class="forecast-pill forecast-pill--neutral" *ngIf="summary.forecastContext?.marginPct != null">
+                                            Margin: {{ summary.forecastContext?.marginPct | number:'1.0-2' }}%
+                                        </span>
+                                        <span class="forecast-pill forecast-pill--neutral" *ngIf="summary.generatedAt">
+                                            Generated {{ summary.generatedAt | date:'MMM d, y, h:mm a' }}
+                                        </span>
+                                        <span class="forecast-pill forecast-pill--neutral" *ngIf="summary.forecastContext?.topRevenueSource">
+                                            Revenue driver: {{ humanizeForecastLabel(summary.forecastContext?.topRevenueSource || '') }}
+                                        </span>
+                                        <span class="forecast-pill forecast-pill--neutral" *ngIf="summary.forecastContext?.watchCategory">
+                                            Watch: {{ humanizeForecastLabel(summary.forecastContext?.watchCategory || '') }}
+                                        </span>
+                                    </div>
+                                    <h5 class="forecast-window__hero-title">
+                                        {{ getRecommendationHeadline(summary) }}
+                                    </h5>
+                                    <p class="forecast-window__hero-text">
+                                        {{ getRecommendationSupportText(summary) }}
+                                    </p>
+
+                                    <div class="recommendation-admin-checklist" *ngIf="recommendationAdminChecklist.length">
+                                        <span class="recommendation-admin-checklist__title">Admin checklist for this cycle</span>
+                                        <ul class="recommendation-admin-checklist__list">
+                                            <li *ngFor="let item of recommendationAdminChecklist">{{ item }}</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="recommendation-window__hero-panel forecast-window__hero-panel">
+                                    <span class="recommendation-window__hero-panel-label">Top recommendation</span>
+                                    <h6 class="recommendation-window__hero-panel-title">
+                                        {{ (summary.topRecommendations.length && summary.topRecommendations[0].title) || 'Review the ranked recommendations below' }}
+                                    </h6>
+                                    <p class="recommendation-window__hero-panel-text">
+                                        {{ (summary.topRecommendations.length && summary.topRecommendations[0].month)
+                                            ? 'Start with ' + formatForecastMonth(summary.topRecommendations[0].month || '') + ' and track the result week by week.'
+                                            : 'Start with the highest-ranked action and monitor the metric attached to it.' }}
+                                    </p>
+
+                                    <div class="recommendation-window__hero-stats forecast-window__hero-panel-stats" *ngIf="summary.topRecommendations.length">
+                                        <div class="recommendation-window__hero-stat forecast-window__hero-panel-stat">
+                                            <span>Start month</span>
+                                            <strong>{{ summary.topRecommendations[0].month ? formatForecastMonth(summary.topRecommendations[0].month || '') : 'Next review' }}</strong>
+                                        </div>
+                                        <div class="recommendation-window__hero-stat forecast-window__hero-panel-stat">
+                                            <span>Watch weekly</span>
+                                            <strong>{{ getRecommendationTargetMetricLabel(summary.topRecommendations[0].targetMetric) }}</strong>
+                                        </div>
+                                        <div class="recommendation-window__hero-stat forecast-window__hero-panel-stat">
+                                            <span>Priority</span>
+                                            <strong>{{ summary.topRecommendations[0].priority || 'MEDIUM' }}</strong>
+                                        </div>
+                                    </div>
+
+                                    <button type="button" class="btn btn-dark w-100" (click)="refreshRecommendations()">
+                                        <i class="fa fa-bolt me-2"></i> Refresh output
+                                    </button>
+                                </div>
+                            </div>
+
+                            <section class="forecast-window__section" *ngIf="recommendationQuickStats.length">
+                                <div class="forecast-window__section-head">
+                                    <div>
+                                        <h5 class="mb-1">Admin summary</h5>
+                                        <p class="mb-0 text-muted">Read these first before assigning actions to the team.</p>
+                                    </div>
+                                </div>
+                                <div class="recommendation-summary-grid">
+                                    <article *ngFor="let stat of recommendationQuickStats" [ngClass]="getRecommendationStatCardClass(stat.tone)">
+                                        <span class="recommendation-summary-card__label">{{ stat.label }}</span>
+                                        <strong class="recommendation-summary-card__value">{{ stat.value }}</strong>
+                                        <p class="recommendation-summary-card__text">{{ stat.detail }}</p>
+                                    </article>
+                                </div>
+                            </section>
+
+                            <section class="forecast-window__section" *ngIf="summary.topRecommendations.length">
+                                <div class="forecast-window__section-head">
+                                    <div>
+                                        <h5 class="mb-1">Priority actions for admins</h5>
+                                        <p class="mb-0 text-muted">Each card tells you what to do now, why it matters, and which KPI should improve if the team follows through.</p>
+                                    </div>
+                                </div>
+                                <div class="recommendation-grid">
+                                    <article class="recommendation-card" *ngFor="let rec of summary.topRecommendations | slice:0:4">
+                                        <div class="recommendation-card__top">
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <span class="forecast-pill forecast-pill--neutral">#{{ rec.recommendationRank }}</span>
+                                                <span [ngClass]="getRecommendationPriorityClass(rec.priority)">{{ rec.priority || 'MEDIUM' }}</span>
+                                                <span [ngClass]="getRecommendationImpactClass(rec.impactBand)">{{ rec.impactBand || 'WATCH' }}</span>
+                                            </div>
+                                            <span class="recommendation-card__month">{{ rec.month ? formatForecastMonth(rec.month) : 'Forecast month' }}</span>
+                                        </div>
+                                        <h6 class="recommendation-card__title">{{ rec.title }}</h6>
+
+                                        <div class="recommendation-card__impact">
+                                            <div class="recommendation-card__impact-item">
+                                                <span>Margin path</span>
+                                                <strong class="recommendation-card__impact-value">
+                                                    {{ rec.marginBefore | number:'1.0-2' }}% -> {{ rec.marginAfter | number:'1.0-2' }}%
+                                                </strong>
+                                                <small class="recommendation-card__impact-delta" *ngIf="getRecommendationMarginDelta(rec) != null">
+                                                    +{{ getRecommendationMarginDelta(rec) | number:'1.1-2' }} pts
+                                                </small>
+                                            </div>
+                                            <div class="recommendation-card__impact-item">
+                                                <span>Profit path</span>
+                                                <strong class="recommendation-card__impact-value">
+                                                    {{ rec.profitBefore | currency:'USD':'symbol':'1.0-0' }} -> {{ rec.profitAfter | currency:'USD':'symbol':'1.0-0' }}
+                                                </strong>
+                                                <small class="recommendation-card__impact-delta" *ngIf="getRecommendationProfitDelta(rec) != null">
+                                                    +{{ getRecommendationProfitDelta(rec) | currency:'USD':'symbol':'1.0-0' }}
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <p class="recommendation-card__line"><strong>Admin move:</strong> {{ rec.how || 'Apply this action to the linked KPI and review the result weekly.' }}</p>
+                                        <p class="recommendation-card__line"><strong>Why now:</strong> {{ rec.recommendationReason }}</p>
+                                        <p class="recommendation-card__line"><strong>Watch weekly:</strong> {{ getRecommendationTargetMetricLabel(rec.targetMetric) }}</p>
+                                        <p class="recommendation-card__line"><strong>Expected outcome:</strong> {{ rec.expectedOutcome }}</p>
+                                        <p class="recommendation-card__line mb-0"><strong>Success signal:</strong> {{ rec.successSignal }}</p>
+                                    </article>
+                                </div>
+                            </section>
+
+                            <section class="forecast-window__section">
+                                <div class="forecast-window__section-head">
+                                    <div>
+                                        <h5 class="mb-1">Expected impact by month</h5>
+                                        <p class="mb-0 text-muted">Use this table when you need a quick month-by-month view of what should improve after action is taken.</p>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table forecast-table recommendation-evidence-table mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Month</th>
+                                                <th>Action</th>
+                                                <th>Margin uplift</th>
+                                                <th>Profit uplift</th>
+                                                <th>Watch weekly</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr *ngFor="let rec of summary.topRecommendations | slice:0:4">
+                                                <td>{{ rec.month ? formatForecastMonth(rec.month) : '-' }}</td>
+                                                <td>{{ rec.title }}</td>
+                                                <td>
+                                                    <span *ngIf="getRecommendationMarginDelta(rec) != null; else noMarginDelta">
+                                                        +{{ getRecommendationMarginDelta(rec) | number:'1.1-2' }} pts
+                                                    </span>
+                                                    <ng-template #noMarginDelta>Review card</ng-template>
+                                                </td>
+                                                <td>
+                                                    <span *ngIf="getRecommendationProfitDelta(rec) != null; else noProfitDelta">
+                                                        +{{ getRecommendationProfitDelta(rec) | currency:'USD':'symbol':'1.0-0' }}
+                                                    </span>
+                                                    <ng-template #noProfitDelta>Review card</ng-template>
+                                                </td>
+                                                <td>{{ getRecommendationTargetMetricLabel(rec.targetMetric) }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </section>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+
             <!-- Forecast Window -->
             <div class="forecast-window-backdrop" *ngIf="showForecastModal" (click)="closeForecastModal()"></div>
-            <div class="forecast-window" *ngIf="showForecastModal" role="dialog" aria-modal="true"
+            <div class="forecast-window forecast-window--forecast" *ngIf="showForecastModal" role="dialog" aria-modal="true"
                 aria-labelledby="forecastWindowTitle">
                 <div class="forecast-window__dialog" (click)="$event.stopPropagation()">
                     <div class="forecast-window__header">
@@ -989,7 +1582,7 @@
                         </div>
 
                         <ng-container *ngIf="forecastData as data">
-                            <div class="forecast-window__hero">
+                            <div class="forecast-window__hero forecast-window__hero--forecast">
                                 <div class="forecast-window__hero-copy">
                                     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                                         <span [ngClass]="getForecastRiskClass(data.forecast_horizon_summary.risk_level)">
@@ -1013,8 +1606,35 @@
                                         categories that threaten profit.
                                     </p>
                                 </div>
-                                <div class="forecast-window__hero-actions">
-                                    <button type="button" class="btn btn-dark"
+                                <div class="forecast-window__hero-panel forecast-window__hero-panel--forecast">
+                                    <span class="forecast-window__hero-panel-label">Forecast command deck</span>
+                                    <h6 class="forecast-window__hero-panel-title">
+                                        {{ data.forecast_horizon_summary.months_ahead }}-month outlook
+                                    </h6>
+                                    <p class="forecast-window__hero-panel-text">
+                                        A fast read on the outlook before admins dive into detailed tables and charts.
+                                    </p>
+
+                                    <div class="forecast-window__hero-panel-stats">
+                                        <div class="forecast-window__hero-panel-stat">
+                                            <span>Income</span>
+                                            <strong>{{ data.forecast_horizon_summary.income_total | currency:'USD':'symbol':'1.0-0' }}</strong>
+                                        </div>
+                                        <div class="forecast-window__hero-panel-stat">
+                                            <span>Profit</span>
+                                            <strong>{{ data.forecast_horizon_summary.profit_total | currency:'USD':'symbol':'1.0-0' }}</strong>
+                                        </div>
+                                        <div class="forecast-window__hero-panel-stat">
+                                            <span>Margin</span>
+                                            <strong>{{ data.forecast_horizon_summary.margin | number:'1.1-2' }}%</strong>
+                                        </div>
+                                        <div class="forecast-window__hero-panel-stat">
+                                            <span>Risk</span>
+                                            <strong>{{ data.forecast_horizon_summary.risk_level }}</strong>
+                                        </div>
+                                    </div>
+
+                                    <button type="button" class="btn btn-dark w-100"
                                         (click)="openForecastAsset('forecast_dashboard.png')">
                                         <i class="fa fa-external-link me-2"></i> Open dashboard image
                                     </button>
@@ -1089,7 +1709,7 @@
                                 </div>
                             </section>
 
-                            <div class="row g-3">
+                            <div class="row g-3 d-none">
                                 <div class="col-lg-5">
                                     <section class="forecast-window__section forecast-window__section--compact h-100">
                                         <div class="forecast-window__section-head">
@@ -1218,43 +1838,6 @@
                                 </div>
                             </div>
 
-                            <section class="forecast-window__section">
-                                <div class="forecast-window__section-head">
-                                    <div>
-                                        <h5 class="mb-1">Charts and dashboards</h5>
-                                        <p class="mb-0 text-muted">Open any generated image for a bigger view during
-                                            finance reviews.</p>
-                                    </div>
-                                </div>
-                                <div class="forecast-chart-grid">
-                                    <article class="forecast-chart-card" *ngFor="let chart of forecastCharts">
-                                        <div class="forecast-chart-card__preview">
-                                            <img [src]="forecastAssetUrl(chart.fileName)" [alt]="chart.title">
-                                        </div>
-                                        <div class="forecast-chart-card__content">
-                                            <div>
-                                                <h6 class="mb-1">{{ chart.title }}</h6>
-                                                <p class="mb-0 text-muted">{{ chart.helper }}</p>
-                                            </div>
-                                            <button type="button" class="btn btn-sm btn-outline-dark"
-                                                (click)="openForecastAsset(chart.fileName)">
-                                                Open chart
-                                            </button>
-                                        </div>
-                                    </article>
-                                </div>
-                            </section>
-
-                            <section class="forecast-window__section forecast-window__section--compact">
-                                <div class="forecast-window__section-head">
-                                    <div>
-                                        <h5 class="mb-1">Detailed report</h5>
-                                        <p class="mb-0 text-muted">Raw report output for deeper discussion or handoff.
-                                        </p>
-                                    </div>
-                                </div>
-                                <pre class="forecast-window__pre forecast-window__pre--tall">{{ forecastDetailedReport }}</pre>
-                            </section>
                         </ng-container>
                     </div>
                 </div>
