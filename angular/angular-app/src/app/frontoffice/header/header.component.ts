@@ -56,9 +56,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   }
 
   get currentMode(): string {
-    const mode = this.userSession.getMode();
-    console.log('[HEADER] currentMode:', mode);
-    return mode;
+    return this.userSession.getMode();
   }
 
   get currentRole(): string {
