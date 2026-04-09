@@ -15,10 +15,15 @@ import tn.esprit.tpfoyer.Repositories.LessonProgressRepository;
 import tn.esprit.tpfoyer.Repositories.LessonRepository;
 import tn.esprit.tpfoyer.Services.MLServiceClient;
 
+import tn.esprit.tpfoyer.Dto.MlConversionDTO;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
@@ -296,5 +301,122 @@ public class MLController {
     public ResponseEntity<?> getForecast(
             @RequestParam(defaultValue = "6") int steps) {
         return ResponseEntity.ok(mlClient.getForecast(steps));
+    }
+
+    // GET /api/ml/admin/conversion-stats
+    // Aggregate conversion analytics across all students using DSO1
+    @GetMapping("/admin/conversion-stats")
+    public ResponseEntity<?> getAdminConversionStats() {
+        try {
+            // Step 1: Get all enrollments
+            List<Enrollment> allEnrollments = enrollmentRepository.findAll();
+
+            // Step 2: Group by studentId
+            Map<Long, List<Enrollment>> byStudent = allEnrollments.stream()
+                .collect(Collectors.groupingBy(Enrollment::getStudentId));
+
+            int totalStudents = byStudent.size();
+
+            // Step 3: Identify converted students (those with at least one paid enrollment)
+            Set<Long> convertedStudentIds = byStudent.entrySet().stream()
+                .filter(entry -> entry.getValue().stream()
+                    .anyMatch(e -> e.getPaymentIntentId() != null
+                        && !e.getPaymentIntentId().isEmpty()))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+
+            int convertedStudents = convertedStudentIds.size();
+
+            // Step 4: Free-only students
+            Set<Long> freeOnlyStudentIds = byStudent.keySet().stream()
+                .filter(sid -> !convertedStudentIds.contains(sid))
+                .collect(Collectors.toSet());
+
+            int freeOnlyStudents = freeOnlyStudentIds.size();
+
+            // Step 5: Run DSO1 on free-only students and average the probability
+            double totalProbability = 0.0;
+            int highPotentialCount = 0;
+            int processed = 0;
+
+            for (Long studentId : freeOnlyStudentIds) {
+                try {
+                    List<Enrollment> studentEnrollments = byStudent.get(studentId);
+
+                    List<Long> enrollmentIds = studentEnrollments.stream()
+                        .map(Enrollment::getId)
+                        .collect(Collectors.toList());
+
+                    List<LessonProgress> allProgress = enrollmentIds.isEmpty()
+                        ? Collections.emptyList()
+                        : lessonProgressRepository.findByEnrollmentIdIn(enrollmentIds);
+
+                    double timeSpent = allProgress.stream()
+                        .mapToDouble(lp -> lp.getTimeSpentSeconds() != null
+                            ? lp.getTimeSpentSeconds() / 60.0 : 0)
+                        .sum();
+
+                    double completionRate = studentEnrollments.stream()
+                        .mapToDouble(e -> e.getCompletionPercentage() != null
+                            ? e.getCompletionPercentage() / 100.0 : 0)
+                        .average().orElse(0.0);
+
+                    double quizScores = 50.0;
+                    try {
+                        org.springframework.web.client.RestTemplate rt =
+                            new org.springframework.web.client.RestTemplate();
+                        @SuppressWarnings("unchecked")
+                        java.util.Map<String, Object> quizData = rt.getForObject(
+                            "http://localhost:8083/api/quizzes/student/" + studentId + "/avg-score",
+                            java.util.Map.class);
+                        if (quizData != null && quizData.get("avgScore") != null) {
+                            quizScores = ((Number) quizData.get("avgScore")).doubleValue();
+                        }
+                    } catch (Exception ignored) {}
+
+                    long videosWatched = allProgress.stream()
+                        .filter(lp -> ProgressStatus.COMPLETED.equals(lp.getStatus()))
+                        .count();
+
+                    long lessonInteractions = allProgress.size();
+
+                    MlConversionDTO result = mlClient.predictConversion(
+                        timeSpent, completionRate, quizScores,
+                        (double) videosWatched, (double) lessonInteractions, 0.0);
+
+                    if (result != null && result.getPercentage() != null) {
+                        double prob = result.getPercentage();
+                        totalProbability += prob;
+                        if (prob >= 70.0) highPotentialCount++;
+                        processed++;
+                    }
+                } catch (Exception e) {
+                    System.out.println("[ConversionStats] Failed for student "
+                        + studentId + ": " + e.getMessage());
+                }
+            }
+
+            double avgConversionProbability = processed > 0
+                ? totalProbability / processed : 0.0;
+
+            double conversionRate = totalStudents > 0
+                ? (convertedStudents * 100.0) / totalStudents : 0.0;
+
+            Map<String, Object> stats = new LinkedHashMap<>();
+            stats.put("totalStudents", totalStudents);
+            stats.put("convertedStudents", convertedStudents);
+            stats.put("freeOnlyStudents", freeOnlyStudents);
+            stats.put("conversionRate", Math.round(conversionRate * 10.0) / 10.0);
+            stats.put("avgConversionProbability",
+                Math.round(avgConversionProbability * 10.0) / 10.0);
+            stats.put("highPotentialCount", highPotentialCount);
+
+            return ResponseEntity.ok(stats);
+
+        } catch (Exception e) {
+            System.out.println("[ConversionStats] Error: " + e.getMessage());
+            return ResponseEntity.internalServerError()
+                .body(Map.of("error", e.getMessage()));
+        }
     }
 }
