@@ -67,6 +67,30 @@ export const routes: Routes = [
     canActivate: [adminGuard],
   },
   {
+    path: 'dashboard/forum/categories',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./backoffice/categories/backoffice-categories.component').then(
+        (m) => m.BackofficeCategoriesComponent
+      ),
+  },
+  {
+    path: 'dashboard/forum/threads',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./backoffice/forum/backoffice-forum-threads.component').then(
+        (m) => m.BackofficeForumThreadsComponent
+      ),
+  },
+  {
+    path: 'dashboard/forum/threads/:threadId',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./backoffice/forum/backoffice-forum-thread-detail.component').then(
+        (m) => m.BackofficeForumThreadDetailComponent
+      ),
+  },
+  {
     path: 'dashboard/profile',
     canActivate: [adminGuard],
     loadComponent: () =>
@@ -75,6 +99,7 @@ export const routes: Routes = [
   {
     path: 'dashboard',
     component: BackofficeDashboardComponent,
+    data: { page: 'index.html' },
     canActivate: [adminGuard],
   },
   {

@@ -3,6 +3,8 @@ export const environment = {
   apiBaseUrl: 'http://localhost:8088',
   apiUrl: 'http://localhost:8091/api',
   financeApiUrl: 'http://localhost:8093/api/finance',
+  forumApiUrl: 'http://localhost:8080',
+  forumWsUrl: 'http://localhost:8086',
   googleIdpHint: 'google',
   keycloakUrl: 'http://localhost:9190',
   keycloakRealm: 'microservices',

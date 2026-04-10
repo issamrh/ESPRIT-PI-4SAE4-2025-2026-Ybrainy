@@ -19,13 +19,14 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   readonly assets = 'assets/frontoffice/www.ciklum.com/';
   private lenis: any;
   private animObserver: IntersectionObserver | null = null;
+  private visibilityFallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(private ngZone: NgZone) {}
 
   ngAfterViewInit(): void {
     // Run outside Angular zone for better performance with animation libs
     this.ngZone.runOutsideAngular(() => {
-      setTimeout(() => this.initAllAnimations(), 100);
+      setTimeout(() => this.bootHomeExperience(), 100);
     });
   }
 
@@ -42,9 +43,24 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
         this.animObserver.disconnect();
         this.animObserver = null;
       }
+      if (this.visibilityFallbackTimer) {
+        clearTimeout(this.visibilityFallbackTimer);
+        this.visibilityFallbackTimer = null;
+      }
     } catch (e) {
       // eslint-disable-next-line no-console
       console.warn('Cleanup error:', e);
+    }
+  }
+
+  private bootHomeExperience(): void {
+    try {
+      this.initAllAnimations();
+      this.scheduleVisibilityFallback();
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn('Home animation bootstrap failed, falling back to static view:', e);
+      this.revealStaticHomeView();
     }
   }
 
@@ -64,6 +80,44 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       // eslint-disable-next-line no-console
       console.warn('Animation init error:', e);
     }
+  }
+
+  private scheduleVisibilityFallback(): void {
+    if (this.visibilityFallbackTimer) {
+      clearTimeout(this.visibilityFallbackTimer);
+    }
+
+    this.visibilityFallbackTimer = setTimeout(() => {
+      const mainHead = document.querySelector('.main-head') as HTMLElement | null;
+      const bannerBottom = document.querySelector('.banner-bottom') as HTMLElement | null;
+      const hiddenMainHead = mainHead ? getComputedStyle(mainHead).opacity === '0' : true;
+      const hiddenBannerBottom = bannerBottom ? getComputedStyle(bannerBottom).opacity === '0' : true;
+
+      if (hiddenMainHead && hiddenBannerBottom) {
+        this.revealStaticHomeView();
+      }
+    }, 2800);
+  }
+
+  private revealStaticHomeView(): void {
+    const showSelectors = ['.home-header', '.main-head', '.banner-bottom', '.fundamental-wrap .card-txt'];
+    const resetTransformSelectors = ['.fundamental-head', '.fundamentals-grid', '.fundamental-wrap .comm-card'];
+
+    showSelectors.forEach((selector) => {
+      document.querySelectorAll<HTMLElement>(selector).forEach((el) => {
+        el.style.opacity = '1';
+      });
+    });
+
+    resetTransformSelectors.forEach((selector) => {
+      document.querySelectorAll<HTMLElement>(selector).forEach((el) => {
+        el.style.transform = 'none';
+      });
+    });
+
+    document.querySelectorAll<HTMLElement>('.main-circle-wrap').forEach((el) => {
+      el.style.display = 'none';
+    });
   }
 
   private initLenis(): void {
@@ -571,7 +625,9 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     });
 
     const vidInd = document.querySelectorAll('.industry-media video') as NodeListOf<HTMLVideoElement>;
-    if (vidInd.length > 0) vidInd[0].play();
+    if (vidInd.length > 0) {
+      this.tryPlayVideo(vidInd[0]);
+    }
 
     $('.industry-acc').click(function (this: any) {
       $('.industry-acc').removeClass('active');
@@ -583,10 +639,10 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       industrySwiper.slideTo($(this).index() - 1);
     });
 
-    industrySwiper.on('slideChange', function () {
+    industrySwiper.on('slideChange', () => {
       $('.industry-acc').removeClass('active');
       $('.industry-acc').eq(industrySwiper.activeIndex).addClass('active');
-      if (vidInd[industrySwiper.activeIndex]) vidInd[industrySwiper.activeIndex].play();
+      this.tryPlayVideo(vidInd[industrySwiper.activeIndex]);
       $('.industry-acc')
         .eq(industrySwiper.activeIndex)
         .one('transitionend', function () {
@@ -594,6 +650,25 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
           gsap.to('.industry-acc-bg', { top: indTop, duration: 0.3 });
         });
     });
+  }
+
+  private tryPlayVideo(video?: HTMLVideoElement | null): void {
+    if (!video) return;
+
+    video.muted = true;
+    video.playsInline = true;
+
+    const playPromise = video.play();
+    if (playPromise && typeof playPromise.catch === 'function') {
+      playPromise.catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'NotAllowedError') {
+          return;
+        }
+
+        // eslint-disable-next-line no-console
+        console.warn('Industry video playback failed:', error);
+      });
+    }
   }
 
   private initLottieAnimations(): void {

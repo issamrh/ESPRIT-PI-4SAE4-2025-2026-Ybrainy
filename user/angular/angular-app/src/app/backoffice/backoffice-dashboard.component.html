@@ -10,6 +10,8 @@
         </div>
       </div>
       <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/users" class="quick-link primary">User Management</a>
+      <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/forum/threads" class="quick-link">Forum Threads</a>
+      <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/forum/categories" class="quick-link">Forum Categories</a>
       <a routerLink="/dashboard/profile" class="quick-link">My Profile</a>
       <a routerLink="/courses" class="quick-link">← Student View</a>
       <button type="button" class="quick-link quick-link-danger" (click)="onLogout()">Logout</button>
@@ -22,5 +24,4 @@
     title="Backoffice Dashboard"
   ></iframe>
 </div>
-
 

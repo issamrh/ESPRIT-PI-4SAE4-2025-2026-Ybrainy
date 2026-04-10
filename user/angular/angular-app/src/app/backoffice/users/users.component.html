@@ -27,6 +27,8 @@
               </a>
               <ul aria-expanded="true" class="mm-show">
                 <li><a routerLink="/dashboard/users" class="mm-active">User Moderation</a></li>
+                <li><a routerLink="/dashboard/forum/threads">Forum Threads</a></li>
+                <li><a routerLink="/dashboard/forum/categories">Forum Categories</a></li>
                 <li><a routerLink="/dashboard/profile">My Profile</a></li>
                 <li><a routerLink="/dashboard">Template Dashboard</a></li>
                 <li><button type="button" class="sidebar-logout" (click)="logoutAdmin()">Logout</button></li>
@@ -52,6 +54,8 @@
           <div class="admin-menu-list">
             <a routerLink="/dashboard" class="admin-menu-item">Template Dashboard</a>
             <a routerLink="/dashboard/users" class="admin-menu-item">User Moderation</a>
+            <a routerLink="/dashboard/forum/threads" class="admin-menu-item">Forum Threads</a>
+            <a routerLink="/dashboard/forum/categories" class="admin-menu-item">Forum Categories</a>
             <a routerLink="/dashboard/profile" class="admin-menu-item">My Profile</a>
             <button type="button" class="admin-menu-item danger" (click)="logoutAdmin()">Log Out</button>
           </div>
@@ -657,7 +661,6 @@
     </div>
   </div>
 </div>
-
 
 
 

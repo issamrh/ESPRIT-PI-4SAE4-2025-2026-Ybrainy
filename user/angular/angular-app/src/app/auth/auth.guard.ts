@@ -32,16 +32,6 @@ export const authGuard: CanActivateFn = (_route, state) => {
     console.log('[AUTH GUARD] First login detected, setting mode to:', userRole);
     // First time - set mode to role
     userSession.setMode(userRole as 'STUDENT' | 'INSTRUCTOR' | 'ADMIN');
-
-    // Only force a default landing page when the user is visiting the root URL.
-    if (isRootNavigation && userRole === 'ADMIN') {
-      console.log('[AUTH GUARD] Redirecting to /dashboard');
-      return router.parseUrl('/dashboard');
-    } else if (isRootNavigation && userRole === 'INSTRUCTOR') {
-      console.log('[AUTH GUARD] Redirecting to /dashboard/courses');
-      return router.parseUrl('/dashboard/courses');
-    }
-    console.log('[AUTH GUARD] Student, allowing through');
   }
 
   console.log('[AUTH GUARD] Returning true (allowing access)');

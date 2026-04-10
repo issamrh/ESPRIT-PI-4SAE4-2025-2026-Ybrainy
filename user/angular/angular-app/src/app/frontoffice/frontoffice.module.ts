@@ -18,6 +18,9 @@ import { PaymentComponent } from './pages/payment/payment.component';
 import { ResourcesComponent } from './pages/resources/resources.component';
 import { AboutComponent } from './pages/about/about.component';
 import { ForumComponent } from './pages/forum/forum.component';
+import { CreateThreadComponent } from './pages/forum/create-thread/create-thread.component';
+import { DraftsComponent } from './pages/forum/drafts/drafts.component';
+import { ThreadDetailComponent } from './pages/forum/thread-detail/thread-detail.component';
 import { CalendarComponent } from './pages/calendar/calendar.component';
 import { CoursesComponent } from './pages/courses/courses.component';
 import { LessonsComponent } from './pages/lessons/lessons.component';
@@ -31,6 +34,13 @@ import { AiLearningPathPageComponent } from './pages/learning-paths/learning-pat
 import { StudentDashboardComponent } from './pages/student-dashboard/student-dashboard.component';
 import { FoPackListComponent } from './pages/packs/pack-list/pack-list.component';
 import { FoPackDetailComponent } from './pages/packs/pack-detail/pack-detail.component';
+import { AiAssistantComponent } from './ai-assistant/ai-assistant.component';
+import { YforumyTextPipe } from './ai-assistant/yforumy-text.pipe';
+import { LevelBarComponent } from './level-bar/level-bar.component';
+import { DashboardComponent } from './pages/dashboard/dashboard.component';
+import { MessagingComponent } from './pages/messaging/messaging.component';
+import { UserProfileComponent } from './pages/user-profile/user-profile.component';
+import { WishlistComponent } from './pages/wishlist/wishlist.component';
 
 // Section components
 import { HeroSectionComponent } from './home/hero-section/hero-section.component';
@@ -57,6 +67,9 @@ import { PrefooterCtaComponent } from './home/prefooter-cta/prefooter-cta.compon
     ResourcesComponent,
     AboutComponent,
     ForumComponent,
+    CreateThreadComponent,
+    DraftsComponent,
+    ThreadDetailComponent,
     CalendarComponent,
     CoursesComponent,
     LessonsComponent,
@@ -70,6 +83,12 @@ import { PrefooterCtaComponent } from './home/prefooter-cta/prefooter-cta.compon
     StudentDashboardComponent,
     FoPackListComponent,
     FoPackDetailComponent,
+    AiAssistantComponent,
+    YforumyTextPipe,
+    DashboardComponent,
+    MessagingComponent,
+    UserProfileComponent,
+    WishlistComponent,
     HeroSectionComponent,
     TrustLogosComponent,
     WhyYbrainyComponent,
@@ -86,6 +105,7 @@ import { PrefooterCtaComponent } from './home/prefooter-cta/prefooter-cta.compon
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    LevelBarComponent,
     RouterModule,
     FrontofficeRoutingModule
   ]

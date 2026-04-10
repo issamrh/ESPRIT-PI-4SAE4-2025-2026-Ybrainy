@@ -165,7 +165,7 @@ export class LoginPageComponent {
       }
     }
 
-    await this.router.navigateByUrl(role === 'ADMIN' ? '/dashboard' : '/');
+    await this.router.navigateByUrl('/');
   }
 
   private getPostLoginRedirectUri(): string {

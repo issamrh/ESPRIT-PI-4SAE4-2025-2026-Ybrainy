@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { AiSearchResult, AiCourseItem, Course, MlRecommendation, MlRecommendationsResponse, MlQualityResult } from '../../models/course.models';
@@ -12,7 +12,7 @@ import { UserSessionService } from '../../../tracking/user-session.service';
   styleUrls: ['./courses.component.css'],
   host: { 'style': 'display:block' }
 })
-export class CoursesComponent implements AfterViewInit, OnDestroy {
+export class CoursesComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   private readonly _courses$ = new BehaviorSubject<Course[]>([]);
@@ -123,9 +123,12 @@ export class CoursesComponent implements AfterViewInit, OnDestroy {
     private userSession: UserSessionService
   ) {}
 
-  async ngAfterViewInit(): Promise<void> {
+  ngOnInit(): void {
     this.loadPage();
     this.loadMLRecommendations();
+  }
+
+  async ngAfterViewInit(): Promise<void> {
     this.startAutoScroll();
     this.attachWheelListener();
   }

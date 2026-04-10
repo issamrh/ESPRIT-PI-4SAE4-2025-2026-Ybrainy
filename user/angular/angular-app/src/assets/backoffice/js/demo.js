@@ -255,10 +255,16 @@ function deleteAllCookie(reload = true)
 		var attrName = item.name.replace('data-','').replace('-','_');
 		if(attrName === "nav_headerbg" || attrName === "headerbg" || attrName === "sidebarbg" || attrName === "primary"){
 			var attrNameColor = attrName.replace("bg","")
-			document.getElementById(attrNameColor+"_"+item.value).checked = true;
+			var colorInput = document.getElementById(attrNameColor+"_"+item.value);
+			if(colorInput){
+				colorInput.checked = true;
+			}
 		}else if(attrName === "direction"){
-		}else if(jQuery(attrName).length > 0){
-			document.getElementById(attrName).value = item.value;				
+		}else{
+			var optionInput = document.getElementById(attrName);
+			if(optionInput){
+				optionInput.value = item.value;
+			}
 		}
 		// $('.default-select').niceSelect('update');
 	}

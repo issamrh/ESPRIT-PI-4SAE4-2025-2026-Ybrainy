@@ -138,3 +138,21 @@ app-services, app-payment, app-resources, app-about,
 app-forum, app-calendar, app-courses {
   display: block;
 }
+
+/* Safety fallback: keep the home page usable even if animation bootstrap fails. */
+.main-circle-wrap {
+  display: none !important;
+}
+
+.home-header,
+.main-head,
+.banner-bottom,
+.fundamental-wrap .card-txt {
+  opacity: 1 !important;
+}
+
+.fundamental-head,
+.fundamentals-grid,
+.fundamental-wrap .comm-card {
+  transform: none !important;
+}

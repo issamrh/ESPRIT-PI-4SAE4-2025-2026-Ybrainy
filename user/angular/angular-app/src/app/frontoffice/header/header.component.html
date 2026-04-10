@@ -314,6 +314,21 @@
                   <a routerLink="/forum">Forum</a>
                 </li>
                 <li>
+                  <a routerLink="/forum/create">Create Thread</a>
+                </li>
+                <li>
+                  <a routerLink="/messages">Messages</a>
+                </li>
+                <li>
+                  <a routerLink="/wishlist">Wishlist</a>
+                </li>
+                <li>
+                  <a routerLink="/my-dashboard">Forum Dashboard</a>
+                </li>
+                <li>
+                  <a routerLink="/forum/profile">Community Profile</a>
+                </li>
+                <li>
                   <a routerLink="/calendar">Calendar</a>
                 </li>
                 <li>
@@ -472,6 +487,21 @@
 
                 <div class="dropdown-divider"></div>
 
+                <a routerLink="/my-dashboard" class="dropdown-item" (click)="showModeDropdown = false">
+                  Forum Dashboard
+                </a>
+                <a routerLink="/messages" class="dropdown-item" (click)="showModeDropdown = false">
+                  Messages
+                </a>
+                <a routerLink="/wishlist" class="dropdown-item" (click)="showModeDropdown = false">
+                  Wishlist
+                </a>
+                <a routerLink="/forum/profile" class="dropdown-item" (click)="showModeDropdown = false">
+                  Community Profile
+                </a>
+
+                <div class="dropdown-divider"></div>
+
                 <a routerLink="/profile" class="dropdown-item" (click)="showModeDropdown = false">
                   ⚙️ Settings
                 </a>
@@ -578,6 +608,11 @@
           <a routerLink="/resources">Resources</a>
           <ul>
             <li><a routerLink="/forum">Forum</a></li>
+            <li><a routerLink="/forum/create">Create Thread</a></li>
+            <li><a routerLink="/messages">Messages</a></li>
+            <li><a routerLink="/wishlist">Wishlist</a></li>
+            <li><a routerLink="/my-dashboard">Forum Dashboard</a></li>
+            <li><a routerLink="/forum/profile">Community Profile</a></li>
             <li><a routerLink="/calendar">Calendar</a></li>
             <li><a routerLink="/courses">Courses</a></li>
             <li><a routerLink="/my-learning">My Learning</a></li>

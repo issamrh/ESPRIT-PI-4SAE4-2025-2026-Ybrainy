@@ -24,7 +24,7 @@ declare var $: any;
 })
 export class HeaderComponent implements AfterViewInit, OnDestroy {
   readonly assets = 'assets/frontoffice/www.ciklum.com/';
-  isHome = true;
+  isHome = false;
   menuOpen = false;
   profileMenuOpen = false;
   showModeDropdown = false;
@@ -50,7 +50,9 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     private frontofficeUserService: UserService,
     private userSession: UserSessionService,
     private cdr: ChangeDetectorRef
-  ) { }
+  ) {
+    this.syncIsHomeFromUrl(this.getCurrentUrl());
+  }
 
   get authenticated(): boolean {
     return isAuthenticated();
@@ -227,8 +229,8 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this.syncIsHomeFromUrl(this.router.url);
-    this.handleStripeCheckoutReturn(this.router.url);
+    const currentUrl = this.getCurrentUrl();
+    this.handleStripeCheckoutReturn(currentUrl);
     this.loadHeaderUserData();
     if (this.authenticated) {
       this.cartService.refreshCart();
@@ -260,7 +262,9 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    $(window).off('scroll.headerSticky');
+    if (this.canUseJquery()) {
+      $(window).off('scroll.headerSticky');
+    }
     if (this.checkoutToastTimer) {
       clearTimeout(this.checkoutToastTimer);
       this.checkoutToastTimer = null;
@@ -284,6 +288,9 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
 
   toggleMenu(): void {
     this.menuOpen = !this.menuOpen;
+    if (!this.canUseJquery()) {
+      return;
+    }
     $('.menu').toggleClass('show-menu');
     $('.nav-wrapper').toggleClass('show-menu');
     const rt = window.innerWidth;
@@ -293,6 +300,10 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   }
 
   private initStickyHeader(): void {
+    if (!this.canUseJquery()) {
+      return;
+    }
+
     function fixedHeader() {
       const sticky = $('#header');
       const scroll = $(window).scrollTop();
@@ -307,6 +318,13 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   private syncIsHomeFromUrl(url: string): void {
     const clean = (url || '').split('?')[0].split('#')[0];
     this.isHome = clean === '' || clean === '/';
+  }
+
+  private getCurrentUrl(): string {
+    if (typeof window !== 'undefined') {
+      return `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    }
+    return this.router.url;
   }
 
   private loadHeaderUserData(): void {
@@ -415,6 +433,10 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   }
 
   private initMegaMenu(): void {
+    if (!this.canUseJquery()) {
+      return;
+    }
+
     const dropLinks = document.querySelectorAll('.drop-list-links');
     const dropList = document.querySelectorAll('.drop-list-tabs li');
     dropList.forEach((element: any, i: number) => {
@@ -445,6 +467,10 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   }
 
   private initMobileNav(): void {
+    if (!this.canUseJquery()) {
+      return;
+    }
+
     if ($(window).outerWidth() >= 990) return;
 
     const initElem = $('nav');
@@ -495,5 +521,9 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     }
 
     updateMenuTitle();
+  }
+
+  private canUseJquery(): boolean {
+    return typeof $ === 'function';
   }
 }

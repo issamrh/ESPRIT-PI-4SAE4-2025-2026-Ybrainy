@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="en-US" class="lenis"><head>
+  <script type="module" src="/@vite/client"></script>
+
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>YBrainy - E-Learning &amp; Certifications Platform</title>
+  <meta name="description" content="Leading e-learning platform offering professional courses and industry-recognized certifications to help you advance your career and master new skills.">
+  <base href="/">
+  <link rel="icon" href="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fav.png" sizes="32x32">
+  <link rel="icon" href="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fav.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fav.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+<link rel="stylesheet" href="styles.css"><style>
+
+/*# sourceMappingURL=layout.component.css.map */</style><style>
+
+.profile-menu-wrapper[_ngcontent-ng-c2159879138] {
+  position: relative;
+  margin-right: 12px;
+  display: inline-flex;
+  align-items: center;
+}
+.profile-avatar-button[_ngcontent-ng-c2159879138] {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  background: rgba(15, 23, 42, 0.06);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  cursor: pointer;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0;
+}
+.profile-avatar-button[_ngcontent-ng-c2159879138]:hover {
+  border-color: rgba(10, 110, 245, 0.45);
+}
+.profile-avatar-button[_ngcontent-ng-c2159879138]   img[_ngcontent-ng-c2159879138] {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.profile-avatar-button[_ngcontent-ng-c2159879138]   span[_ngcontent-ng-c2159879138] {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background:
+    linear-gradient(
+      135deg,
+      #0a6ef5,
+      #00c2a6);
+}
+.profile-dropdown[_ngcontent-ng-c2159879138] {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 220px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
+  padding: 8px;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-6px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.profile-dropdown.open[_ngcontent-ng-c2159879138] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.profile-dropdown-header[_ngcontent-ng-c2159879138] {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 6px 6px 10px;
+  border-bottom: 1px solid #edf2f7;
+  margin-bottom: 6px;
+}
+.mini-avatar[_ngcontent-ng-c2159879138] {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(
+      135deg,
+      #0a6ef5,
+      #00c2a6);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+}
+.mini-avatar[_ngcontent-ng-c2159879138]   img[_ngcontent-ng-c2159879138] {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mini-user-meta[_ngcontent-ng-c2159879138] {
+  min-width: 0;
+}
+.mini-user-meta[_ngcontent-ng-c2159879138]   strong[_ngcontent-ng-c2159879138] {
+  display: block;
+  font-size: 13px;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mini-user-meta[_ngcontent-ng-c2159879138]   span[_ngcontent-ng-c2159879138] {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+}
+.profile-dropdown-item[_ngcontent-ng-c2159879138] {
+  width: 100%;
+  display: block;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: #0f172a;
+  border-radius: 10px;
+  padding: 9px 10px;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.profile-dropdown-item[_ngcontent-ng-c2159879138]:hover {
+  background: #f8fafc;
+}
+.profile-dropdown-item.signout[_ngcontent-ng-c2159879138] {
+  color: #b42318;
+}
+@media (max-width: 989px) {
+  .profile-menu-wrapper[_ngcontent-ng-c2159879138] {
+    margin-right: 8px;
+  }
+  .profile-dropdown[_ngcontent-ng-c2159879138] {
+    right: -8px;
+  }
+}
+.mode-switcher-container[_ngcontent-ng-c2159879138] {
+  position: relative;
+  display: inline-block;
+  z-index: 100;
+}
+.avatar-wrapper[_ngcontent-ng-c2159879138] {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 3px solid transparent;
+  animation: _ngcontent-ng-c2159879138_pulse-glow 3s ease-in-out infinite;
+}
+.avatar-wrapper.mode-student[_ngcontent-ng-c2159879138] {
+  border-color: #3b82f6;
+  box-shadow:
+    0 0 0 0 rgba(59, 130, 246, 0.4),
+    0 0 20px rgba(59, 130, 246, 0.6),
+    inset 0 0 20px rgba(59, 130, 246, 0.2);
+}
+.avatar-wrapper.mode-instructor[_ngcontent-ng-c2159879138] {
+  border-color: #8b5cf6;
+  box-shadow:
+    0 0 0 0 rgba(139, 92, 246, 0.4),
+    0 0 20px rgba(139, 92, 246, 0.6),
+    inset 0 0 20px rgba(139, 92, 246, 0.2);
+}
+.avatar-wrapper.mode-admin[_ngcontent-ng-c2159879138] {
+  border-color: #f59e0b;
+  box-shadow:
+    0 0 0 0 rgba(245, 158, 11, 0.4),
+    0 0 20px rgba(245, 158, 11, 0.6),
+    inset 0 0 20px rgba(245, 158, 11, 0.2);
+}
+@keyframes _ngcontent-ng-c2159879138_pulse-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 0 currentColor,
+      0 0 15px currentColor,
+      inset 0 0 15px currentColor;
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px currentColor,
+      0 0 30px currentColor,
+      inset 0 0 30px currentColor;
+  }
+}
+.avatar-wrapper[_ngcontent-ng-c2159879138]:hover {
+  transform: scale(1.1) rotate(5deg);
+}
+.user-avatar[_ngcontent-ng-c2159879138] {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background:
+    linear-gradient(
+      135deg,
+      #667eea 0%,
+      #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: white;
+  font-size: 18px;
+}
+.avatar-initials[_ngcontent-ng-c2159879138] {
+  background:
+    linear-gradient(
+      135deg,
+      #667eea 0%,
+      #764ba2 100%);
+}
+.mode-indicator[_ngcontent-ng-c2159879138] {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  font-size: 20px;
+  background: white;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+}
+.avatar-wrapper[_ngcontent-ng-c2159879138]:hover   .mode-indicator[_ngcontent-ng-c2159879138] {
+  transform: scale(1.2) rotate(15deg);
+}
+.mode-dropdown[_ngcontent-ng-c2159879138] {
+  position: absolute;
+  top: 65px;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+  min-width: 300px;
+  z-index: 1000;
+  animation: _ngcontent-ng-c2159879138_dropdownSlide 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+@keyframes _ngcontent-ng-c2159879138_dropdownSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.dropdown-header[_ngcontent-ng-c2159879138] {
+  padding: 20px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(99, 102, 241, 0.1) 0%,
+      rgba(168, 85, 247, 0.1) 100%);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+.user-info[_ngcontent-ng-c2159879138]   strong[_ngcontent-ng-c2159879138] {
+  display: block;
+  font-size: 17px;
+  color: #1f2937;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.user-role[_ngcontent-ng-c2159879138] {
+  display: block;
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+.dropdown-divider[_ngcontent-ng-c2159879138] {
+  height: 1px;
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(0, 0, 0, 0.08),
+      transparent);
+  margin: 8px 0;
+}
+.dropdown-label[_ngcontent-ng-c2159879138] {
+  padding: 12px 20px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.mode-list[_ngcontent-ng-c2159879138] {
+  padding: 8px 0;
+}
+.mode-option[_ngcontent-ng-c2159879138] {
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 15px;
+  color: #374151;
+  position: relative;
+  overflow: hidden;
+}
+.mode-option[_ngcontent-ng-c2159879138]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background: currentColor;
+  transform: scaleY(0);
+  transition: transform 0.2s ease;
+}
+.mode-option[_ngcontent-ng-c2159879138]:hover::before {
+  transform: scaleY(1);
+}
+.mode-option[_ngcontent-ng-c2159879138]:hover {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(99, 102, 241, 0.08) 0%,
+      transparent 100%);
+  padding-left: 24px;
+}
+.mode-option.active[_ngcontent-ng-c2159879138] {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(99, 102, 241, 0.12) 0%,
+      rgba(168, 85, 247, 0.08) 100%);
+  color: #6366f1;
+  font-weight: 600;
+}
+.mode-option.active[_ngcontent-ng-c2159879138]::before {
+  transform: scaleY(1);
+}
+.mode-icon[_ngcontent-ng-c2159879138] {
+  font-size: 24px;
+  transition: transform 0.2s ease;
+}
+.mode-option[_ngcontent-ng-c2159879138]:hover   .mode-icon[_ngcontent-ng-c2159879138] {
+  transform: scale(1.2) rotate(-5deg);
+}
+.mode-name[_ngcontent-ng-c2159879138] {
+  flex: 1;
+  text-align: left;
+}
+.check-icon[_ngcontent-ng-c2159879138] {
+  color: #6366f1;
+  font-weight: bold;
+  font-size: 18px;
+}
+.dropdown-item[_ngcontent-ng-c2159879138] {
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 15px;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+.dropdown-item[_ngcontent-ng-c2159879138]:hover {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(99, 102, 241, 0.06) 0%,
+      transparent 100%);
+  padding-left: 24px;
+}
+.dropdown-item.logout[_ngcontent-ng-c2159879138] {
+  color: #dc2626;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  margin-top: 8px;
+}
+.dropdown-item.logout[_ngcontent-ng-c2159879138]:hover {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(220, 38, 38, 0.08) 0%,
+      transparent 100%);
+}
+.cart-wrapper[_ngcontent-ng-c2159879138] {
+  position: relative;
+  margin-right: 18px;
+  display: inline-flex;
+  align-items: center;
+}
+.cart-toggle[_ngcontent-ng-c2159879138] {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.92);
+  color: #0f172a;
+  font-size: 1.35rem;
+  text-decoration: none;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+.cart-toggle[_ngcontent-ng-c2159879138]:hover, 
+.cart-toggle.is-open[_ngcontent-ng-c2159879138] {
+  transform: translateY(-1px);
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.16);
+}
+.cart-badge[_ngcontent-ng-c2159879138] {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #e74c3c;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  box-shadow: 0 10px 20px rgba(231, 76, 60, 0.35);
+}
+.cart-dropdown[_ngcontent-ng-c2159879138] {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  width: min(320px, calc(100vw - 24px));
+  padding: 15px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.16);
+  z-index: 1050;
+}
+.cart-dropdown-tabs[_ngcontent-ng-c2159879138] {
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid #eee;
+}
+.cart-dropdown-tab[_ngcontent-ng-c2159879138] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 10px;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+.cart-dropdown-tab.active[_ngcontent-ng-c2159879138] {
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #1d4ed8);
+  color: #fff;
+}
+.cart-empty-state[_ngcontent-ng-c2159879138] {
+  padding: 16px 8px;
+  text-align: center;
+}
+.cart-empty-state[_ngcontent-ng-c2159879138]   p[_ngcontent-ng-c2159879138] {
+  margin: 0 0 8px;
+}
+.cart-mini-link[_ngcontent-ng-c2159879138] {
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.cart-items[_ngcontent-ng-c2159879138], 
+.activity-feed[_ngcontent-ng-c2159879138] {
+  max-height: 320px;
+  overflow-y: auto;
+}
+.cart-item-row[_ngcontent-ng-c2159879138] {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+.cart-item-copy[_ngcontent-ng-c2159879138] {
+  min-width: 0;
+  flex: 1;
+}
+.cart-item-title[_ngcontent-ng-c2159879138] {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+.cart-item-meta[_ngcontent-ng-c2159879138] {
+  font-size: 12px;
+  color: #64748b;
+}
+.cart-remove-btn[_ngcontent-ng-c2159879138] {
+  border: 0;
+  background: transparent;
+  color: #dc2626;
+  padding: 0 4px;
+  font-size: 0.95rem;
+}
+.cart-footer[_ngcontent-ng-c2159879138] {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #eee;
+}
+.cart-total-row[_ngcontent-ng-c2159879138] {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+.cart-total-amount[_ngcontent-ng-c2159879138] {
+  font-weight: 700;
+}
+.cart-checkout-btn[_ngcontent-ng-c2159879138] {
+  width: 100%;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  background:
+    linear-gradient(
+      135deg,
+      #2563eb,
+      #1d4ed8);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+.cart-checkout-btn[_ngcontent-ng-c2159879138]:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 24px rgba(37, 99, 235, 0.22);
+}
+.cart-checkout-btn[_ngcontent-ng-c2159879138]:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+.history-item[_ngcontent-ng-c2159879138] {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0 0 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px dashed #f0f0f0;
+}
+.activity-icon[_ngcontent-ng-c2159879138] {
+  margin-top: 2px;
+  font-size: 18px;
+}
+.history-copy[_ngcontent-ng-c2159879138] {
+  flex: 1;
+  min-width: 0;
+}
+.history-title[_ngcontent-ng-c2159879138] {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+.history-description[_ngcontent-ng-c2159879138] {
+  font-size: 12px;
+  color: #374151;
+  line-height: 1.45;
+}
+.history-meta[_ngcontent-ng-c2159879138] {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.checkout-spin[_ngcontent-ng-c2159879138] {
+  display: inline-block;
+  animation: _ngcontent-ng-c2159879138_checkoutSpin 0.8s linear infinite;
+}
+.checkout-toast[_ngcontent-ng-c2159879138] {
+  position: fixed;
+  top: 88px;
+  right: 20px;
+  width: min(390px, calc(100vw - 24px));
+  z-index: 2200;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 14px;
+  border: 1px solid rgba(180, 204, 255, 0.4);
+  color: #f6f9ff;
+  box-shadow: 0 14px 28px rgba(10, 20, 54, 0.35);
+  animation: _ngcontent-ng-c2159879138_checkoutToastIn 0.25s ease-out;
+}
+.checkout-toast--success[_ngcontent-ng-c2159879138] {
+  background:
+    radial-gradient(
+      120% 120% at 8% 0%,
+      rgba(94, 210, 171, 0.32) 0%,
+      rgba(94, 210, 171, 0) 55%),
+    linear-gradient(
+      135deg,
+      #0a2452 0%,
+      #1a3f74 100%);
+}
+.checkout-toast--error[_ngcontent-ng-c2159879138] {
+  background:
+    radial-gradient(
+      120% 120% at 8% 0%,
+      rgba(255, 128, 139, 0.28) 0%,
+      rgba(255, 128, 139, 0) 55%),
+    linear-gradient(
+      135deg,
+      #451839 0%,
+      #7f2946 100%);
+}
+.checkout-toast__icon[_ngcontent-ng-c2159879138] {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-size: 1rem;
+}
+.checkout-toast__content[_ngcontent-ng-c2159879138] {
+  flex: 1;
+  min-width: 0;
+}
+.checkout-toast__title[_ngcontent-ng-c2159879138] {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.checkout-toast__message[_ngcontent-ng-c2159879138] {
+  margin: 0.22rem 0 0;
+  font-size: 0.83rem;
+  line-height: 1.35;
+  color: rgba(241, 246, 255, 0.9);
+}
+.checkout-toast__close[_ngcontent-ng-c2159879138] {
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 0.12rem;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+.checkout-toast__close[_ngcontent-ng-c2159879138]:hover {
+  color: #fff;
+}
+@keyframes _ngcontent-ng-c2159879138_checkoutSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes _ngcontent-ng-c2159879138_checkoutToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (max-width: 989px) {
+  .cart-wrapper[_ngcontent-ng-c2159879138] {
+    margin-right: 10px;
+  }
+  .cart-dropdown[_ngcontent-ng-c2159879138] {
+    right: -18px;
+    width: min(320px, calc(100vw - 18px));
+  }
+}
+@media (max-width: 767.98px) {
+  .checkout-toast[_ngcontent-ng-c2159879138] {
+    top: 72px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+  }
+}
+/*# sourceMappingURL=header.component.css.map */</style><style>
+
+.lvlbar[_ngcontent-ng-c371028733] {
+  position: sticky;
+  top: 70px;
+  z-index: 2;
+  background: rgba(255, 255, 255, .92);
+  backdrop-filter: saturate(140%) blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, .08);
+}
+.lvlbar-inner[_ngcontent-ng-c371028733] {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 10px 14px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+.lvl-title[_ngcontent-ng-c371028733] {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.lvl-username[_ngcontent-ng-c371028733] {
+  font-weight: 900;
+  color: #1a1a1b;
+}
+.lvl-badge[_ngcontent-ng-c371028733] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #0079d3;
+  color: #fff;
+  font-weight: 900;
+  font-size: 12px;
+}
+.lvl-text[_ngcontent-ng-c371028733] {
+  color: #6a6d6f;
+  font-weight: 800;
+  font-size: 12px;
+}
+.lvl-progress[_ngcontent-ng-c371028733] {
+  margin-top: 6px;
+  height: 8px;
+  border-radius: 999px;
+  background: #e8eaed;
+  overflow: hidden;
+  position: relative;
+}
+.lvl-progress-fill[_ngcontent-ng-c371028733] {
+  height: 100%;
+  background:
+    linear-gradient(
+      90deg,
+      #0079d3,
+      #00c2ff);
+  border-radius: 999px;
+}
+.lvl-meta[_ngcontent-ng-c371028733] {
+  margin-top: 6px;
+  color: #6a6d6f;
+  font-size: 12px;
+  font-weight: 800;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.lvl-btn[_ngcontent-ng-c371028733] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, .12);
+  background: #f6f7f8;
+  color: #1a1a1b;
+  text-decoration: none;
+  font-weight: 900;
+  font-size: 13px;
+}
+.lvl-btn[_ngcontent-ng-c371028733]:hover {
+  background: #fff;
+  border-color: #0079d3;
+  color: #0079d3;
+}
+@media (max-width: 768px) {
+  .lvlbar[_ngcontent-ng-c371028733] {
+    top: 60px;
+  }
+}
+/*# sourceMappingURL=level-bar.component.css.map */</style><style>
+
+[_nghost-ng-c3794703028] {
+  display: block;
+  width: 100%;
+}
+/*# sourceMappingURL=home.component.css.map */</style><style>
+
+/*# sourceMappingURL=hero-section.component.css.map */</style><style>
+
+/*# sourceMappingURL=trust-logos.component.css.map */</style><style>
+
+/*# sourceMappingURL=why-ybrainy.component.css.map */</style><style>
+
+/*# sourceMappingURL=learning-paths.component.css.map */</style><style>
+
+/*# sourceMappingURL=learning-domains.component.css.map */</style><style>
+
+/*# sourceMappingURL=designed-for-learners.component.css.map */</style><style>
+
+/*# sourceMappingURL=success-stories.component.css.map */</style><style>
+
+/*# sourceMappingURL=partners.component.css.map */</style><style>
+
+/*# sourceMappingURL=career-cta.component.css.map */</style><style>
+
+/*# sourceMappingURL=blog-insights.component.css.map */</style><style>
+
+/*# sourceMappingURL=prefooter-cta.component.css.map */</style><style>
+
+/*# sourceMappingURL=footer.component.css.map */</style><style>
+
+[_nghost-ng-c1715457980] {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 9500;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+[_nghost-ng-c1715457980]    > *[_ngcontent-ng-c1715457980] {
+  pointer-events: auto;
+}
+.yf-fab[_ngcontent-ng-c1715457980] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 18px 0 10px;
+  height: 48px;
+  border-radius: 24px;
+  background:
+    linear-gradient(
+      135deg,
+      #6366f1 0%,
+      #8b5cf6 100%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+  letter-spacing: 0.3px;
+}
+.yf-fab[_ngcontent-ng-c1715457980]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 28px rgba(99, 102, 241, 0.6);
+}
+.yf-fab--open[_ngcontent-ng-c1715457980] {
+  background:
+    linear-gradient(
+      135deg,
+      #4f46e5,
+      #7c3aed);
+}
+.yf-fab-icon[_ngcontent-ng-c1715457980] {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.yf-fab-svg[_ngcontent-ng-c1715457980] {
+  width: 28px;
+  height: 28px;
+}
+.yf-fab-avatar[_ngcontent-ng-c1715457980] {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.yf-fab-close[_ngcontent-ng-c1715457980] {
+  font-size: 16px;
+  line-height: 1;
+}
+.yf-fab-label[_ngcontent-ng-c1715457980] {
+  font-size: 14px;
+  font-weight: 700;
+}
+.yf-panel[_ngcontent-ng-c1715457980] {
+  width: 370px;
+  max-height: 540px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: _ngcontent-ng-c1715457980_yf-slide-in 0.2s ease;
+}
+@keyframes _ngcontent-ng-c1715457980_yf-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.yf-panel-header[_ngcontent-ng-c1715457980] {
+  background:
+    linear-gradient(
+      135deg,
+      #6366f1,
+      #8b5cf6);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.yf-panel-title-row[_ngcontent-ng-c1715457980] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.yf-panel-avatar[_ngcontent-ng-c1715457980] {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.yf-panel-avatar[_ngcontent-ng-c1715457980]   svg[_ngcontent-ng-c1715457980] {
+  width: 36px;
+  height: 36px;
+}
+.yf-header-avatar[_ngcontent-ng-c1715457980] {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.yf-panel-name[_ngcontent-ng-c1715457980] {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.yf-panel-status[_ngcontent-ng-c1715457980] {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 11px;
+}
+.yf-panel-actions[_ngcontent-ng-c1715457980] {
+  display: flex;
+  gap: 4px;
+}
+.yf-icon-btn[_ngcontent-ng-c1715457980] {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: background 0.15s;
+}
+.yf-icon-btn[_ngcontent-ng-c1715457980]:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+.yf-messages[_ngcontent-ng-c1715457980] {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  scroll-behavior: smooth;
+}
+.yf-msg-row[_ngcontent-ng-c1715457980] {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.yf-msg-row--user[_ngcontent-ng-c1715457980] {
+  flex-direction: row-reverse;
+}
+.yf-msg-avatar[_ngcontent-ng-c1715457980] {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.yf-msg-avatar[_ngcontent-ng-c1715457980]   svg[_ngcontent-ng-c1715457980] {
+  width: 28px;
+  height: 28px;
+}
+.yf-msg-avatar-img[_ngcontent-ng-c1715457980] {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+@keyframes _ngcontent-ng-c1715457980_yf-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scale(0.95);
+  }
+}
+.yf-avatar-pulse[_ngcontent-ng-c1715457980] {
+  animation: _ngcontent-ng-c1715457980_yf-pulse 1.4s ease-in-out infinite;
+}
+.yf-bubble[_ngcontent-ng-c1715457980] {
+  max-width: 88%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+.yf-bubble--ai[_ngcontent-ng-c1715457980] {
+  background: #f4f4ff;
+  color: #1c1c1c;
+  border-bottom-left-radius: 4px;
+}
+.yf-bubble--user[_ngcontent-ng-c1715457980] {
+  background:
+    linear-gradient(
+      135deg,
+      #6366f1,
+      #8b5cf6);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.yf-bubble-text[_ngcontent-ng-c1715457980] {
+  white-space: pre-wrap;
+}
+.yf-related[_ngcontent-ng-c1715457980] {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(99, 102, 241, 0.15);
+}
+.yf-related-label[_ngcontent-ng-c1715457980] {
+  font-size: 11.5px;
+  color: #6366f1;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.yf-thread-chip[_ngcontent-ng-c1715457980] {
+  display: inline-block;
+  background: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 2px 4px 2px 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.yf-thread-chip[_ngcontent-ng-c1715457980]:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+.yf-draft-card[_ngcontent-ng-c1715457980] {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1.5px solid #6366f1;
+  border-radius: 10px;
+}
+.yf-draft-card-header[_ngcontent-ng-c1715457980] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.yf-draft-icon[_ngcontent-ng-c1715457980] {
+  font-size: 16px;
+}
+.yf-draft-card-title[_ngcontent-ng-c1715457980] {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6366f1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.yf-draft-card-name[_ngcontent-ng-c1715457980] {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1c1c1c;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.yf-draft-card-btns[_ngcontent-ng-c1715457980] {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.yf-btn[_ngcontent-ng-c1715457980] {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+}
+.yf-btn[_ngcontent-ng-c1715457980]:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.yf-btn-primary[_ngcontent-ng-c1715457980] {
+  background: #6366f1;
+  color: #fff;
+}
+.yf-btn-primary[_ngcontent-ng-c1715457980]:hover:not(:disabled) {
+  background: #4f46e5;
+}
+.yf-btn-ghost[_ngcontent-ng-c1715457980] {
+  background: rgba(99, 102, 241, 0.1);
+  color: #4f46e5;
+}
+.yf-btn-ghost[_ngcontent-ng-c1715457980]:hover {
+  background: rgba(99, 102, 241, 0.2);
+}
+.yf-loading-bubble[_ngcontent-ng-c1715457980] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 20px;
+  background: #f4f4ff;
+}
+.yf-pencil-wrap[_ngcontent-ng-c1715457980] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.yf-typing-text[_ngcontent-ng-c1715457980] {
+  font-size: 12px;
+  color: #6366f1;
+  font-weight: 600;
+  margin-top: 6px;
+  letter-spacing: 0.3px;
+}
+.yf-conv-files-bar[_ngcontent-ng-c1715457980] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #f0f2ff;
+  border-bottom: 1px solid #dde0ff;
+  font-size: 12px;
+  color: #4f46e5;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.yf-msg-files[_ngcontent-ng-c1715457980] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.yf-msg-file-chip[_ngcontent-ng-c1715457980] {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: inherit;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.yf-draft-attachments-note[_ngcontent-ng-c1715457980] {
+  font-size: 11.5px;
+  color: #6366f1;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.yf-pending-files[_ngcontent-ng-c1715457980] {
+  padding: 6px 12px 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-top: 1px solid #ededff;
+  background: #fafaff;
+  flex-shrink: 0;
+}
+.yf-pending-chip[_ngcontent-ng-c1715457980] {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #eeeeff;
+  border: 1px solid #c7c8ff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  max-width: 220px;
+}
+.yf-pending-icon[_ngcontent-ng-c1715457980] {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.yf-pending-name[_ngcontent-ng-c1715457980] {
+  color: #1c1c1c;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100px;
+}
+.yf-pending-size[_ngcontent-ng-c1715457980] {
+  color: #9a9a9a;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+.yf-pending-remove[_ngcontent-ng-c1715457980] {
+  background: none;
+  border: none;
+  color: #9a9a9a;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 2px;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.12s;
+}
+.yf-pending-remove[_ngcontent-ng-c1715457980]:hover {
+  color: #ef4444;
+}
+.yf-input-area[_ngcontent-ng-c1715457980] {
+  padding: 10px 12px;
+  border-top: 1px solid #ededff;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-shrink: 0;
+  background: #fafaff;
+}
+.yf-attach-btn[_ngcontent-ng-c1715457980] {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #eeeeff;
+  border: 1.5px solid #c7c8ff;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+.yf-attach-btn[_ngcontent-ng-c1715457980]:hover:not(:disabled) {
+  background: #e0e0ff;
+}
+.yf-attach-btn[_ngcontent-ng-c1715457980]:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.yf-input[_ngcontent-ng-c1715457980] {
+  flex: 1;
+  border: 1.5px solid #e0e0ff;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  color: #1c1c1c;
+  background: #fff;
+  outline: none;
+  resize: none;
+  max-height: 90px;
+  overflow-y: auto;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+.yf-input[_ngcontent-ng-c1715457980]:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.12);
+}
+.yf-input[_ngcontent-ng-c1715457980]:disabled {
+  background: #f5f5f5;
+  color: #999;
+}
+.yf-send-btn[_ngcontent-ng-c1715457980] {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background:
+    linear-gradient(
+      135deg,
+      #6366f1,
+      #8b5cf6);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}
+.yf-send-btn[_ngcontent-ng-c1715457980]:hover:not(:disabled) {
+  transform: scale(1.08);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.5);
+}
+.yf-send-btn[_ngcontent-ng-c1715457980]:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.yf-send-btn[_ngcontent-ng-c1715457980]   svg[_ngcontent-ng-c1715457980] {
+  width: 16px;
+  height: 16px;
+  color: #fff;
+  flex-shrink: 0;
+}
+.pencil[_ngcontent-ng-c1715457980] {
+  display: block;
+}
+.pencil__body1[_ngcontent-ng-c1715457980], 
+.pencil__body2[_ngcontent-ng-c1715457980], 
+.pencil__body3[_ngcontent-ng-c1715457980], 
+.pencil__eraser[_ngcontent-ng-c1715457980], 
+.pencil__eraser-skew[_ngcontent-ng-c1715457980], 
+.pencil__point[_ngcontent-ng-c1715457980], 
+.pencil__rotate[_ngcontent-ng-c1715457980], 
+.pencil__stroke[_ngcontent-ng-c1715457980] {
+  animation-duration: 3s;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.pencil__body1[_ngcontent-ng-c1715457980], 
+.pencil__body2[_ngcontent-ng-c1715457980], 
+.pencil__body3[_ngcontent-ng-c1715457980] {
+  transform: rotate(-90deg);
+}
+.pencil__body1[_ngcontent-ng-c1715457980] {
+  animation-name: _ngcontent-ng-c1715457980_pencilBody1;
+}
+.pencil__body2[_ngcontent-ng-c1715457980] {
+  animation-name: _ngcontent-ng-c1715457980_pencilBody2;
+}
+.pencil__body3[_ngcontent-ng-c1715457980] {
+  animation-name: _ngcontent-ng-c1715457980_pencilBody3;
+}
+.pencil__eraser[_ngcontent-ng-c1715457980] {
+  animation-name: _ngcontent-ng-c1715457980_pencilEraser;
+  transform: rotate(-90deg) translate(49px, 0);
+}
+.pencil__eraser-skew[_ngcontent-ng-c1715457980] {
+  animation-name: _ngcontent-ng-c1715457980_pencilEraserSkew;
+  animation-timing-function: ease-in-out;
+}
+.pencil__point[_ngcontent-ng-c1715457980] {
+  animation-name: _ngcontent-ng-c1715457980_pencilPoint;
+  transform: rotate(-90deg) translate(49px, -30px);
+}
+.pencil__rotate[_ngcontent-ng-c1715457980] {
+  animation-name: _ngcontent-ng-c1715457980_pencilRotate;
+}
+.pencil__stroke[_ngcontent-ng-c1715457980] {
+  animation-name: _ngcontent-ng-c1715457980_pencilStroke;
+  transform: translate(100px, 100px) rotate(-113deg);
+}
+@keyframes _ngcontent-ng-c1715457980_pencilBody1 {
+  from, to {
+    stroke-dashoffset: 351.86;
+    transform: rotate(-90deg);
+  }
+  50% {
+    stroke-dashoffset: 150.8;
+    transform: rotate(-225deg);
+  }
+}
+@keyframes _ngcontent-ng-c1715457980_pencilBody2 {
+  from, to {
+    stroke-dashoffset: 406.84;
+    transform: rotate(-90deg);
+  }
+  50% {
+    stroke-dashoffset: 174.36;
+    transform: rotate(-225deg);
+  }
+}
+@keyframes _ngcontent-ng-c1715457980_pencilBody3 {
+  from, to {
+    stroke-dashoffset: 296.88;
+    transform: rotate(-90deg);
+  }
+  50% {
+    stroke-dashoffset: 127.23;
+    transform: rotate(-225deg);
+  }
+}
+@keyframes _ngcontent-ng-c1715457980_pencilEraser {
+  from, to {
+    transform: rotate(-45deg) translate(49px, 0);
+  }
+  50% {
+    transform: rotate(0deg) translate(49px, 0);
+  }
+}
+@keyframes _ngcontent-ng-c1715457980_pencilEraserSkew {
+  from, 32.5%, 67.5%, to {
+    transform: skewX(0);
+  }
+  35%, 65% {
+    transform: skewX(-4deg);
+  }
+  37.5%, 62.5% {
+    transform: skewX(8deg);
+  }
+  40%, 45%, 50%, 55%, 60% {
+    transform: skewX(-15deg);
+  }
+  42.5%, 47.5%, 52.5%, 57.5% {
+    transform: skewX(15deg);
+  }
+}
+@keyframes _ngcontent-ng-c1715457980_pencilPoint {
+  from, to {
+    transform: rotate(-90deg) translate(49px, -30px);
+  }
+  50% {
+    transform: rotate(-225deg) translate(49px, -30px);
+  }
+}
+@keyframes _ngcontent-ng-c1715457980_pencilRotate {
+  from {
+    transform: translate(100px, 100px) rotate(0);
+  }
+  to {
+    transform: translate(100px, 100px) rotate(720deg);
+  }
+}
+@keyframes _ngcontent-ng-c1715457980_pencilStroke {
+  from {
+    stroke-dashoffset: 439.82;
+    transform: translate(100px, 100px) rotate(-113deg);
+  }
+  50% {
+    stroke-dashoffset: 164.93;
+    transform: translate(100px, 100px) rotate(-113deg);
+  }
+  75%, to {
+    stroke-dashoffset: 439.82;
+    transform: translate(100px, 100px) rotate(112deg);
+  }
+}
+/*# sourceMappingURL=ai-assistant.component.css.map */</style></head>
+
+<body class="home wp-singular page-template page-template-homepage page-template-homepage-php page page-id-4151 wp-theme-ciklum">
+  <app-root _nghost-ng-c2244485336="" ng-version="18.2.14"><router-outlet _ngcontent-ng-c2244485336=""></router-outlet><app-layout style="display: block;" _nghost-ng-c661985599=""><app-header _ngcontent-ng-c661985599="" style="display: block;" _nghost-ng-c2159879138=""><header _ngcontent-ng-c2159879138="" id="header" class="home-header"><div _ngcontent-ng-c2159879138="" class="header-box"><div _ngcontent-ng-c2159879138="" class="container"><div _ngcontent-ng-c2159879138="" class="header-container"><div _ngcontent-ng-c2159879138="" class="head-left"><a _ngcontent-ng-c2159879138="" routerlink="/" class="logo" ng-reflect-router-link="/" href="/"><img _ngcontent-ng-c2159879138="" width="100" height="63" alt="YBrainy Logo" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/logos.svg"></a></div><ul _ngcontent-ng-c2159879138="" class="header-list"><li _ngcontent-ng-c2159879138="" class="drop-big"><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Services</a><div _ngcontent-ng-c2159879138="" class="drop-list-wrap"><div _ngcontent-ng-c2159879138="" class="drop-list-container"><div _ngcontent-ng-c2159879138="" class="drop-list-tabs"><ul _ngcontent-ng-c2159879138=""><li _ngcontent-ng-c2159879138="" class="active"><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services"><div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_8599789.png"></div> Software Engineering </a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services"><div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_6119491-2.png"></div> Professional Development </a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services"><div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/service-icon-3.png"></div> Automation &amp; DevOps </a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services"><div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/service-icon-4.png"></div> Cloud Computing </a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services"><div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/service-icon-5.png"></div> Data Science </a></li></ul></div><div _ngcontent-ng-c2159879138="" class="drop-list-links-wrap"><div _ngcontent-ng-c2159879138="" class="drop-list-links active"><ul _ngcontent-ng-c2159879138=""><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Software Engineering</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">AI-Enabled Software Engineering <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_6582502.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Solution Discovery <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/eng-icon-1-1.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Software Architecture <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/eng-icon-2-1.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Scaled Agile Delivery <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/eng-icon-3-1.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Digital Assurance <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/eng-icon-4-1.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">RunOps <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/eng-icon-5-2.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Enterprise-Ready AI <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/ent.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">AI-Assisted Legacy Refactor <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_7253691.png"></div></a></li></ul></div><div _ngcontent-ng-c2159879138="" class="drop-list-links"><ul _ngcontent-ng-c2159879138=""><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Professional Development</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">User Research <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_8057761.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">UX/UI Design <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/exp-icon-1-1.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Product Discovery <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/exp-icon-4-1.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Product Management <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/prod-mgmt.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">AI Incubator <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/exp-icon-2-1.png"></div></a></li></ul></div><div _ngcontent-ng-c2159879138="" class="drop-list-links"><ul _ngcontent-ng-c2159879138=""><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Automation &amp; DevOps</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Conversational AI <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_4429516.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">AI Strategy, Enablement &amp; CoE <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_4729618.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Generative AI &amp; Decision Science <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_6771715-1.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Process Transformation &amp; Automation <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_9126189-1.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Low Code Applications <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/XMLID_786_.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">AI Agents &amp; Autonomous Orchestration <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_9251990.png"></div></a></li></ul></div><div _ngcontent-ng-c2159879138="" class="drop-list-links"><ul _ngcontent-ng-c2159879138=""><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Cloud Computing</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Cloud Services <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_5157311-2.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">DevOps <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_10472747-4.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Edge Tech <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_7486594.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">IoT &amp; Embedded <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_7253691.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Media &amp; Content Creation <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_6581908-1.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">XR: AR/MR/VR <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_10433935.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Gaming &amp; Simulation <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_7863402.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Cloud Transformation Optimization <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_6582496.png"></div></a></li></ul></div><div _ngcontent-ng-c2159879138="" class="drop-list-links"><ul _ngcontent-ng-c2159879138=""><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Data Science Analytics</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Modern Data Science Tech <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_10472868-1.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Business Intelligence <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_4183351.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Modern Data Platforms <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/bigData Science.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Data Science &amp; Analytics <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_7009962-1.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Responsible AI <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_8093780-1.png"></div></a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">AIOps <div _ngcontent-ng-c2159879138="" class="drop-tab-icon"><img _ngcontent-ng-c2159879138="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/fi_5154056-1.png"></div></a></li></ul></div></div></div></div></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/payment" ng-reflect-router-link="/payment" href="/payment">Payment</a></li><li _ngcontent-ng-c2159879138="" class="drop"><a _ngcontent-ng-c2159879138="" routerlink="/resources" ng-reflect-router-link="/resources" href="/resources">Resources</a><div _ngcontent-ng-c2159879138="" class="drop-list-tabs"><ul _ngcontent-ng-c2159879138=""><li _ngcontent-ng-c2159879138="" class="active"><a _ngcontent-ng-c2159879138="" routerlink="/forum" ng-reflect-router-link="/forum" href="/forum">Forum</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/forum/create" ng-reflect-router-link="/forum/create" href="/forum/create">Create Thread</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/messages" ng-reflect-router-link="/messages" href="/messages">Messages</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/wishlist" ng-reflect-router-link="/wishlist" href="/wishlist">Wishlist</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/my-dashboard" ng-reflect-router-link="/my-dashboard" href="/my-dashboard">Forum Dashboard</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/forum/profile" ng-reflect-router-link="/forum/profile" href="/forum/profile">Community Profile</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/calendar" ng-reflect-router-link="/calendar" href="/calendar">Calendar</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/courses" ng-reflect-router-link="/courses" href="/courses">Courses</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/my-learning" ng-reflect-router-link="/my-learning" href="/my-learning">My Learning</a></li></ul></div></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/about" ng-reflect-router-link="/about" href="/about">About</a></li></ul><div _ngcontent-ng-c2159879138="" class="head-right"><div _ngcontent-ng-c2159879138="" class="menuBtn"><!--bindings={
+  "ng-reflect-ng-if": "false"
+}--><!--bindings={
+  "ng-reflect-ng-if": "false"
+}--><a _ngcontent-ng-c2159879138="" routerlink="/login" class="button line" ng-reflect-router-link="/login" href="/login">Sign in</a><!--bindings={
+  "ng-reflect-ng-if": "true"
+}--><a _ngcontent-ng-c2159879138="" routerlink="/" class="button line" ng-reflect-router-link="/" href="/">Get In Touch</a><!--bindings={
+  "ng-reflect-ng-if": "true"
+}--><div _ngcontent-ng-c2159879138="" class="menu side-menu"><a _ngcontent-ng-c2159879138="" href="javascript:void(0)" class="js-nav-toggle"><span _ngcontent-ng-c2159879138=""></span></a></div></div></div></div></div></div><div _ngcontent-ng-c2159879138="" class="menuOverlay"></div><div _ngcontent-ng-c2159879138="" class="nav-wrapper"><nav _ngcontent-ng-c2159879138="" role="mob-navigation" class="mob-navigation"><div _ngcontent-ng-c2159879138="" class="nav-toggle"><span _ngcontent-ng-c2159879138="" class="nav-back"></span><span _ngcontent-ng-c2159879138="" class="nav-title">Menu</span><span _ngcontent-ng-c2159879138="" class="nav-close"></span></div><ul _ngcontent-ng-c2159879138=""><li _ngcontent-ng-c2159879138="" class="has-dropdown"><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Services</a><ul _ngcontent-ng-c2159879138=""><li _ngcontent-ng-c2159879138="" class="has-dropdown"><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Software Engineering</a><ul _ngcontent-ng-c2159879138="" class="third-list"><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Software Engineering</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">AI-Enabled Software Engineering</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Solution Discovery</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Software Architecture</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Scaled Agile Delivery</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Digital Assurance</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">RunOps</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Enterprise-Ready AI</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">AI-Assisted Legacy Refactor</a></li></ul></li><li _ngcontent-ng-c2159879138="" class="has-dropdown"><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Professional Development</a><ul _ngcontent-ng-c2159879138="" class="third-list"><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Professional Development</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">User Research</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">UX/UI Design</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Product Discovery</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Product Management</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">AI Incubator</a></li></ul></li><li _ngcontent-ng-c2159879138="" class="has-dropdown"><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Automation &amp; DevOps</a><ul _ngcontent-ng-c2159879138="" class="third-list"><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Automation &amp; DevOps</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Conversational AI</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">AI Strategy, Enablement &amp; CoE</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Generative AI &amp; Decision Science</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Process Transformation &amp; Automation</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Low Code Applications</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">AI Agents &amp; Autonomous Orchestration</a></li></ul></li><li _ngcontent-ng-c2159879138="" class="has-dropdown"><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Cloud Computing</a><ul _ngcontent-ng-c2159879138="" class="third-list"><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Cloud Computing</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Cloud Services</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">DevOps</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Edge Tech</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">IoT &amp; Embedded</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Media &amp; Content Creation</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">XR: AR/MR/VR</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Gaming &amp; Simulation</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Cloud Transformation Optimization</a></li></ul></li><li _ngcontent-ng-c2159879138="" class="has-dropdown"><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Data Science</a><ul _ngcontent-ng-c2159879138="" class="third-list"><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Data Science Analytics</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Modern Data Science Tech</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Business Intelligence</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Modern Data Platforms</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Data Science &amp; Analytics</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">Responsible AI</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/services" ng-reflect-router-link="/services" href="/services">AIOps</a></li></ul></li></ul></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/payment" ng-reflect-router-link="/payment" href="/payment">Payment</a></li><li _ngcontent-ng-c2159879138="" class="has-dropdown"><a _ngcontent-ng-c2159879138="" routerlink="/resources" ng-reflect-router-link="/resources" href="/resources">Resources</a><ul _ngcontent-ng-c2159879138=""><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/forum" ng-reflect-router-link="/forum" href="/forum">Forum</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/forum/create" ng-reflect-router-link="/forum/create" href="/forum/create">Create Thread</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/messages" ng-reflect-router-link="/messages" href="/messages">Messages</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/wishlist" ng-reflect-router-link="/wishlist" href="/wishlist">Wishlist</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/my-dashboard" ng-reflect-router-link="/my-dashboard" href="/my-dashboard">Forum Dashboard</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/forum/profile" ng-reflect-router-link="/forum/profile" href="/forum/profile">Community Profile</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/calendar" ng-reflect-router-link="/calendar" href="/calendar">Calendar</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/courses" ng-reflect-router-link="/courses" href="/courses">Courses</a></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/my-learning" ng-reflect-router-link="/my-learning" href="/my-learning">My Learning</a></li></ul></li><li _ngcontent-ng-c2159879138=""><a _ngcontent-ng-c2159879138="" routerlink="/about" ng-reflect-router-link="/about" href="/about">About</a></li></ul></nav></div><!--bindings={
+  "ng-reflect-ng-if": "false"
+}--></header></app-header><!--bindings={
+  "ng-reflect-ng-if": "true"
+}--><app-level-bar _ngcontent-ng-c661985599="" style="display: block;" _nghost-ng-c371028733=""><!--bindings={
+  "ng-reflect-ng-if": null
+}--></app-level-bar><!--bindings={
+  "ng-reflect-ng-if": "true"
+}--><router-outlet _ngcontent-ng-c661985599=""></router-outlet><app-home style="display: block;" _nghost-ng-c3794703028=""><main _ngcontent-ng-c3794703028="" id="go-to-top" class="main-container pt0"><div _ngcontent-ng-c3794703028="" class="main-circle-wrap"><div _ngcontent-ng-c3794703028="" class="tl-circle circle-binary" style="transform: translate3d(0px, 0px, 0px) scale(0.9607, 0.9607); translate: none; rotate: none; scale: none; opacity: 0.9607;"><div _ngcontent-ng-c3794703028="" class="ring"></div><video _ngcontent-ng-c3794703028="" autoplay="" muted="" loop="" playsinline="" style="transform: translate(0px, 0px);"><source _ngcontent-ng-c3794703028="" src="assets/frontoffice/www.ciklum.com/wp-content/themes/ciklum/assets/video/neon-glow.mp4"></video><div _ngcontent-ng-c3794703028="" class="circle-binary-overlay"><div _ngcontent-ng-c3794703028="" class="hover-parent mix"><canvas _ngcontent-ng-c3794703028="" id="binary-main" class="binary-canvas" width="0" height="0"></canvas></div></div><div _ngcontent-ng-c3794703028="" class="main-logo"><img _ngcontent-ng-c3794703028="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/themes/ciklum/assets/img/ciklum-white-big.png"></div></div><span _ngcontent-ng-c3794703028="" class="loading-text" style="opacity: 1;">Loading YBrainy</span></div><app-hero-section _ngcontent-ng-c3794703028="" style="display: block;" _nghost-ng-c2262109997=""><div _ngcontent-ng-c2262109997="" class="banner-section"><div _ngcontent-ng-c2262109997="" class="container"><div _ngcontent-ng-c2262109997="" class="banner-wrap"><div _ngcontent-ng-c2262109997="" class="banner-center"><div _ngcontent-ng-c2262109997="" class="cross-anim"><svg _ngcontent-ng-c2262109997="" width="144" height="89" viewBox="0 0 144 89" fill="none" xmlns="http://www.w3.org/2000/svg"><path _ngcontent-ng-c2262109997="" d="M127.633 35.6722H115.937V43.4388H126.666V45.7044H115.937V53.472H127.955V55.7376H113.165V33.4066H127.633V35.6722ZM136.46 45.2191L140.745 38.5843H143.936L137.942 46.9993L144 55.7376H140.777L136.299 48.8441L131.852 55.7376H128.661L134.784 47.0638L128.887 38.5843H132.174L136.46 45.2191Z" fill="#495377" class="cross-anim-1"></path><path _ngcontent-ng-c2262109997="" d="M24.9219 10.7251H13.2256V18.4917H23.9551V20.7573H13.2256V28.5249H25.2441V30.7905H10.4541V8.45947H24.9219V10.7251ZM36.8086 13.1841C40.5464 13.1841 42.6406 15.191 42.8984 18.2007C42.9629 19.0745 42.9629 19.7544 42.9629 21.146V30.7905H40.1924V21.3403C40.1924 20.4665 40.1924 19.7542 40.1279 18.8804C39.9668 16.8739 38.8708 15.3853 36.2285 15.3853C33.5541 15.3853 31.2988 17.3918 31.2988 23.2495V30.7905H28.5273V13.6372H31.2988V16.5825L32.3623 14.6089C33.8123 13.4762 35.0686 13.1841 36.8086 13.1841Z" fill="#495377" class="cross-anim-2"></path><path _ngcontent-ng-c2262109997="" d="M32.2633 80.6844H29.2662L26.6237 72.7879H18.4391L15.8297 80.6844H12.8649L20.8561 58.3533H24.5944L32.2633 80.6844ZM37.6656 80.6844H34.8942V63.5311H37.6656V80.6844ZM19.2125 70.5223H25.8824L22.6608 60.5545L19.2125 70.5223ZM36.2799 57.9002C37.2788 57.9002 38.0524 58.6772 38.0524 59.6805C38.0522 60.6836 37.2787 61.4598 36.2799 61.4598C35.2811 61.4598 34.5076 60.6836 34.5074 59.6805C34.5074 58.6772 35.281 57.9002 36.2799 57.9002Z" fill="#495377" class="cross-anim-3"></path><path _ngcontent-ng-c2262109997="" d="M64.4453 42.3164C65.8836 42.5909 67.017 43.729 67.29 45.1738H97.3389V41.9561L104.052 45.8486L97.3389 49.7412V46.5225H67.29C67.0171 47.9673 65.8835 49.1043 64.4453 49.3789V89H63.1025V49.3799C61.6633 49.1059 60.5298 47.9679 60.2568 46.5225H0V45.1738H60.2568C60.53 43.7285 61.6634 42.5893 63.1025 42.3154V0H64.4453V42.3164Z" fill="#495377" class="cross"></path></svg></div><h1 _ngcontent-ng-c2262109997="" class="main-head mb24" style="translate: none; rotate: none; scale: none; transform: translate(0px, 100px);"> Learn Without Limits. <span _ngcontent-ng-c2262109997="">Earn Certifications That Matter.</span></h1><div _ngcontent-ng-c2262109997="" class="banner-bottom" style="translate: none; rotate: none; scale: none; transform: translate(0px, 100px);"><a _ngcontent-ng-c2262109997="" routerlink="/courses" class="button center" ng-reflect-router-link="/courses" href="/courses"> Explore Courses </a></div></div></div></div></div></app-hero-section><app-trust-logos _ngcontent-ng-c3794703028="" style="display: block;" _nghost-ng-c802019443=""><div _ngcontent-ng-c802019443="" class="comm-section"><div _ngcontent-ng-c802019443="" class="container"><div _ngcontent-ng-c802019443="" class="tl-wrap"><div _ngcontent-ng-c802019443="" class="tl-txt"><p _ngcontent-ng-c802019443="" aria-label="Empowering learners worldwide withexpert-led courses, hands-on projects, and industry-recognized certifications."><div aria-hidden="true" style="position: relative; display: inline-block; translate: none; rotate: none; scale: none; opacity: 0; transform: translate(0px, 50px);">Empowering</div> <div aria-hidden="true" style="position: relative; display: inline-block; translate: none; rotate: none; scale: none; opacity: 0; transform: translate(0px, 50px);">learners</div> <div aria-hidden="true" style="position: relative; display: inline-block; translate: none; rotate: none; scale: none; opacity: 0; transform: translate(0px, 50px);">worldwide</div> <div aria-hidden="true" style="position: relative; display: inline-block; translate: none; rotate: none; scale: none; opacity: 0; transform: translate(0px, 50px);">with</div><br _ngcontent-ng-c802019443=""><b _ngcontent-ng-c802019443=""><div aria-hidden="true" style="position: relative; display: inline-block; translate: none; rotate: none; scale: none; opacity: 0; transform: translate(0px, 50px);">expert-led</div> <div aria-hidden="true" style="position: relative; display: inline-block; translate: none; rotate: none; scale: none; opacity: 0; transform: translate(0px, 50px);">courses,</div> <div aria-hidden="true" style="position: relative; display: inline-block; translate: none; rotate: none; scale: none; opacity: 0; transform: translate(0px, 50px);">hands-on</div> <div aria-hidden="true" style="position: relative; display: inline-block; translate: none; rotate: none; scale: none; opacity: 0; transform: translate(0px, 50px);">projects,</div><br _ngcontent-ng-c802019443=""> <div aria-hidden="true" style="position: relative; display: inline-block; translate: none; rotate: none; scale: none; opacity: 0; transform: translate(0px, 50px);">and</div> <div aria-hidden="true" style="position: relative; display: inline-block; translate: none; rotate: none; scale: none; opacity: 0; transform: translate(0px, 50px);">industry-recognized</div> <div aria-hidden="true" style="position: relative; display: inline-block; translate: none; rotate: none; scale: none; opacity: 0; transform: translate(0px, 50px);">certifications.</div></b></p></div><div _ngcontent-ng-c802019443="" class="tl-swiper"><h2 _ngcontent-ng-c802019443="" class="small-head t-cen mb30">Trusted By Leading Organizations</h2><div _ngcontent-ng-c802019443="" class="swiper trustSwiper partner-swiper trust-brand-swiper swiper-initialized swiper-horizontal swiper-watch-progress"><div _ngcontent-ng-c802019443="" class="swiper-wrapper" id="swiper-wrapper-1610874b1592a0542" aria-live="off" style="transform: translate3d(-245.333px, 0px, 0px); transition-duration: 3000ms;"><div _ngcontent-ng-c802019443="" class="swiper-slide swiper-slide-prev" role="group" aria-label="1 / 15" data-swiper-slide-index="0" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="Santander" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/santander.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide swiper-slide-visible swiper-slide-active" role="group" aria-label="2 / 15" data-swiper-slide-index="1" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="TUI Group" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/TUI_Group.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide swiper-slide-visible swiper-slide-fully-visible swiper-slide-next" role="group" aria-label="3 / 15" data-swiper-slide-index="2" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="P&amp;G" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/pg.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide swiper-slide-visible swiper-slide-fully-visible" role="group" aria-label="4 / 15" data-swiper-slide-index="3" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="Panasonic" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/Panasonic.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide" role="group" aria-label="5 / 15" data-swiper-slide-index="4" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="Akamai" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/akamai-Logo.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide" role="group" aria-label="6 / 15" data-swiper-slide-index="5" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="Canaery" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/Canaery.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide" role="group" aria-label="7 / 15" data-swiper-slide-index="6" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="CreatePay" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/CreatePay_Logo_CMYK_Black-scaled-1.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide" role="group" aria-label="8 / 15" data-swiper-slide-index="7" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="Duracell" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/Duracell.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide" role="group" aria-label="9 / 15" data-swiper-slide-index="8" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="eToro" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/etoro-scaled.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide" role="group" aria-label="10 / 15" data-swiper-slide-index="9" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="Inspired Education" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/Inspired-Education.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide" role="group" aria-label="11 / 15" data-swiper-slide-index="10" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="JLL" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/JLL.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide" role="group" aria-label="12 / 15" data-swiper-slide-index="11" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="Just Eat" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/just-eat.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide" role="group" aria-label="13 / 15" data-swiper-slide-index="12" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="Peek &amp; Cloppenburg" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/Peek-Cloppenburg-scaled.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide" role="group" aria-label="14 / 15" data-swiper-slide-index="13" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="Saab" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/Saab.png"></a></div></div><div _ngcontent-ng-c802019443="" class="swiper-slide" role="group" aria-label="15 / 15" data-swiper-slide-index="14" style="width: 225.333px; margin-right: 20px;"><div _ngcontent-ng-c802019443="" class="partner-img"><a _ngcontent-ng-c802019443="" href="javascript:void(0)"><img _ngcontent-ng-c802019443="" alt="Stena" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/Stena.png"></a></div></div></div><span class="swiper-notification" aria-live="assertive" aria-atomic="true"></span></div></div></div></div></div></app-trust-logos><app-why-ybrainy _ngcontent-ng-c3794703028="" style="display: block;" _nghost-ng-c3525409644=""><div _ngcontent-ng-c3525409644="" class="comm-section fundamental-section"><div _ngcontent-ng-c3525409644="" class="container container-md"><div _ngcontent-ng-c3525409644="" class="fundamental-wrap"><div _ngcontent-ng-c3525409644="" class="fundamental-head"><div _ngcontent-ng-c3525409644="" class="comm-head-wrap mb40 cen"><h3 _ngcontent-ng-c3525409644="" class="small-head-tag mb16">Why YBrainy</h3><h2 _ngcontent-ng-c3525409644="" class="comm-head mb24">Beyond Courses, <br _ngcontent-ng-c3525409644=""> Toward Career Transformation</h2><div _ngcontent-ng-c3525409644="" class="comm-txt mb24"><p _ngcontent-ng-c3525409644="">We don't just teach — we transform careers. Combining expert instruction, real-world projects, and recognized certifications, we help you build skills that matter. <br _ngcontent-ng-c3525409644=""> This is about your future.</p></div></div></div><div _ngcontent-ng-c3525409644="" class="fundamentals-grid comm-grid g-3 gp-20 g-1024-1 gp-1024-40"><div _ngcontent-ng-c3525409644="" class="comm-card"><div _ngcontent-ng-c3525409644="" class="card-icon"><img _ngcontent-ng-c3525409644="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/f-icon-1-1.svg"></div><div _ngcontent-ng-c3525409644="" class="card-txt"><h3 _ngcontent-ng-c3525409644="">Expert-Led Courses,<br _ngcontent-ng-c3525409644="">Real-World Skills</h3><p _ngcontent-ng-c3525409644="">Learn from industry professionals who bring years of hands-on experience. Every course is designed to give you practical, job-ready skills you can apply immediately.</p><a _ngcontent-ng-c3525409644="" href="javascript:void(0)" class="learn-more">Learn More</a></div></div><div _ngcontent-ng-c3525409644="" class="comm-card"><div _ngcontent-ng-c3525409644="" class="card-icon"><img _ngcontent-ng-c3525409644="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/f-icon-2.svg"></div><div _ngcontent-ng-c3525409644="" class="card-txt"><h3 _ngcontent-ng-c3525409644="">Industry-Recognized<br _ngcontent-ng-c3525409644="">Certifications</h3><p _ngcontent-ng-c3525409644="">Earn certifications that employers trust. Our credentials are recognized across industries and validate your expertise to open doors to new career opportunities.</p><a _ngcontent-ng-c3525409644="" href="javascript:void(0)" class="learn-more">Learn More</a></div></div><div _ngcontent-ng-c3525409644="" class="comm-card"><div _ngcontent-ng-c3525409644="" class="card-icon"><img _ngcontent-ng-c3525409644="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/f-icon-3.svg"></div><div _ngcontent-ng-c3525409644="" class="card-txt"><h3 _ngcontent-ng-c3525409644="">Learn at Your Pace, <br _ngcontent-ng-c3525409644="">Anywhere, Anytime</h3><p _ngcontent-ng-c3525409644="">Flexible learning paths designed for busy professionals. Access courses on-demand, join live sessions, and learn from any device — at your own pace.</p><a _ngcontent-ng-c3525409644="" href="javascript:void(0)" class="learn-more">Learn More</a></div></div></div></div></div></div></app-why-ybrainy><app-learning-paths _ngcontent-ng-c3794703028="" style="display: block;" _nghost-ng-c530044706=""><div _ngcontent-ng-c530044706="" id="enterprise" class="comm-section cards-section grey-bg"><div _ngcontent-ng-c530044706="" class="container container-md"><div _ngcontent-ng-c530044706="" class="comm-head-wrap mb40 cen"><h2 _ngcontent-ng-c530044706="" class="comm-head mb8">Popular Learning Paths</h2><h3 _ngcontent-ng-c530044706="" class="comm-head-small mb24">Structured Roadmaps to Master In-Demand Skills</h3><div _ngcontent-ng-c530044706="" class="comm-txt mb24"><p _ngcontent-ng-c530044706="">Your learning journey is unique. Choose a path that matches your goals and advance step by step.</p></div></div><div _ngcontent-ng-c530044706="" class="three-cards-wrap"><div _ngcontent-ng-c530044706="" class="swiper swiperHomeCards swiper-initialized swiper-horizontal swiper-watch-progress swiper-backface-hidden"><div _ngcontent-ng-c530044706="" class="swiper-wrapper" id="swiper-wrapper-a88e2984b46d3275" aria-live="polite"><div _ngcontent-ng-c530044706="" class="swiper-slide swiper-slide-visible swiper-slide-fully-visible swiper-slide-active" role="group" aria-label="1 / 4" style="width: 380px; margin-right: 40px;"><div _ngcontent-ng-c530044706="" class="hover-card"><div _ngcontent-ng-c530044706="" class="hover-card-img"><div _ngcontent-ng-c530044706="" data-anim-loop="true" data-name="Web Development" class="lottie" data-path="assets/frontoffice/www.ciklum.com/wp-content/themes/ciklum/assets/lottie/illus-1.json"><canvas width="320" height="252" style="width: 100%; height: 100%; transform-origin: 0px 0px 0px; content-visibility: visible;"></canvas></div></div><h3 _ngcontent-ng-c530044706="">Full Stack Web Development</h3><div _ngcontent-ng-c530044706="" class="hover-card-txt"><div _ngcontent-ng-c530044706="" class="comm-txt white"><p _ngcontent-ng-c530044706="">Master HTML, CSS, JavaScript, React, Node.js and databases. Build complete web applications and earn your Full Stack Developer certification.</p></div><a _ngcontent-ng-c530044706="" href="javascript:void(0)" class="learn-more white">Explore Path</a></div></div></div><div _ngcontent-ng-c530044706="" class="swiper-slide swiper-slide-next" role="group" aria-label="2 / 4" style="width: 380px; margin-right: 40px;"><div _ngcontent-ng-c530044706="" class="hover-card"><div _ngcontent-ng-c530044706="" class="hover-card-img"><div _ngcontent-ng-c530044706="" data-anim-loop="true" data-name="Data Science" class="lottie" data-path="assets/frontoffice/www.ciklum.com/wp-content/themes/ciklum/assets/lottie/illus-2.json"><canvas width="320" height="252" style="width: 100%; height: 100%; transform-origin: 0px 0px 0px; content-visibility: visible;"></canvas></div></div><h3 _ngcontent-ng-c530044706="">Data Science &amp; AI</h3><div _ngcontent-ng-c530044706="" class="hover-card-txt"><div _ngcontent-ng-c530044706="" class="comm-txt white"><p _ngcontent-ng-c530044706="">Learn Python, machine learning, deep learning, and data visualization. Become a certified data scientist ready to solve real-world problems.</p></div><a _ngcontent-ng-c530044706="" href="javascript:void(0)" class="learn-more white">Explore Path</a></div></div></div><div _ngcontent-ng-c530044706="" class="swiper-slide" role="group" aria-label="3 / 4" style="width: 380px; margin-right: 40px;"><div _ngcontent-ng-c530044706="" class="hover-card"><div _ngcontent-ng-c530044706="" class="hover-card-img"><div _ngcontent-ng-c530044706="" data-anim-loop="true" data-name="Cloud Computing" class="lottie" data-path="assets/frontoffice/www.ciklum.com/wp-content/themes/ciklum/assets/lottie/illus-3.json"><canvas width="320" height="252" style="width: 100%; height: 100%; transform-origin: 0px 0px 0px; content-visibility: visible;"></canvas></div></div><h3 _ngcontent-ng-c530044706="">Cloud &amp; DevOps Engineering</h3><div _ngcontent-ng-c530044706="" class="hover-card-txt"><div _ngcontent-ng-c530044706="" class="comm-txt white"><p _ngcontent-ng-c530044706="">Master AWS, Azure, Docker, Kubernetes, and CI/CD pipelines. Prepare for cloud certifications and automate modern infrastructure.</p></div><a _ngcontent-ng-c530044706="" href="javascript:void(0)" class="learn-more white">Explore Path</a></div></div></div><div _ngcontent-ng-c530044706="" class="swiper-slide" role="group" aria-label="4 / 4" style="width: 380px; margin-right: 40px;"><div _ngcontent-ng-c530044706="" class="hover-card"><div _ngcontent-ng-c530044706="" class="hover-card-img"><div _ngcontent-ng-c530044706="" data-anim-loop="true" data-name="Cybersecurity" class="lottie" data-path="assets/frontoffice/www.ciklum.com/wp-content/themes/ciklum/assets/lottie/illus-4.json"><canvas width="320" height="252" style="width: 100%; height: 100%; transform-origin: 0px 0px 0px; content-visibility: visible;"></canvas></div></div><h3 _ngcontent-ng-c530044706="">Cybersecurity Professional</h3><div _ngcontent-ng-c530044706="" class="hover-card-txt"><div _ngcontent-ng-c530044706="" class="comm-txt white"><p _ngcontent-ng-c530044706="">Learn ethical hacking, network security, threat analysis, and incident response. Earn certifications to protect organizations from cyber threats.</p></div><a _ngcontent-ng-c530044706="" href="javascript:void(0)" class="learn-more white">Explore Path</a></div></div></div></div><div _ngcontent-ng-c530044706="" class="swiper-nav-wrap"><div _ngcontent-ng-c530044706="" class="homeCardPrev circPrev swiper-button-prev swiper-button-disabled" tabindex="-1" role="button" aria-label="Previous slide" aria-controls="swiper-wrapper-a88e2984b46d3275" aria-disabled="true"></div><div _ngcontent-ng-c530044706="" class="homeCardNext circNext swiper-button-next" tabindex="0" role="button" aria-label="Next slide" aria-controls="swiper-wrapper-a88e2984b46d3275" aria-disabled="false"></div></div><span class="swiper-notification" aria-live="assertive" aria-atomic="true"></span></div></div></div></div></app-learning-paths><app-learning-domains _ngcontent-ng-c3794703028="" style="display: block;" _nghost-ng-c2917843163=""><div _ngcontent-ng-c2917843163="" id="Services" class="comm-section grad-rev-bg ind-section"><div _ngcontent-ng-c2917843163="" class="container container-md"><div _ngcontent-ng-c2917843163="" class="comm-head-wrap cen mb60"><h2 _ngcontent-ng-c2917843163="" class="comm-head mb16 white">Explore Our Learning Domains</h2><div _ngcontent-ng-c2917843163="" class="comm-txt white"><p _ngcontent-ng-c2917843163="">From programming to professional skills, we cover the domains that matter most. <br _ngcontent-ng-c2917843163=""> Each learning domain offers structured courses, hands-on projects, and certifications designed by industry experts. </p></div></div><div _ngcontent-ng-c2917843163="" class="industry-wrap"><div _ngcontent-ng-c2917843163="" class="swiper industrySwiper industry-swiper swiper-fade swiper-initialized swiper-horizontal swiper-watch-progress swiper-backface-hidden"><div _ngcontent-ng-c2917843163="" class="hover-cricle"><div _ngcontent-ng-c2917843163="" class="hover-parent ring industryHover" style="transform: translate(calc(0px), calc(0px));"><canvas _ngcontent-ng-c2917843163="" class="binary-canvas" width="225" height="225"></canvas></div></div><div _ngcontent-ng-c2917843163="" class="swiper-wrapper" id="swiper-wrapper-0f5ea770731f92c7" aria-live="polite"><div _ngcontent-ng-c2917843163="" class="swiper-slide swiper-slide-visible swiper-slide-fully-visible swiper-slide-active" role="group" aria-label="1 / 6" style="width: 500px; opacity: 1; transform: translate3d(0px, 0px, 0px);"><div _ngcontent-ng-c2917843163="" class="industry-media"><video _ngcontent-ng-c2917843163="" loop="" muted="" playsinline=""><source _ngcontent-ng-c2917843163="" type="video/mp4" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/industry-bfsi.mp4"></video></div></div><div _ngcontent-ng-c2917843163="" class="swiper-slide swiper-slide-next" role="group" aria-label="2 / 6" style="width: 500px; opacity: 0; transform: translate3d(-500px, 0px, 0px);"><div _ngcontent-ng-c2917843163="" class="industry-media"><video _ngcontent-ng-c2917843163="" loop="" muted="" playsinline=""><source _ngcontent-ng-c2917843163="" type="video/mp4" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/industry-retail.mp4"></video></div></div><div _ngcontent-ng-c2917843163="" class="swiper-slide" role="group" aria-label="3 / 6" style="width: 500px; opacity: 0; transform: translate3d(-1000px, 0px, 0px);"><div _ngcontent-ng-c2917843163="" class="industry-media"><video _ngcontent-ng-c2917843163="" loop="" muted="" playsinline=""><source _ngcontent-ng-c2917843163="" type="video/mp4" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/industry-health.mp4"></video></div></div><div _ngcontent-ng-c2917843163="" class="swiper-slide" role="group" aria-label="4 / 6" style="width: 500px; opacity: 0; transform: translate3d(-1500px, 0px, 0px);"><div _ngcontent-ng-c2917843163="" class="industry-media"><video _ngcontent-ng-c2917843163="" loop="" muted="" playsinline=""><source _ngcontent-ng-c2917843163="" type="video/mp4" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/industry-hitech.mp4"></video></div></div><div _ngcontent-ng-c2917843163="" class="swiper-slide" role="group" aria-label="5 / 6" style="width: 500px; opacity: 0; transform: translate3d(-2000px, 0px, 0px);"><div _ngcontent-ng-c2917843163="" class="industry-media"><video _ngcontent-ng-c2917843163="" loop="" muted="" playsinline=""><source _ngcontent-ng-c2917843163="" type="video/mp4" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/industry-automotive.mp4"></video></div></div><div _ngcontent-ng-c2917843163="" class="swiper-slide" role="group" aria-label="6 / 6" style="width: 500px; opacity: 0; transform: translate3d(-2500px, 0px, 0px);"><div _ngcontent-ng-c2917843163="" class="industry-media"><video _ngcontent-ng-c2917843163="" loop="" muted="" playsinline=""><source _ngcontent-ng-c2917843163="" type="video/mp4" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/industry-travel.mp4"></video></div></div></div><span class="swiper-notification" aria-live="assertive" aria-atomic="true"></span></div><div _ngcontent-ng-c2917843163="" class="industry-accordion"><div _ngcontent-ng-c2917843163="" class="industry-acc-bg"></div><div _ngcontent-ng-c2917843163="" class="industry-acc active"><h3 _ngcontent-ng-c2917843163="">Web &amp; Software Development</h3><div _ngcontent-ng-c2917843163="" class="industry-hidden"><p _ngcontent-ng-c2917843163="">Master full stack development with courses in JavaScript, Python, React, Angular, Node.js, and more. Build real applications and earn developer certifications recognized by top employers.</p><a _ngcontent-ng-c2917843163="" routerlink="/courses" class="learn-more white" ng-reflect-router-link="/courses" href="/courses">Browse Courses</a></div></div><div _ngcontent-ng-c2917843163="" class="industry-acc"><h3 _ngcontent-ng-c2917843163="">Data Science &amp; Analytics</h3><div _ngcontent-ng-c2917843163="" class="industry-hidden"><p _ngcontent-ng-c2917843163="">Dive into data analysis, machine learning, statistical modeling, and data visualization with Python, R, and industry tools. Earn certifications that prove your data expertise.</p><a _ngcontent-ng-c2917843163="" routerlink="/courses" class="learn-more white" ng-reflect-router-link="/courses" href="/courses">Browse Courses</a></div></div><div _ngcontent-ng-c2917843163="" class="industry-acc"><h3 _ngcontent-ng-c2917843163="">Cloud Computing &amp; DevOps</h3><div _ngcontent-ng-c2917843163="" class="industry-hidden"><p _ngcontent-ng-c2917843163="">Learn cloud architecture on AWS, Azure, and GCP. Master Docker, Kubernetes, CI/CD, and infrastructure as code. Prepare for official cloud certifications.</p><a _ngcontent-ng-c2917843163="" routerlink="/courses" class="learn-more white" ng-reflect-router-link="/courses" href="/courses">Browse Courses</a></div></div><div _ngcontent-ng-c2917843163="" class="industry-acc"><h3 _ngcontent-ng-c2917843163="">Cybersecurity</h3><div _ngcontent-ng-c2917843163="" class="industry-hidden"><p _ngcontent-ng-c2917843163="">From ethical hacking to network security and compliance, develop the skills to protect organizations from cyber threats. Earn certifications like CompTIA Security+ and CEH.</p><a _ngcontent-ng-c2917843163="" routerlink="/courses" class="learn-more white" ng-reflect-router-link="/courses" href="/courses">Browse Courses</a></div></div><div _ngcontent-ng-c2917843163="" class="industry-acc"><h3 _ngcontent-ng-c2917843163="">Mobile App Development</h3><div _ngcontent-ng-c2917843163="" class="industry-hidden"><p _ngcontent-ng-c2917843163="">Build native and cross-platform mobile apps with Flutter, React Native, Swift, and Kotlin. Learn UI/UX design for mobile and publish apps to the app stores.</p><a _ngcontent-ng-c2917843163="" routerlink="/courses" class="learn-more white" ng-reflect-router-link="/courses" href="/courses">Browse Courses</a></div></div><div _ngcontent-ng-c2917843163="" class="industry-acc"><h3 _ngcontent-ng-c2917843163="">Professional Skills &amp; Leadership</h3><div _ngcontent-ng-c2917843163="" class="industry-hidden"><p _ngcontent-ng-c2917843163="">Develop essential soft skills including project management, leadership, communication, and agile methodologies. Earn PMP, Scrum Master, and other professional certifications.</p><a _ngcontent-ng-c2917843163="" routerlink="/courses" class="learn-more white" ng-reflect-router-link="/courses" href="/courses">Browse Courses</a></div></div></div></div></div></div></app-learning-domains><app-designed-for-learners _ngcontent-ng-c3794703028="" style="display: block;" _nghost-ng-c3192859474=""><div _ngcontent-ng-c3192859474="" id="engineered" class="comm-section eng-section"><div _ngcontent-ng-c3192859474="" class="container container-md"><div _ngcontent-ng-c3192859474="" class="eng-wrap"><div _ngcontent-ng-c3192859474="" class="comm-head-wrap mb40 cen"><h2 _ngcontent-ng-c3192859474="" class="comm-head mb24">Designed for Learners. <br _ngcontent-ng-c3192859474="">Built for Results.</h2><div _ngcontent-ng-c3192859474="" class="comm-txt mb36 mw768"><p _ngcontent-ng-c3192859474="">Our platform is built around how people actually learn — with interactive content,<br _ngcontent-ng-c3192859474=""> real-world projects, and mentorship that drives real career outcomes.</p></div><a _ngcontent-ng-c3192859474="" routerlink="/courses" class="button center" ng-reflect-router-link="/courses" href="/courses">View All Courses</a></div><div _ngcontent-ng-c3192859474="" class="comm-grid g-3 gp-35 gp-1200-20 g-990-1"><div _ngcontent-ng-c3192859474="" class="comm-card base"><div _ngcontent-ng-c3192859474="" class="card-icon"><img _ngcontent-ng-c3192859474="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/eng-1.svg"></div><div _ngcontent-ng-c3192859474="" class="card-txt"><h3 _ngcontent-ng-c3192859474="">Hands-On Projects, <br _ngcontent-ng-c3192859474="">Portfolio-Ready</h3><p _ngcontent-ng-c3192859474="">Every course includes real-world projects you can showcase to employers. Build a portfolio that demonstrates your skills and sets you apart in the job market.</p></div></div><div _ngcontent-ng-c3192859474="" class="comm-card base"><div _ngcontent-ng-c3192859474="" class="card-icon"><img _ngcontent-ng-c3192859474="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/eng-2.svg"></div><div _ngcontent-ng-c3192859474="" class="card-txt"><h3 _ngcontent-ng-c3192859474="">Flexible Learning, <br _ngcontent-ng-c3192859474="">Your Schedule.</h3><p _ngcontent-ng-c3192859474="">Learn on your terms. Access courses 24/7, switch between devices seamlessly, and pick up right where you left off — no deadlines, no pressure.</p></div></div><div _ngcontent-ng-c3192859474="" class="comm-card base"><div _ngcontent-ng-c3192859474="" class="card-icon"><img _ngcontent-ng-c3192859474="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/eng-3.svg"></div><div _ngcontent-ng-c3192859474="" class="card-txt"><h3 _ngcontent-ng-c3192859474="">Community &amp; Mentorship <br _ngcontent-ng-c3192859474="">Support</h3><p _ngcontent-ng-c3192859474="">Join a thriving community of learners and get guidance from experienced mentors. Ask questions, share insights, and grow together through our forums and live sessions.</p></div></div></div></div></div></div></app-designed-for-learners><app-success-stories _ngcontent-ng-c3794703028="" style="display: block;" _nghost-ng-c2476060320=""><div _ngcontent-ng-c2476060320="" class="comm-section success-section"><div _ngcontent-ng-c2476060320="" class="container container-md"><div _ngcontent-ng-c2476060320="" class="comm-head-wrap mb40 cen"><h3 _ngcontent-ng-c2476060320="" class="small-head-tag mb24">Learner Success Stories</h3><h2 _ngcontent-ng-c2476060320="" class="comm-head mb16">Where Learning Transforms Careers</h2><div _ngcontent-ng-c2476060320="" class="comm-txt mb36"><p _ngcontent-ng-c2476060320="">Behind every certification is a story of growth. From career changers<br _ngcontent-ng-c2476060320=""> to skill upgraders, these are the learners who turned their ambitions into real achievements.</p></div><a _ngcontent-ng-c2476060320="" routerlink="/courses" class="button center" ng-reflect-router-link="/courses" href="/courses">Start Learning</a></div><div _ngcontent-ng-c2476060320="" class="success-swiper-wrap"><div _ngcontent-ng-c2476060320="" class="swiper successSwiper success-swiper swiper-initialized swiper-horizontal swiper-watch-progress swiper-backface-hidden"><div _ngcontent-ng-c2476060320="" class="swiper-wrapper" id="swiper-wrapper-8c94df816d3aaa71" aria-live="polite"><div _ngcontent-ng-c2476060320="" class="swiper-slide swiper-slide-visible swiper-slide-fully-visible swiper-slide-active" role="group" aria-label="1 / 8" style="width: 278px; margin-right: 40px;"><div _ngcontent-ng-c2476060320="" class="success-card"><div _ngcontent-ng-c2476060320="" class="success-img"><img _ngcontent-ng-c2476060320="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/Group-2085664968-1.png"></div><div _ngcontent-ng-c2476060320="" class="success-txt"><h3 _ngcontent-ng-c2476060320="">From Accounting Clerk to Full Stack Developer in 6 Months</h3><a _ngcontent-ng-c2476060320="" routerlink="/courses" class="learn-more" ng-reflect-router-link="/courses" href="/courses">Read Story</a></div></div></div><div _ngcontent-ng-c2476060320="" class="swiper-slide swiper-slide-visible swiper-slide-fully-visible swiper-slide-next" role="group" aria-label="2 / 8" style="width: 278px; margin-right: 40px;"><div _ngcontent-ng-c2476060320="" class="success-card"><div _ngcontent-ng-c2476060320="" class="success-img"><img _ngcontent-ng-c2476060320="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/Group-2085664967-1.png"></div><div _ngcontent-ng-c2476060320="" class="success-txt"><h3 _ngcontent-ng-c2476060320="">Earned AWS Solutions Architect Certification &amp; Landed a Cloud Engineering Role</h3><a _ngcontent-ng-c2476060320="" routerlink="/courses" class="learn-more" ng-reflect-router-link="/courses" href="/courses">Read Story</a></div></div></div><div _ngcontent-ng-c2476060320="" class="swiper-slide" role="group" aria-label="3 / 8" style="width: 278px; margin-right: 40px;"><div _ngcontent-ng-c2476060320="" class="success-card"><div _ngcontent-ng-c2476060320="" class="success-img"><img _ngcontent-ng-c2476060320="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/alpha.png"></div><div _ngcontent-ng-c2476060320="" class="success-txt"><h3 _ngcontent-ng-c2476060320="">Mastered Python &amp; Data Science — Now Leading Analytics at a Top Startup</h3><a _ngcontent-ng-c2476060320="" routerlink="/courses" class="learn-more" ng-reflect-router-link="/courses" href="/courses">Read Story</a></div></div></div><div _ngcontent-ng-c2476060320="" class="swiper-slide" role="group" aria-label="4 / 8" style="width: 278px; margin-right: 40px;"><div _ngcontent-ng-c2476060320="" class="success-card"><div _ngcontent-ng-c2476060320="" class="success-img"><img _ngcontent-ng-c2476060320="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/betsson.png"></div><div _ngcontent-ng-c2476060320="" class="success-txt"><h3 _ngcontent-ng-c2476060320="">Completed Cybersecurity Certification &amp; Secured a Remote Security Analyst Position</h3><a _ngcontent-ng-c2476060320="" routerlink="/courses" class="learn-more" ng-reflect-router-link="/courses" href="/courses">Read Story</a></div></div></div><div _ngcontent-ng-c2476060320="" class="swiper-slide" role="group" aria-label="5 / 8" style="width: 278px; margin-right: 40px;"><div _ngcontent-ng-c2476060320="" class="success-card"><div _ngcontent-ng-c2476060320="" class="success-img"><img _ngcontent-ng-c2476060320="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/doxy-me.png"></div><div _ngcontent-ng-c2476060320="" class="success-txt"><h3 _ngcontent-ng-c2476060320="">Built 3 Mobile Apps During the Course &amp; Launched a Freelance Development Career</h3><a _ngcontent-ng-c2476060320="" routerlink="/courses" class="learn-more" ng-reflect-router-link="/courses" href="/courses">Read Story</a></div></div></div><div _ngcontent-ng-c2476060320="" class="swiper-slide" role="group" aria-label="6 / 8" style="width: 278px; margin-right: 40px;"><div _ngcontent-ng-c2476060320="" class="success-card"><div _ngcontent-ng-c2476060320="" class="success-img"><img _ngcontent-ng-c2476060320="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/Bytes.png"></div><div _ngcontent-ng-c2476060320="" class="success-txt"><h3 _ngcontent-ng-c2476060320="">Transitioned from Teaching to UX Design with Our UI/UX Certification Program</h3><a _ngcontent-ng-c2476060320="" routerlink="/courses" class="learn-more" ng-reflect-router-link="/courses" href="/courses">Read Story</a></div></div></div><div _ngcontent-ng-c2476060320="" class="swiper-slide" role="group" aria-label="7 / 8" style="width: 278px; margin-right: 40px;"><div _ngcontent-ng-c2476060320="" class="success-card"><div _ngcontent-ng-c2476060320="" class="success-img"><img _ngcontent-ng-c2476060320="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/Stenaline-.png"></div><div _ngcontent-ng-c2476060320="" class="success-txt"><h3 _ngcontent-ng-c2476060320="">Earned PMP Certification &amp; Got Promoted to Senior Project Manager</h3><a _ngcontent-ng-c2476060320="" routerlink="/courses" class="learn-more" ng-reflect-router-link="/courses" href="/courses">Read Story</a></div></div></div><div _ngcontent-ng-c2476060320="" class="swiper-slide" role="group" aria-label="8 / 8" style="width: 278px; margin-right: 40px;"><div _ngcontent-ng-c2476060320="" class="success-card"><div _ngcontent-ng-c2476060320="" class="success-img"><img _ngcontent-ng-c2476060320="" alt="" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/TUI.png"></div><div _ngcontent-ng-c2476060320="" class="success-txt"><h3 _ngcontent-ng-c2476060320="">From Zero Coding Experience to Deploying a Full E-Commerce Platform</h3><a _ngcontent-ng-c2476060320="" routerlink="/courses" class="learn-more" ng-reflect-router-link="/courses" href="/courses">Read Story</a></div></div></div></div><div _ngcontent-ng-c2476060320="" class="swiper-nav-wrap"><div _ngcontent-ng-c2476060320="" class="successSwiperPrev circPrev swiper-button-prev swiper-button-disabled" tabindex="-1" role="button" aria-label="Previous slide" aria-controls="swiper-wrapper-8c94df816d3aaa71" aria-disabled="true"></div><div _ngcontent-ng-c2476060320="" class="successSwiperNext circNext swiper-button-next" tabindex="0" role="button" aria-label="Next slide" aria-controls="swiper-wrapper-8c94df816d3aaa71" aria-disabled="false"></div></div><span class="swiper-notification" aria-live="assertive" aria-atomic="true"></span></div></div></div></div></app-success-stories><app-partners _ngcontent-ng-c3794703028="" style="display: block;" _nghost-ng-c1700244322=""><div _ngcontent-ng-c1700244322="" class="comm-section"><div _ngcontent-ng-c1700244322="" class="container container-md"><h4 _ngcontent-ng-c1700244322="" class="small-head t-cen mb60">Trusted by Leading Certification Bodies &amp; Partners</h4><div _ngcontent-ng-c1700244322="" class="swiper partnerSwiper partner-swiper swiper-initialized swiper-horizontal swiper-backface-hidden"><div _ngcontent-ng-c1700244322="" class="swiper-wrapper" id="swiper-wrapper-78c9b2feedd8c622" aria-live="off" style="transition-duration: 3000ms; transform: translate3d(-238.667px, 0px, 0px);"><div _ngcontent-ng-c1700244322="" class="swiper-slide swiper-slide-prev" role="group" aria-label="1 / 10" data-swiper-slide-index="0" style="width: 238.667px;"><div _ngcontent-ng-c1700244322="" class="partner-img"><img _ngcontent-ng-c1700244322="" alt="partner" width="235" height="60" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/partner-11.png"></div></div><div _ngcontent-ng-c1700244322="" class="swiper-slide swiper-slide-active" role="group" aria-label="2 / 10" data-swiper-slide-index="1" style="width: 238.667px;"><div _ngcontent-ng-c1700244322="" class="partner-img"><img _ngcontent-ng-c1700244322="" alt="partner" width="280" height="76" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/partner-12.png"></div></div><div _ngcontent-ng-c1700244322="" class="swiper-slide swiper-slide-next" role="group" aria-label="3 / 10" data-swiper-slide-index="2" style="width: 238.667px;"><div _ngcontent-ng-c1700244322="" class="partner-img"><img _ngcontent-ng-c1700244322="" alt="partner" width="115" height="70" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/partner-13.png"></div></div><div _ngcontent-ng-c1700244322="" class="swiper-slide" role="group" aria-label="4 / 10" data-swiper-slide-index="3" style="width: 238.667px;"><div _ngcontent-ng-c1700244322="" class="partner-img"><img _ngcontent-ng-c1700244322="" alt="partner" width="101" height="70" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/partner-14.png"></div></div><div _ngcontent-ng-c1700244322="" class="swiper-slide" role="group" aria-label="5 / 10" data-swiper-slide-index="4" style="width: 238.667px;"><div _ngcontent-ng-c1700244322="" class="partner-img"><img _ngcontent-ng-c1700244322="" alt="partner" width="144" height="70" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/partner-15.png"></div></div><div _ngcontent-ng-c1700244322="" class="swiper-slide" role="group" aria-label="6 / 10" data-swiper-slide-index="5" style="width: 238.667px;"><div _ngcontent-ng-c1700244322="" class="partner-img"><img _ngcontent-ng-c1700244322="" alt="partner" width="130" height="70" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/partner-16.png"></div></div><div _ngcontent-ng-c1700244322="" class="swiper-slide" role="group" aria-label="7 / 10" data-swiper-slide-index="6" style="width: 238.667px;"><div _ngcontent-ng-c1700244322="" class="partner-img"><img _ngcontent-ng-c1700244322="" alt="partner" width="155" height="70" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/partner-17.png"></div></div><div _ngcontent-ng-c1700244322="" class="swiper-slide" role="group" aria-label="8 / 10" data-swiper-slide-index="7" style="width: 238.667px;"><div _ngcontent-ng-c1700244322="" class="partner-img"><img _ngcontent-ng-c1700244322="" alt="partner" width="231" height="36" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/partner-18.png"></div></div><div _ngcontent-ng-c1700244322="" class="swiper-slide" role="group" aria-label="9 / 10" data-swiper-slide-index="8" style="width: 238.667px;"><div _ngcontent-ng-c1700244322="" class="partner-img"><img _ngcontent-ng-c1700244322="" alt="partner" width="382" height="126" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/partner-19.png"></div></div><div _ngcontent-ng-c1700244322="" class="swiper-slide" role="group" aria-label="10 / 10" data-swiper-slide-index="9" style="width: 238.667px;"><div _ngcontent-ng-c1700244322="" class="partner-img"><img _ngcontent-ng-c1700244322="" alt="partner" width="2560" height="683" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/boostai-1-scaled.png"></div></div></div><span class="swiper-notification" aria-live="assertive" aria-atomic="true"></span></div></div></div></app-partners><app-career-cta _ngcontent-ng-c3794703028="" style="display: block;" _nghost-ng-c2887705166=""><div _ngcontent-ng-c2887705166="" class="comm-section"><div _ngcontent-ng-c2887705166="" class="container container-md"><div _ngcontent-ng-c2887705166="" class="career-box"><div _ngcontent-ng-c2887705166="" class="career-img"><div _ngcontent-ng-c2887705166="" class="career-circle circle-binary"><video _ngcontent-ng-c2887705166="" autoplay="" muted="" loop="" playsinline=""><source _ngcontent-ng-c2887705166="" src="assets/frontoffice/www.ciklum.com/wp-content/themes/ciklum/assets/video/neon-glow.mp4"></video><div _ngcontent-ng-c2887705166="" class="circle-binary-overlay"><div _ngcontent-ng-c2887705166="" class="hover-parent mix"><canvas _ngcontent-ng-c2887705166="" class="binary-canvas" width="1512" height="976"></canvas></div></div></div><img _ngcontent-ng-c2887705166="" alt="" width="807" height="530" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/career-img.webp"></div><div _ngcontent-ng-c2887705166="" class="career-txt"><h3 _ngcontent-ng-c2887705166="" class="small-head-tag">Your Future Starts Here</h3><h2 _ngcontent-ng-c2887705166="" class="comm-head white">Start Your Learning Journey</h2><div _ngcontent-ng-c2887705166="" class="comm-txt white mb30"><p _ngcontent-ng-c2887705166="">Join thousands of learners who are transforming their careers with expert-led courses and industry-recognized certifications.</p></div><a _ngcontent-ng-c2887705166="" routerlink="/courses" class="button" ng-reflect-router-link="/courses" href="/courses">Browse Courses</a></div></div></div></div></app-career-cta><app-blog-insights _ngcontent-ng-c3794703028="" style="display: block;" _nghost-ng-c3066740109=""><div _ngcontent-ng-c3066740109="" class="comm-section"><div _ngcontent-ng-c3066740109="" class="container container-md"><div _ngcontent-ng-c3066740109="" class="comm-head-wrap flex mb36"><div _ngcontent-ng-c3066740109="" class="comm-head-left"><h3 _ngcontent-ng-c3066740109="" class="small-head-tag mb8">Learning Resources</h3><h2 _ngcontent-ng-c3066740109="" class="comm-head">Insights &amp; Guides for Learners</h2></div><a _ngcontent-ng-c3066740109="" routerlink="/forum" class="button" ng-reflect-router-link="/forum" href="/forum">Visit Forum</a></div><div _ngcontent-ng-c3066740109="" class="thought-wrap"><div _ngcontent-ng-c3066740109="" class="featured-blog-wrap"><a _ngcontent-ng-c3066740109="" routerlink="/forum" class="blog-card" ng-reflect-router-link="/forum" href="/forum"><div _ngcontent-ng-c3066740109="" class="blog-img"><img _ngcontent-ng-c3066740109="" alt="Top 10 Certifications That Will Boost Your Career in 2026" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/08/The-Data Science-Driven-Edge_BannerOpt2.png"></div><div _ngcontent-ng-c3066740109="" class="blog-txt-wrap"><h3 _ngcontent-ng-c3066740109="">Top 10 Certifications That Will Boost Your Career in 2026</h3><div _ngcontent-ng-c3066740109="" class="learn-more">Read More</div></div></a><a _ngcontent-ng-c3066740109="" routerlink="/forum" class="blog-card" ng-reflect-router-link="/forum" href="/forum"><div _ngcontent-ng-c3066740109="" class="blog-img"><img _ngcontent-ng-c3066740109="" alt="How to Build a Study Plan for Your First Tech Certification" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/08/Achieve-Faster-Product-Cycles-in-Retail-with-AI-Driven-Software Engineering_BannerOpt2.png"></div><div _ngcontent-ng-c3066740109="" class="blog-txt-wrap"><h3 _ngcontent-ng-c3066740109="">How to Build a Study Plan for Your First Tech Certification</h3><div _ngcontent-ng-c3066740109="" class="learn-more">Read More</div></div></a><a _ngcontent-ng-c3066740109="" routerlink="/forum" class="blog-card" ng-reflect-router-link="/forum" href="/forum"><div _ngcontent-ng-c3066740109="" class="blog-img"><img _ngcontent-ng-c3066740109="" alt="From Beginner to Job-Ready: A Complete Web Development Roadmap" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/08/How-AI-Agents-Are-Rewiring-Corporate-DNA-in-Healthcare_BannerOpt1-1.png"></div><div _ngcontent-ng-c3066740109="" class="blog-txt-wrap"><h3 _ngcontent-ng-c3066740109="">From Beginner to Job-Ready: A Complete Web Development Roadmap</h3><div _ngcontent-ng-c3066740109="" class="learn-more">Read More</div></div></a><a _ngcontent-ng-c3066740109="" routerlink="/forum" class="blog-card" ng-reflect-router-link="/forum" href="/forum"><div _ngcontent-ng-c3066740109="" class="blog-img"><img _ngcontent-ng-c3066740109="" alt="5 Tips to Pass Your Cloud Certification Exam on the First Try" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2026/01/Legacy-Modernization-Architecture-AI-Cloud-ROI-Roadmaps.jpg"></div><div _ngcontent-ng-c3066740109="" class="blog-txt-wrap"><h3 _ngcontent-ng-c3066740109="">5 Tips to Pass Your Cloud Certification Exam on the First Try</h3><div _ngcontent-ng-c3066740109="" class="learn-more">Read More</div></div></a></div></div></div></div></app-blog-insights><app-prefooter-cta _ngcontent-ng-c3794703028="" style="display: block;" _nghost-ng-c3392034186=""><div _ngcontent-ng-c3392034186="" class="comm-section pfHome pb0"><div _ngcontent-ng-c3392034186="" class="container"><div _ngcontent-ng-c3392034186="" class="pre-footer-wrap"><div _ngcontent-ng-c3392034186="" class="pf-circle circle-binary" style="translate: none; rotate: none; scale: none; transform: scale(0.5, 0.5);"><div _ngcontent-ng-c3392034186="" class="ring"></div><video _ngcontent-ng-c3392034186="" autoplay="" muted="" loop="" playsinline=""><source _ngcontent-ng-c3392034186="" type="video/mp4" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/neon-glow.mp4"></video><div _ngcontent-ng-c3392034186="" class="circle-overlay"></div><div _ngcontent-ng-c3392034186="" class="circle-binary-overlay"><div _ngcontent-ng-c3392034186="" class="hover-parent mix"><canvas _ngcontent-ng-c3392034186="" class="binary-canvas" width="1512" height="976"></canvas></div></div></div><div _ngcontent-ng-c3392034186="" class="comm-head-wrap cen"><div _ngcontent-ng-c3392034186="" class="comm-head-left"><h2 _ngcontent-ng-c3392034186="" class="comm-head mb24">Ready to Level Up Your Career?<br _ngcontent-ng-c3392034186="">Start Learning Today</h2><div _ngcontent-ng-c3392034186="" class="comm-txt mb36"><p _ngcontent-ng-c3392034186="">Whether you're a beginner exploring new skills or a professional seeking certifications, we have the perfect course for you.</p></div></div><a _ngcontent-ng-c3392034186="" routerlink="/courses" class="button center" ng-reflect-router-link="/courses" href="/courses">Explore Courses</a></div></div></div></div></app-prefooter-cta></main></app-home><!--container--><app-footer _ngcontent-ng-c661985599="" style="display: block;" _nghost-ng-c1765211664=""><footer _ngcontent-ng-c1765211664="" id="footer"><div _ngcontent-ng-c1765211664="" class="footer-wrap"><div _ngcontent-ng-c1765211664="" class="container"><div _ngcontent-ng-c1765211664="" class="footer-container"><div _ngcontent-ng-c1765211664="" class="logo-section"><div _ngcontent-ng-c1765211664="" class="footer-logo"><img _ngcontent-ng-c1765211664="" alt="YBrainy" width="200" height="63" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/10/footer-logo-1.svg"></div><div _ngcontent-ng-c1765211664="" class="footer-social"><div _ngcontent-ng-c1765211664="" class="fb-wrap"><div _ngcontent-ng-c1765211664="" class="soc-icon"><a _ngcontent-ng-c1765211664="" href="https://www.facebook.com/YBrainy" target="_blank" rel="noopener"><img _ngcontent-ng-c1765211664="" alt="Facebook" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/11/fb.svg"></a></div><div _ngcontent-ng-c1765211664="" class="fb-links"><a _ngcontent-ng-c1765211664="" href="https://www.facebook.com/YBrainy" target="_blank" rel="noopener">Tunisia</a></div></div><div _ngcontent-ng-c1765211664="" class="other-social"><div _ngcontent-ng-c1765211664="" class="soc-icon"><a _ngcontent-ng-c1765211664="" href="https://www.linkedin.com/company/ybrainy/" target="_blank" rel="noopener"><img _ngcontent-ng-c1765211664="" alt="LinkedIn" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/11/linkedin.svg"></a></div><div _ngcontent-ng-c1765211664="" class="soc-icon"><a _ngcontent-ng-c1765211664="" href="https://www.instagram.com/ybrainy/" target="_blank" rel="noopener"><img _ngcontent-ng-c1765211664="" alt="Instagram" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/11/insta.svg"></a></div><div _ngcontent-ng-c1765211664="" class="soc-icon"><a _ngcontent-ng-c1765211664="" href="https://www.youtube.com/@ybrainy" target="_blank" rel="noopener"><img _ngcontent-ng-c1765211664="" alt="YouTube" src="assets/frontoffice/www.ciklum.com/wp-content/uploads/2025/11/yt.svg"></a></div></div></div></div><div _ngcontent-ng-c1765211664="" class="footer-links-container"><div _ngcontent-ng-c1765211664="" class="footer-links-box"><h4 _ngcontent-ng-c1765211664="">Learning</h4><div _ngcontent-ng-c1765211664="" class="footer-links"><div _ngcontent-ng-c1765211664="" class="footer-links-wrap"><ul _ngcontent-ng-c1765211664=""><li _ngcontent-ng-c1765211664=""><a _ngcontent-ng-c1765211664="" routerlink="/courses" ng-reflect-router-link="/courses" href="/courses">All Courses</a></li><li _ngcontent-ng-c1765211664=""><a _ngcontent-ng-c1765211664="" routerlink="/courses" ng-reflect-router-link="/courses" href="/courses">Certifications</a></li><li _ngcontent-ng-c1765211664=""><a _ngcontent-ng-c1765211664="" routerlink="/calendar" ng-reflect-router-link="/calendar" href="/calendar">Calendar &amp; Events</a></li><li _ngcontent-ng-c1765211664=""><a _ngcontent-ng-c1765211664="" routerlink="/forum" ng-reflect-router-link="/forum" href="/forum">Community Forum</a></li><li _ngcontent-ng-c1765211664=""><a _ngcontent-ng-c1765211664="" routerlink="/courses" ng-reflect-router-link="/courses" href="/courses">Learning Packs</a></li></ul></div></div></div><div _ngcontent-ng-c1765211664="" class="footer-links-box"><h4 _ngcontent-ng-c1765211664="">Company</h4><div _ngcontent-ng-c1765211664="" class="footer-links"><div _ngcontent-ng-c1765211664="" class="footer-links-wrap"><ul _ngcontent-ng-c1765211664=""><li _ngcontent-ng-c1765211664=""><a _ngcontent-ng-c1765211664="" routerlink="/about" ng-reflect-router-link="/about" href="/about">About</a></li><li _ngcontent-ng-c1765211664=""><a _ngcontent-ng-c1765211664="" routerlink="/resources" ng-reflect-router-link="/resources" href="/resources">Resources</a></li></ul></div></div></div><div _ngcontent-ng-c1765211664="" class="footer-links-box"><h4 _ngcontent-ng-c1765211664="">Company</h4><div _ngcontent-ng-c1765211664="" class="footer-links"><div _ngcontent-ng-c1765211664="" class="footer-links-wrap"><ul _ngcontent-ng-c1765211664=""><li _ngcontent-ng-c1765211664=""><a _ngcontent-ng-c1765211664="" routerlink="/about" ng-reflect-router-link="/about" href="/about">About YBrainy</a></li><li _ngcontent-ng-c1765211664=""><a _ngcontent-ng-c1765211664="" routerlink="/about" ng-reflect-router-link="/about" href="/about">Contact Us</a></li></ul></div></div></div><div _ngcontent-ng-c1765211664="" class="footer-links-box"><h4 _ngcontent-ng-c1765211664="">Resources</h4><div _ngcontent-ng-c1765211664="" class="footer-links"><div _ngcontent-ng-c1765211664="" class="footer-links-wrap"><ul _ngcontent-ng-c1765211664=""><li _ngcontent-ng-c1765211664=""><a _ngcontent-ng-c1765211664="" routerlink="/forum" ng-reflect-router-link="/forum" href="/forum">Community Forum</a></li><li _ngcontent-ng-c1765211664=""><a _ngcontent-ng-c1765211664="" routerlink="/courses" ng-reflect-router-link="/courses" href="/courses">Courses</a></li><li _ngcontent-ng-c1765211664=""><a _ngcontent-ng-c1765211664="" routerlink="/calendar" ng-reflect-router-link="/calendar" href="/calendar">Calendar &amp; Events</a></li></ul></div></div></div></div></div><div _ngcontent-ng-c1765211664="" class="footer-bottom"><div _ngcontent-ng-c1765211664="" class="privacy-link-box"><a _ngcontent-ng-c1765211664="" href="javascript:void(0)">Terms &amp; Conditions</a><a _ngcontent-ng-c1765211664="" href="javascript:void(0)">Privacy Notice</a></div><p _ngcontent-ng-c1765211664="" class="copyrights">© 2026 - YBrainy</p></div></div></div></footer></app-footer><!--bindings={
+  "ng-reflect-ng-if": "true"
+}--><app-ai-assistant _ngcontent-ng-c661985599="" _nghost-ng-c1715457980=""><input _ngcontent-ng-c1715457980="" type="file" multiple="" accept="image/*,application/pdf,video/*,.txt,.log,.zip" style="display: none;"><button _ngcontent-ng-c1715457980="" title="yForumy AI Assistant" class="yf-fab"><img _ngcontent-ng-c1715457980="" src="assets/yforumy-avatar.png" alt="yForumy" class="yf-fab-avatar"><!--bindings={
+  "ng-reflect-ng-if": "true"
+}--><!--bindings={
+  "ng-reflect-ng-if": "false"
+}--><span _ngcontent-ng-c1715457980="" class="yf-fab-label">yForumy</span></button><!--bindings={
+  "ng-reflect-ng-if": "false"
+}--></app-ai-assistant><!--bindings={
+  "ng-reflect-ng-if": "true"
+}--></app-layout><!--container--></app-root>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="polyfills.js" type="module"></script><script src="scripts.js" defer=""></script><script src="main.js" type="module"></script>
+
+
+<pre id="ybrainy-runtime-error" style="position: fixed; top: 16px; left: 16px; right: 16px; z-index: 2147483647; max-height: 50vh; overflow: auto; padding: 16px; margin: 0px; white-space: pre-wrap; background: rgb(31, 41, 55); color: rgb(249, 250, 251); border: 1px solid rgb(239, 68, 68); border-radius: 12px; box-shadow: rgba(0, 0, 0, 0.35) 0px 20px 40px;">Runtime error detected
+
+NotAllowedError: play() failed because the user didn't interact with the document first.</pre></body></html>

@@ -19,6 +19,10 @@ export class BackofficeDashboardComponent implements OnInit, OnDestroy {
   adminDisplayName = 'Admin';
   userRole: string = 'ADMIN';
   private readonly sub = new Subscription();
+  private readonly embeddedNavPaths = new Set([
+    '/dashboard/forum/threads',
+    '/dashboard/forum/categories',
+  ]);
 
   private readonly allowedPages = new Set(['index.html', 'courses.html', 'lessons.html', 'app-calender.html']);
 
@@ -31,10 +35,7 @@ export class BackofficeDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    if (!this.route.snapshot.data['page']) {
-      this.router.navigate(['/dashboard/courses']);
-      return;
-    }
+    window.addEventListener('message', this.handleEmbeddedNavigation);
     this.adminDisplayName = getDisplayName() ?? 'Admin';
     const raw = localStorage.getItem('bb_user_session_v1');
     if (raw) {
@@ -51,12 +52,27 @@ export class BackofficeDashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    window.removeEventListener('message', this.handleEmbeddedNavigation);
     this.sub.unsubscribe();
   }
 
   async onLogout(): Promise<void> {
     await logout();
   }
-}
 
+  private readonly handleEmbeddedNavigation = (event: MessageEvent): void => {
+    if (event.origin !== window.location.origin) {
+      return;
+    }
+
+    const type = typeof event.data?.type === 'string' ? event.data.type : '';
+    const path = typeof event.data?.path === 'string' ? event.data.path.trim() : '';
+
+    if (type !== 'yb:navigate' || !this.embeddedNavPaths.has(path)) {
+      return;
+    }
+
+    void this.router.navigateByUrl(path);
+  };
+}
 
