@@ -83,7 +83,7 @@ export class LoginPageComponent {
 
   onGoogleLogin(): void {
     this.errorMessage = '';
-    loginWithGoogle(`${window.location.origin}/`).catch(() => {
+    loginWithGoogle(this.getPostLoginRedirectUri()).catch(() => {
       this.errorMessage = 'Unable to start login. Please try again.';
     });
   }
@@ -109,7 +109,7 @@ export class LoginPageComponent {
     this.faceSubmitting = true;
 
     try {
-      await signInWithFaceBiometric(image, `${window.location.origin}/`);
+      await signInWithFaceBiometric(image, this.getPostLoginRedirectUri());
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Face sign-in failed. Please try again.';
@@ -166,6 +166,24 @@ export class LoginPageComponent {
     }
 
     await this.router.navigateByUrl(role === 'ADMIN' ? '/dashboard' : '/');
+  }
+
+  private getPostLoginRedirectUri(): string {
+    const redirect = this.route.snapshot.queryParamMap.get('redirect');
+    if (!redirect) {
+      return `${window.location.origin}/`;
+    }
+
+    try {
+      const normalized = new URL(redirect, window.location.origin);
+      return normalized.origin === window.location.origin
+        ? normalized.toString()
+        : `${window.location.origin}/`;
+    } catch {
+      return redirect.startsWith('/')
+        ? `${window.location.origin}${redirect}`
+        : `${window.location.origin}/`;
+    }
   }
 
   async submitBanAppeal(): Promise<void> {

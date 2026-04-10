@@ -1,6 +1,10 @@
 import { Routes } from '@angular/router';
 import { LoginPageComponent } from './login/login-page.component';
 import { BackofficeDashboardComponent } from './backoffice/backoffice-dashboard.component';
+import { CategoryListComponent } from './backoffice/category-list/category-list.component';
+import { FinanceComponent } from './backoffice/finance/finance.component';
+import { PackListComponent } from './backoffice/pack-list/pack-list.component';
+import { PacksOrderComponent } from './backoffice/packs-order/packs-order.component';
 import { SignUpPageComponent } from './signup/signup.component';
 import { ForgotPasswordComponent } from './forgot-password/forgot-password.component';
 import { UsersComponent } from './backoffice/users/users.component';
@@ -40,6 +44,26 @@ export const routes: Routes = [
   {
     path: 'dashboard/users',
     component: UsersComponent,
+    canActivate: [adminGuard],
+  },
+  {
+    path: 'dashboard/finance',
+    component: FinanceComponent,
+    canActivate: [adminGuard],
+  },
+  {
+    path: 'dashboard/packs',
+    component: PackListComponent,
+    canActivate: [adminGuard],
+  },
+  {
+    path: 'dashboard/packsorder',
+    component: PacksOrderComponent,
+    canActivate: [adminGuard],
+  },
+  {
+    path: 'dashboard/categories',
+    component: CategoryListComponent,
     canActivate: [adminGuard],
   },
   {

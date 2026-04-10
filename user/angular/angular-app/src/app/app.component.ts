@@ -19,7 +19,8 @@ export class AppComponent {
 
     if (isAuthenticated()) {
       const roles = getRealmRoles().map((r) => r.toUpperCase());
-      if (roles.includes('ADMIN') && !window.location.pathname.startsWith('/dashboard')) {
+      const currentPath = window.location.pathname || '/';
+      if (roles.includes('ADMIN') && (currentPath === '/' || currentPath === '')) {
         router.navigateByUrl('/dashboard');
       }
     }

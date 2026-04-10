@@ -8,6 +8,8 @@ import {
   redirectToAppLogin,
   logout,
 } from '../../auth/keycloak.service';
+import { CartHistory } from '../models/cart.model';
+import { CartService } from '../services/cart.service';
 import { UserService } from '../services/user.service';
 import { UserSessionService } from '../../tracking/user-session.service';
 
@@ -26,14 +28,25 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   menuOpen = false;
   profileMenuOpen = false;
   showModeDropdown = false;
+  cartDropdownOpen = false;
+  showHistory = false;
   headerProfileImage: string | null = null;
   headerProfileName: string | null = null;
+  cartHistory: CartHistory[] = [];
+  checkoutInProgress = false;
+  showCheckoutToast = false;
+  checkoutToastType: 'success' | 'error' = 'success';
+  checkoutToastTitle = '';
+  checkoutToastMessage = '';
   private mobileNav: any;
   private readonly subscriptions = new Subscription();
+  private checkoutToastTimer: ReturnType<typeof setTimeout> | null = null;
+  private processingStripeSessionId: string | null = null;
 
   constructor(
     private el: ElementRef,
     private router: Router,
+    public cartService: CartService,
     private frontofficeUserService: UserService,
     private userSession: UserSessionService,
     private cdr: ChangeDetectorRef
@@ -65,6 +78,10 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
 
   get availableModes(): Array<'STUDENT' | 'INSTRUCTOR' | 'ADMIN'> {
     return this.userSession.getAvailableModes();
+  }
+
+  get cartItemCount(): number {
+    return this.cartService.getCartItemCount();
   }
 
   getModeIcon(mode: string): string {
@@ -110,12 +127,78 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     this.showModeDropdown = !this.showModeDropdown;
   }
 
+  toggleCartDropdown(event?: MouseEvent): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.cartDropdownOpen = !this.cartDropdownOpen;
+    if (this.cartDropdownOpen) {
+      this.showHistory = false;
+      this.cartService.refreshCart();
+      this.fetchHistory();
+    }
+  }
+
+  toggleHistory(show: boolean): void {
+    this.showHistory = show;
+    if (show) {
+      this.fetchHistory();
+    }
+  }
+
   onLogin(): void {
     redirectToAppLogin(window.location.href);
   }
 
   async onLogout(): Promise<void> {
     await logout();
+  }
+
+  removeFromCart(itemId: number, event: Event): void {
+    event.stopPropagation();
+    this.cartService.removeFromCart(itemId).subscribe({
+      next: () => this.fetchHistory(),
+      error: (err) => console.error('Error removing from cart', err)
+    });
+  }
+
+  checkout(): void {
+    if (this.checkoutInProgress) {
+      return;
+    }
+    this.checkoutInProgress = true;
+
+    this.cartService.createStripeCheckoutSession().subscribe({
+      next: (session) => {
+        if (!session?.checkoutUrl) {
+          this.checkoutInProgress = false;
+          this.showCheckoutMessage(
+            'error',
+            'Checkout failed',
+            'Stripe checkout URL is missing. Please try again.'
+          );
+          return;
+        }
+
+        window.location.href = session.checkoutUrl;
+      },
+      error: (err) => {
+        this.checkoutInProgress = false;
+        console.error('Checkout failed', err);
+        this.showCheckoutMessage(
+          'error',
+          'Checkout failed',
+          err?.error?.message || err?.message || 'We could not complete checkout. Please try again.'
+        );
+      }
+    });
+  }
+
+  closeCheckoutToast(): void {
+    this.showCheckoutToast = false;
+    if (this.checkoutToastTimer) {
+      clearTimeout(this.checkoutToastTimer);
+      this.checkoutToastTimer = null;
+    }
   }
 
   getAvatarInitials(): string {
@@ -134,9 +217,22 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     this.profileMenuOpen = !this.profileMenuOpen;
   }
 
+  fetchHistory(): void {
+    this.cartService.getHistory().subscribe({
+      next: (history) => {
+        this.cartHistory = [...(history ?? [])].reverse();
+      },
+      error: (err) => console.error('Error fetching history', err)
+    });
+  }
+
   ngAfterViewInit(): void {
     this.syncIsHomeFromUrl(this.router.url);
+    this.handleStripeCheckoutReturn(this.router.url);
     this.loadHeaderUserData();
+    if (this.authenticated) {
+      this.cartService.refreshCart();
+    }
     this.subscriptions.add(
       this.router.events
         .pipe(
@@ -144,9 +240,18 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
         )
         .subscribe((e) => {
           this.syncIsHomeFromUrl(e.urlAfterRedirects);
+          this.handleStripeCheckoutReturn(e.urlAfterRedirects);
           this.profileMenuOpen = false;
           this.loadHeaderUserData();
         })
+    );
+
+    this.subscriptions.add(
+      this.cartService.cart$.subscribe(() => {
+        if (this.cartDropdownOpen) {
+          this.fetchHistory();
+        }
+      })
     );
 
     this.initStickyHeader();
@@ -156,6 +261,10 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     $(window).off('scroll.headerSticky');
+    if (this.checkoutToastTimer) {
+      clearTimeout(this.checkoutToastTimer);
+      this.checkoutToastTimer = null;
+    }
     this.subscriptions.unsubscribe();
   }
 
@@ -167,6 +276,9 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     }
     if (!target?.closest('.mode-switcher-container')) {
       this.showModeDropdown = false;
+    }
+    if (!target?.closest('.cart-wrapper')) {
+      this.cartDropdownOpen = false;
     }
   }
 
@@ -214,6 +326,92 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
         this.headerProfileName = null;
       },
     });
+  }
+
+  private showCheckoutMessage(type: 'success' | 'error', title: string, message: string): void {
+    this.checkoutToastType = type;
+    this.checkoutToastTitle = title;
+    this.checkoutToastMessage = message;
+    this.showCheckoutToast = true;
+
+    if (this.checkoutToastTimer) {
+      clearTimeout(this.checkoutToastTimer);
+    }
+    this.checkoutToastTimer = setTimeout(() => this.closeCheckoutToast(), 4000);
+  }
+
+  private handleStripeCheckoutReturn(url: string): void {
+    const queryIndex = url.indexOf('?');
+    if (queryIndex < 0) {
+      return;
+    }
+
+    const params = new URLSearchParams(url.substring(queryIndex + 1));
+    const payment = params.get('payment');
+
+    if (payment === 'cancelled') {
+      this.showCheckoutMessage(
+        'error',
+        'Checkout cancelled',
+        'Your payment was cancelled. You can try again anytime.'
+      );
+      this.clearStripeQueryParams();
+      return;
+    }
+
+    if (payment !== 'success') {
+      return;
+    }
+
+    const sessionId = params.get('session_id');
+    if (!sessionId) {
+      this.showCheckoutMessage(
+        'error',
+        'Checkout failed',
+        'Missing Stripe session id in return URL.'
+      );
+      this.clearStripeQueryParams();
+      return;
+    }
+
+    if (this.processingStripeSessionId === sessionId || this.checkoutInProgress) {
+      return;
+    }
+
+    this.processingStripeSessionId = sessionId;
+    this.checkoutInProgress = true;
+
+    this.cartService.confirmStripeCheckout(sessionId).subscribe({
+      next: () => {
+        this.showCheckoutMessage(
+          'success',
+          'Enrollment confirmed',
+          'Your learning pack checkout was completed successfully.'
+        );
+        this.cartDropdownOpen = false;
+        this.checkoutInProgress = false;
+        this.processingStripeSessionId = null;
+        this.cartService.refreshCart();
+        this.fetchHistory();
+        this.clearStripeQueryParams();
+      },
+      error: (err) => {
+        this.checkoutInProgress = false;
+        this.processingStripeSessionId = null;
+        console.error('Stripe checkout confirmation failed', err);
+        this.showCheckoutMessage(
+          'error',
+          'Checkout failed',
+          err?.error?.message || err?.message || 'Payment verification failed. Please contact support.'
+        );
+        this.clearStripeQueryParams();
+      }
+    });
+  }
+
+  private clearStripeQueryParams(): void {
+    const cleanPath = this.router.url.split('?')[0] || '/';
+    this.router.navigateByUrl(cleanPath, { replaceUrl: true });
   }
 
   private initMegaMenu(): void {

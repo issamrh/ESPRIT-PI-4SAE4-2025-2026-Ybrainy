@@ -335,6 +335,107 @@
         <!-- Right Button -->
         <div class="head-right">
           <div class="menuBtn">
+            <div *ngIf="authenticated" class="cart-wrapper">
+              <a
+                href="javascript:void(0)"
+                class="cart-toggle"
+                [class.is-open]="cartDropdownOpen"
+                (click)="toggleCartDropdown($event)"
+                aria-label="Open cart">
+                <i class="bi bi-cart3"></i>
+                <span class="cart-badge" *ngIf="cartItemCount > 0">{{ cartItemCount }}</span>
+              </a>
+
+              <div class="cart-dropdown text-dark" *ngIf="cartDropdownOpen" (click)="$event.stopPropagation()">
+                <ul class="cart-dropdown-tabs" role="tablist">
+                  <li>
+                    <a
+                      class="cart-dropdown-tab"
+                      [class.active]="!showHistory"
+                      (click)="toggleHistory(false)"
+                      href="javascript:void(0)">
+                      <i class="bi bi-cart"></i> Cart
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      class="cart-dropdown-tab"
+                      [class.active]="showHistory"
+                      (click)="toggleHistory(true)"
+                      href="javascript:void(0)">
+                      <i class="bi bi-clock-history"></i> Activity
+                    </a>
+                  </li>
+                </ul>
+
+                <div *ngIf="!showHistory">
+                  <div *ngIf="(cartService.cart$ | async)?.items?.length === 0" class="cart-empty-state">
+                    <p class="text-muted">Your cart is empty.</p>
+                    <a routerLink="/packs" class="cart-mini-link" (click)="cartDropdownOpen = false">Browse packs</a>
+                  </div>
+
+                  <div class="cart-items">
+                    <div class="cart-item-row" *ngFor="let item of (cartService.cart$ | async)?.items">
+                      <div class="cart-item-copy">
+                        <div class="cart-item-title">{{ item.packTitle }}</div>
+                        <div class="cart-item-meta">
+                          {{ item.quantity }} x ${{ item.priceAtPurchase | number:'1.2-2' }}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        (click)="removeFromCart(item.id, $event)"
+                        class="cart-remove-btn"
+                        aria-label="Remove item from cart">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div *ngIf="(cartService.cart$ | async)?.items?.length! > 0" class="cart-footer">
+                    <div class="cart-total-row">
+                      <span>Total:</span>
+                      <span class="cart-total-amount">
+                        ${{ (cartService.cart$ | async)?.totalAmount | number:'1.2-2' }}
+                      </span>
+                    </div>
+                    <button (click)="checkout()" class="cart-checkout-btn" [disabled]="checkoutInProgress">
+                      <span *ngIf="!checkoutInProgress">Checkout</span>
+                      <span *ngIf="checkoutInProgress">
+                        <i class="bi bi-arrow-repeat me-1 checkout-spin"></i>Processing...
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                <div *ngIf="showHistory" class="activity-feed">
+                  <div *ngIf="cartHistory.length === 0" class="cart-empty-state">
+                    <p class="text-muted">No recent activity.</p>
+                  </div>
+
+                  <div class="history-item" *ngFor="let entry of cartHistory">
+                    <div class="activity-icon" [ngSwitch]="entry.action">
+                      <i *ngSwitchCase="'ADD_ITEM'" class="bi bi-plus-circle-fill text-success"></i>
+                      <i *ngSwitchCase="'REMOVE_ITEM'" class="bi bi-dash-circle-fill text-danger"></i>
+                      <i *ngSwitchCase="'CLEAR_CART'" class="bi bi-x-circle-fill text-warning"></i>
+                      <i *ngSwitchCase="'CHECKOUT'" class="bi bi-check-circle-fill text-primary"></i>
+                      <i *ngSwitchCase="'CART_CREATED'" class="bi bi-stars text-info"></i>
+                      <i *ngSwitchDefault class="bi bi-clock-history text-secondary"></i>
+                    </div>
+                    <div class="history-copy">
+                      <div class="history-title">{{ (entry.action || 'ACTIVITY').replace('_', ' ') | titlecase }}</div>
+                      <div class="history-description">
+                        {{ entry.description || 'Action recorded in previous session' }}
+                      </div>
+                      <div class="history-meta">
+                        {{ entry.createdAt | date:'MMM d, h:mm a' }} · Total: ${{ entry.totalAmount | number:'1.2-2' }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div *ngIf="authenticated" class="mode-switcher-container">
               <div class="avatar-wrapper"
                    [class.mode-student]="currentMode === 'STUDENT'"
@@ -485,5 +586,21 @@
         <li><a routerLink="/about">About</a></li>
       </ul>
     </nav>
+  </div>
+
+  <div
+    class="checkout-toast"
+    *ngIf="showCheckoutToast"
+    [ngClass]="checkoutToastType === 'success' ? 'checkout-toast--success' : 'checkout-toast--error'">
+    <div class="checkout-toast__icon">
+      <i class="bi" [ngClass]="checkoutToastType === 'success' ? 'bi-check2-circle' : 'bi-exclamation-octagon'"></i>
+    </div>
+    <div class="checkout-toast__content">
+      <div class="checkout-toast__title">{{ checkoutToastTitle }}</div>
+      <p class="checkout-toast__message">{{ checkoutToastMessage }}</p>
+    </div>
+    <button type="button" class="checkout-toast__close" (click)="closeCheckoutToast()" aria-label="Close notification">
+      <i class="bi bi-x-lg"></i>
+    </button>
   </div>
 </header>

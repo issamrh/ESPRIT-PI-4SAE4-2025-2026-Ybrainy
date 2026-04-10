@@ -29,6 +29,8 @@ import { CourseProgressComponent } from './pages/course-progress/course-progress
 import { CourseReviewsComponent } from './pages/course-reviews/course-reviews.component';
 import { AiLearningPathPageComponent } from './pages/learning-paths/learning-paths.component';
 import { StudentDashboardComponent } from './pages/student-dashboard/student-dashboard.component';
+import { FoPackListComponent } from './pages/packs/pack-list/pack-list.component';
+import { FoPackDetailComponent } from './pages/packs/pack-detail/pack-detail.component';
 
 // Section components
 import { HeroSectionComponent } from './home/hero-section/hero-section.component';
@@ -66,6 +68,8 @@ import { PrefooterCtaComponent } from './home/prefooter-cta/prefooter-cta.compon
     CourseReviewsComponent,
     AiLearningPathPageComponent,
     StudentDashboardComponent,
+    FoPackListComponent,
+    FoPackDetailComponent,
     HeroSectionComponent,
     TrustLogosComponent,
     WhyYbrainyComponent,

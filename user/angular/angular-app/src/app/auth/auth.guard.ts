@@ -4,17 +4,19 @@ import { Router } from '@angular/router';
 import { isAuthenticated, redirectToAppLogin } from './keycloak.service';
 import { UserSessionService } from '../tracking/user-session.service';
 
-export const authGuard: CanActivateFn = () => {
+export const authGuard: CanActivateFn = (_route, state) => {
   const router = inject(Router);
   const userSession = inject(UserSessionService);
+  const requestedUrl = state.url || router.url || window.location.href;
+  const requestedPath = requestedUrl.split('?')[0].split('#')[0] || '/';
+  const isRootNavigation = requestedPath === '/' || requestedPath === '';
 
   console.log('[AUTH GUARD] Running...');
   console.log('[AUTH GUARD] isAuthenticated:', isAuthenticated());
 
   if (!isAuthenticated()) {
-    const url = router.url || window.location.href;
     console.log('[AUTH GUARD] Not authenticated, redirecting to login');
-    redirectToAppLogin(url);
+    redirectToAppLogin(requestedUrl);
     return false;
   }
 
@@ -31,11 +33,11 @@ export const authGuard: CanActivateFn = () => {
     // First time - set mode to role
     userSession.setMode(userRole as 'STUDENT' | 'INSTRUCTOR' | 'ADMIN');
 
-    // Route to appropriate default page
-    if (userRole === 'ADMIN') {
+    // Only force a default landing page when the user is visiting the root URL.
+    if (isRootNavigation && userRole === 'ADMIN') {
       console.log('[AUTH GUARD] Redirecting to /dashboard');
       return router.parseUrl('/dashboard');
-    } else if (userRole === 'INSTRUCTOR') {
+    } else if (isRootNavigation && userRole === 'INSTRUCTOR') {
       console.log('[AUTH GUARD] Redirecting to /dashboard/courses');
       return router.parseUrl('/dashboard/courses');
     }
