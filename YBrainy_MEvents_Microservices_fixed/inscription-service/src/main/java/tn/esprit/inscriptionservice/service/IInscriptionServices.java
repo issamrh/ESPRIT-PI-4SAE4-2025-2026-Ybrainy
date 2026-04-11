@@ -15,6 +15,7 @@ public interface IInscriptionServices {
     List<Long> getDistinctEventIdsByStudent(long studentId);
     List<Inscription> getEventStatusesByStudent(long studentId);
     boolean existsByStudentAndEvent(long studentId, long eventId);
+    boolean hasConfirmedInscription(long studentId, long eventId);
     long countConfirmedByEvent(long eventId);
 }
 

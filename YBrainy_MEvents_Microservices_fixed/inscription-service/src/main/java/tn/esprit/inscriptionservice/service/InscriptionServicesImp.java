@@ -122,6 +122,15 @@ public class InscriptionServicesImp implements IInscriptionServices {
     }
 
     @Override
+    public boolean hasConfirmedInscription(long studentId, long eventId) {
+        return inscriptionRepository.existsByStudentIdAndEventIdAndStatut(
+                studentId,
+                eventId,
+                InscriptionStatut.CONFIRMEE
+        );
+    }
+
+    @Override
     public long countConfirmedByEvent(long eventId) {
         return inscriptionRepository.countByEventIdAndStatut(eventId, InscriptionStatut.CONFIRMEE);
     }

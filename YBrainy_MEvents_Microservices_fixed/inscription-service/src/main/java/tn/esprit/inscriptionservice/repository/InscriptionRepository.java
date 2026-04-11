@@ -16,6 +16,8 @@ public interface InscriptionRepository extends JpaRepository<Inscription, Long> 
 
     boolean existsByStudentIdAndEventId(long studentId, long eventId);
 
+    boolean existsByStudentIdAndEventIdAndStatut(long studentId, long eventId, InscriptionStatut statut);
+
     Inscription findByStudentIdAndEventId(long studentId, long eventId);
 
     long countByEventIdAndStatut(long eventId, InscriptionStatut statut);

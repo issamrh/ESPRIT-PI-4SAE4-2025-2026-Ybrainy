@@ -52,6 +52,13 @@ public class InscriptionRestControllers {
         return inscriptionServices.existsByStudentAndEvent(studentId, eventId);
     }
 
+    @GetMapping("/confirmed")
+    public boolean hasConfirmedInscription(
+            @RequestParam("studentId") long studentId,
+            @RequestParam("eventId") long eventId) {
+        return inscriptionServices.hasConfirmedInscription(studentId, eventId);
+    }
+
     /** Called by event-service to attach inscription count to an event. */
     @GetMapping("/count")
     public long countConfirmedByEventId(@RequestParam("eventId") long eventId) {
