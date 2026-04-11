@@ -9,7 +9,7 @@ import { isAuthenticated } from '../../auth/keycloak.service';
     providedIn: 'root'
 })
 export class CartService {
-    private apiUrl = `${environment.apiUrl}/cart`;
+    private apiUrl = `${environment.cartApiUrl}/cart`;
     private cartSubject = new BehaviorSubject<Cart | null>(null);
     cart$ = this.cartSubject.asObservable();
 

@@ -8,7 +8,7 @@ import { CartHistoryRecord } from '../models/cart-history.model';
   providedIn: 'root'
 })
 export class CartHistoryService {
-  private readonly apiUrl = `${environment.apiUrl}/cart/history`;
+  private readonly apiUrl = `${environment.cartApiUrl}/cart/history`;
 
   constructor(private http: HttpClient) { }
 

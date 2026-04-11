@@ -1,5 +1,5 @@
 server:
-  port: 8092
+  port: 8091
 
 spring:
   application:
@@ -11,6 +11,10 @@ spring:
           enabled: true
           lower-case-service-id: true
       routes:
+        - id: cart-service
+          uri: lb://cart-service
+          predicates:
+            - Path=/api/cart/**
         - id: scraper-service
           uri: lb://scraper-service
           predicates:
@@ -19,8 +23,8 @@ spring:
           uri: http://localhost:8093
           predicates:
             - Path=/api/finance/**
-        - id: ybrainy-backend
-          uri: lb://ybrainy-backend
+        - id: payment-service
+          uri: lb://payment-service
           predicates:
             - Path=/api/**
 

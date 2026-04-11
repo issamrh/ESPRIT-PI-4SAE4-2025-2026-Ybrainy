@@ -2,6 +2,7 @@ export const environment = {
   production: true,
   apiBaseUrl: 'https://api.ybrainy.com',
   apiUrl: 'https://api.ybrainy.com/api',
+  cartApiUrl: 'https://api.ybrainy.com/api',
   financeApiUrl: 'https://api.ybrainy.com/api/finance',
   forumApiUrl: 'http://localhost:8080',
   forumWsUrl: 'http://localhost:8086',

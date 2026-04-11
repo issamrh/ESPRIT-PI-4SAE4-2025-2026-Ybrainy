@@ -4,6 +4,39 @@ var Akademi = function () {
 	var screenWidth = $(window).width();
 	var screenHeight = $(window).height();
 
+	// Some Angular pages load custom.js before demo.js, so keep the theme cookie
+	// helpers here as a safe fallback instead of relying on script order.
+	if (typeof window.getCookie !== 'function') {
+		window.getCookie = function (cname) {
+			var name = cname + "=";
+			var decodedCookie = decodeURIComponent(document.cookie || '');
+			var ca = decodedCookie.split(';');
+			for (var i = 0; i < ca.length; i++) {
+				var c = ca[i];
+				while (c.charAt(0) == ' ') {
+					c = c.substring(1);
+				}
+				if (c.indexOf(name) == 0) {
+					return c.substring(name.length, c.length);
+				}
+			}
+			return "";
+		};
+	}
+
+	if (typeof window.setCookie !== 'function') {
+		window.setCookie = function (cname, cvalue, exhours) {
+			var d = new Date();
+			var expiryHours = typeof exhours === 'number' ? exhours : 0.5;
+			d.setTime(d.getTime() + (expiryHours * 60 * 60 * 1000));
+			var expires = "expires=" + d.toUTCString();
+			document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+		};
+	}
+
+	var getCookie = window.getCookie;
+	var setCookie = window.setCookie;
+
 
 
 	var handlePreloader = function () {
