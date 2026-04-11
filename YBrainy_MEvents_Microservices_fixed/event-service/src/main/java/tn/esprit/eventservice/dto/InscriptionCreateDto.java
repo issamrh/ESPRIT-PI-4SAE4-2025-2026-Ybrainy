@@ -5,5 +5,6 @@ package tn.esprit.eventservice.dto;
  */
 public record InscriptionCreateDto(
         long eventId,
-        long studentId
+        long studentId,
+        String initialStatus
 ) {}

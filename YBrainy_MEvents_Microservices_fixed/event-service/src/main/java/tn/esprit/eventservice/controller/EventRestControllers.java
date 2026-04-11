@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.eventservice.dto.DescriptionGenerationRequest;
 import tn.esprit.eventservice.dto.DescriptionGenerationResponse;
+import tn.esprit.eventservice.dto.EventAssignmentResponseDto;
 import tn.esprit.eventservice.entity.Event;
 import tn.esprit.eventservice.service.IEventServices;
 
@@ -52,9 +53,68 @@ public class EventRestControllers {
     }
 
     @PostMapping("/{idEvent}/assign/{idStudent}")
-    public void assignStudentToEvent(
+    public EventAssignmentResponseDto assignStudentToEvent(
             @PathVariable("idEvent") long idEvent,
             @PathVariable("idStudent") long idStudent) {
-        eventServices.assignStudentToEvent(idEvent, idStudent);
+        return eventServices.assignStudentToEvent(idEvent, idStudent);
     }
 }
+
+//import lombok.AllArgsConstructor;
+//import org.springframework.web.bind.annotation.*;
+//import tn.esprit.eventservice.dto.DescriptionGenerationRequest;
+//import tn.esprit.eventservice.dto.DescriptionGenerationResponse;
+//import tn.esprit.eventservice.entity.Event;
+//import tn.esprit.eventservice.service.IEventServices;
+//
+//import java.util.List;
+//
+//@RestController
+//@CrossOrigin(
+//        origins = {"http://localhost:4200", "http://127.0.0.1:4200"},
+//        allowCredentials = "true"
+//)
+//@AllArgsConstructor
+//@RequestMapping("/Event")
+//public class EventRestControllers {
+//
+//    private final IEventServices eventServices;
+//
+//    @PostMapping("/add")
+//    public Event addEvent(@RequestBody Event event) {
+//        return eventServices.addEvent(event);
+//    }
+//
+//    @PutMapping("/update")
+//    public Event updateEvent(@RequestBody Event event) {
+//        return eventServices.updateEvent(event);
+//    }
+//
+//    @PostMapping("/generate-description")
+//    public DescriptionGenerationResponse generateDescription(@RequestBody DescriptionGenerationRequest request) {
+//        var result = eventServices.generateDescription(request.name(), request.type());
+//        return new DescriptionGenerationResponse(result.description(), result.generatedByAi());
+//    }
+//
+//    @GetMapping("/all")
+//    public List<Event> getAllEvents() {
+//        return eventServices.getAllEvents();
+//    }
+//
+//    @GetMapping("/get/{idEvent}")
+//    public Event getEventById(@PathVariable("idEvent") long idEvent) {
+//        return eventServices.getEventById(idEvent);
+//    }
+//
+//    @DeleteMapping("/delete/{idEvent}")
+//    public void deleteEvent(@PathVariable("idEvent") long idEvent) {
+//        eventServices.deleteEvent(idEvent);
+//    }
+//
+//    @PostMapping("/{idEvent}/assign/{idStudent}")
+//    public void assignStudentToEvent(
+//            @PathVariable("idEvent") long idEvent,
+//            @PathVariable("idStudent") long idStudent) {
+//        eventServices.assignStudentToEvent(idEvent, idStudent);
+//    }
+//}

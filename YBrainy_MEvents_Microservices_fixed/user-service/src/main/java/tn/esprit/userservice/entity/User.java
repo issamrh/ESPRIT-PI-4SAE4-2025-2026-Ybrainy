@@ -27,6 +27,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     Role role;
 
+
     /*
      * NOTE — microservice design:
      * The back-references @OneToMany eventsCrees and @OneToMany inscriptions

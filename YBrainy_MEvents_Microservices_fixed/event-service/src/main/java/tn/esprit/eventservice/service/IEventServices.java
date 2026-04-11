@@ -1,6 +1,7 @@
 package tn.esprit.eventservice.service;
 
 import tn.esprit.eventservice.entity.Event;
+import tn.esprit.eventservice.dto.EventAssignmentResponseDto;
 
 import java.util.List;
 
@@ -11,5 +12,19 @@ public interface IEventServices {
     Event getEventById(long idEvent);
     List<Event> getAllEvents();
     void deleteEvent(long idEvent);
-    void assignStudentToEvent(long idEvent, long idStudent);
+    EventAssignmentResponseDto assignStudentToEvent(long idEvent, long idStudent);
 }
+
+//import tn.esprit.eventservice.entity.Event;
+//
+//import java.util.List;
+//
+//public interface IEventServices {
+//    Event addEvent(Event event);
+//    Event updateEvent(Event event);
+//    EventDescriptionGenerationService.GeneratedDescriptionResult generateDescription(String name, String type);
+//    Event getEventById(long idEvent);
+//    List<Event> getAllEvents();
+//    void deleteEvent(long idEvent);
+//    void assignStudentToEvent(long idEvent, long idStudent);
+//}
