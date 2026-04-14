@@ -1344,10 +1344,18 @@
 							<li><a href="teacher-reports.html">Teacher Reports</a></li>
 						</ul>
 					</li>
-					<li><a href="cv-list.html" aria-expanded="false">
-							<i class="material-icons">contact_page</i>
-							<span class="nav-text">CV Submissions</span>
+					<li><a class="has-arrow " href="javascript:void(0);" aria-expanded="false">
+							<i class="material-icons">business_center</i>
+							<span class="nav-text">Recruitment</span>
 						</a>
+						<ul aria-expanded="false">
+							<li><a href="javascript:void(0);" onclick="window.top.postMessage({type:'yb:navigate', path:'/dashboard/partners'}, window.location.origin); return false;">Partners</a></li>
+							<li><a href="javascript:void(0);" onclick="window.top.postMessage({type:'yb:navigate', path:'/dashboard/job-offers'}, window.location.origin); return false;">Job Offers</a></li>
+							<li><a href="javascript:void(0);" onclick="window.top.postMessage({type:'yb:navigate', path:'/dashboard/cv-submissions'}, window.location.origin); return false;">CV Submissions</a></li>
+							<li><a href="javascript:void(0);" onclick="window.top.postMessage({type:'yb:navigate', path:'/dashboard/applications'}, window.location.origin); return false;">Applications</a></li>
+							<li><a href="javascript:void(0);" onclick="window.top.postMessage({type:'yb:navigate', path:'/dashboard/applications/evaluate'}, window.location.origin); return false;">Evaluate Applications</a></li>
+							<li><a href="javascript:void(0);" onclick="window.top.postMessage({type:'yb:navigate', path:'/dashboard/ai-application'}, window.location.origin); return false;">AI Builder</a></li>
+						</ul>
 					</li>
 <li><a class="has-arrow " href="javascript:void(0);" aria-expanded="false">
 							<i class="material-icons">folder</i>

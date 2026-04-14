@@ -52,6 +52,84 @@ export const routes: Routes = [
     canActivate: [adminGuard],
   },
   {
+    path: 'dashboard/partners',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./backoffice/partnerships/backoffice-partnerships-list.component').then(
+        (m) => m.BackofficePartnershipsListComponent
+      ),
+  },
+  {
+    path: 'dashboard/partners/new',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./backoffice/partnerships/backoffice-partnership-form.component').then(
+        (m) => m.BackofficePartnershipFormComponent
+      ),
+  },
+  {
+    path: 'dashboard/partners/:id/edit',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./backoffice/partnerships/backoffice-partnership-form.component').then(
+        (m) => m.BackofficePartnershipFormComponent
+      ),
+  },
+  {
+    path: 'dashboard/job-offers',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./backoffice/job-offers/backoffice-job-offers-list.component').then(
+        (m) => m.BackofficeJobOffersListComponent
+      ),
+  },
+  {
+    path: 'dashboard/job-offers/new',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./backoffice/job-offers/backoffice-job-offer-form.component').then(
+        (m) => m.BackofficeJobOfferFormComponent
+      ),
+  },
+  {
+    path: 'dashboard/job-offers/:id/edit',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./backoffice/job-offers/backoffice-job-offer-form.component').then(
+        (m) => m.BackofficeJobOfferFormComponent
+      ),
+  },
+  {
+    path: 'dashboard/cv-submissions',
+    component: BackofficeDashboardComponent,
+    data: { page: 'cv-list.html' },
+    canActivate: [adminGuard],
+  },
+  {
+    path: 'dashboard/applications',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./backoffice/applications/backoffice-applications-list.component').then(
+        (m) => m.BackofficeApplicationsListComponent
+      ),
+  },
+  {
+    path: 'dashboard/applications/evaluate',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./backoffice/applications/backoffice-candidate-evaluation.component').then(
+        (m) => m.BackofficeCandidateEvaluationComponent
+      ),
+  },
+  {
+    path: 'dashboard/ai-application',
+    canActivate: [adminGuard],
+    loadComponent: () =>
+      import('./backoffice/ai-application/backoffice-ai-application.component').then(
+        (m) => m.BackofficeAiApplicationComponent
+      ),
+  },
+  {
     path: 'dashboard/packs',
     component: PackListComponent,
     canActivate: [adminGuard],

@@ -30,6 +30,8 @@ import { MessagingComponent } from './pages/messaging/messaging.component';
 import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { WishlistComponent } from './pages/wishlist/wishlist.component';
 import { UserProfileComponent } from './pages/user-profile/user-profile.component';
+import { JobsComponent } from './pages/jobs/jobs.component';
+import { JobOfferDetailComponent } from './pages/job-offer-detail/job-offer-detail.component';
 
 const routes: Routes = [
   {
@@ -62,6 +64,9 @@ const routes: Routes = [
       { path: 'packks', redirectTo: 'packs', pathMatch: 'full' },
       { path: 'packs', component: FoPackListComponent },
       { path: 'packs/:id', component: FoPackDetailComponent },
+      { path: 'jobs', component: JobsComponent },
+      { path: 'jobs/:offerId', component: JobOfferDetailComponent },
+      { path: 'job-offers/:offerId', component: JobOfferDetailComponent },
       { path: 'learning-paths', component: AiLearningPathPageComponent },
       { path: 'my-learning', component: StudentDashboardComponent, canActivate: [authGuard] },
       {

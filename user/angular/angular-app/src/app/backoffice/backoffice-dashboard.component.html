@@ -10,6 +10,12 @@
         </div>
       </div>
       <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/users" class="quick-link primary">User Management</a>
+      <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/partners" class="quick-link">Partners</a>
+      <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/job-offers" class="quick-link">Job Offers</a>
+      <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/cv-submissions" class="quick-link">CV Submissions</a>
+      <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/applications" class="quick-link">Applications</a>
+      <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/applications/evaluate" class="quick-link">Evaluate Applications</a>
+      <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/ai-application" class="quick-link">AI Builder</a>
       <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/forum/threads" class="quick-link">Forum Threads</a>
       <a *ngIf="userRole === 'ADMIN'" routerLink="/dashboard/forum/categories" class="quick-link">Forum Categories</a>
       <a routerLink="/dashboard/profile" class="quick-link">My Profile</a>
@@ -24,4 +30,3 @@
     title="Backoffice Dashboard"
   ></iframe>
 </div>
-

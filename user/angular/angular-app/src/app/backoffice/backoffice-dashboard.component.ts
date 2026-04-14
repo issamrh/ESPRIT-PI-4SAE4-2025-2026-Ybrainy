@@ -20,11 +20,25 @@ export class BackofficeDashboardComponent implements OnInit, OnDestroy {
   userRole: string = 'ADMIN';
   private readonly sub = new Subscription();
   private readonly embeddedNavPaths = new Set([
+    '/dashboard/partners',
+    '/dashboard/partners/new',
+    '/dashboard/job-offers',
+    '/dashboard/job-offers/new',
+    '/dashboard/cv-submissions',
+    '/dashboard/applications',
+    '/dashboard/applications/evaluate',
+    '/dashboard/ai-application',
     '/dashboard/forum/threads',
     '/dashboard/forum/categories',
   ]);
 
-  private readonly allowedPages = new Set(['index.html', 'courses.html', 'lessons.html', 'app-calender.html']);
+  private readonly allowedPages = new Set([
+    'index.html',
+    'courses.html',
+    'lessons.html',
+    'app-calender.html',
+    'cv-list.html',
+  ]);
 
   constructor(
     private sanitizer: DomSanitizer,
@@ -75,4 +89,3 @@ export class BackofficeDashboardComponent implements OnInit, OnDestroy {
     void this.router.navigateByUrl(path);
   };
 }
-

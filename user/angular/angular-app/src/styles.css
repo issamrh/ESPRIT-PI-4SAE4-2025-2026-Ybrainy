@@ -115,6 +115,19 @@ html, body {
   min-height: 100vh;
 }
 
+body.backoffice {
+  background: #e6ebee;
+  min-height: 100vh;
+}
+
+body.backoffice #main-wrapper {
+  min-height: 100vh;
+}
+
+body.backoffice .content-body {
+  min-height: calc(100vh - 5rem);
+}
+
 /* Fix dropdown menus z-index so they appear above content */
 .drop-big:hover .drop-list-wrap {
   z-index: 10 !important;

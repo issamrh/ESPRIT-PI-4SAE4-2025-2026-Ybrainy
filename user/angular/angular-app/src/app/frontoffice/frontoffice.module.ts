@@ -41,6 +41,14 @@ import { DashboardComponent } from './pages/dashboard/dashboard.component';
 import { MessagingComponent } from './pages/messaging/messaging.component';
 import { UserProfileComponent } from './pages/user-profile/user-profile.component';
 import { WishlistComponent } from './pages/wishlist/wishlist.component';
+import { JobsComponent } from './pages/jobs/jobs.component';
+import { JobOfferDetailComponent } from './pages/job-offer-detail/job-offer-detail.component';
+import { AnimatedButtonComponent } from '../backoffice/ai-application/components/animated-button.component';
+import { CvUploadCardComponent } from '../backoffice/ai-application/components/cv-upload-card.component';
+import { JobDescriptionCardComponent } from '../backoffice/ai-application/components/job-description-card.component';
+import { LoaderComponent } from '../backoffice/ai-application/components/loader.component';
+import { ResultCardComponent } from '../backoffice/ai-application/components/result-card.component';
+import { ResultTabsComponent } from '../backoffice/ai-application/components/result-tabs.component';
 
 // Section components
 import { HeroSectionComponent } from './home/hero-section/hero-section.component';
@@ -89,6 +97,8 @@ import { PrefooterCtaComponent } from './home/prefooter-cta/prefooter-cta.compon
     MessagingComponent,
     UserProfileComponent,
     WishlistComponent,
+    JobsComponent,
+    JobOfferDetailComponent,
     HeroSectionComponent,
     TrustLogosComponent,
     WhyYbrainyComponent,
@@ -105,6 +115,12 @@ import { PrefooterCtaComponent } from './home/prefooter-cta/prefooter-cta.compon
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    AnimatedButtonComponent,
+    CvUploadCardComponent,
+    JobDescriptionCardComponent,
+    LoaderComponent,
+    ResultTabsComponent,
+    ResultCardComponent,
     LevelBarComponent,
     RouterModule,
     FrontofficeRoutingModule
