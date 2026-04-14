@@ -1,0 +1,121 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        # ── user-service ─────────────────────────────────────────
+        - id: user-service-auth
+          uri: lb://user-service
+          predicates:
+            - Path=/api/auth/**
+
+        - id: user-service-users
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+
+        - id: user-service-notifications
+          uri: lb://user-service
+          predicates:
+            - Path=/api/notifications/**
+
+        - id: user-service-dashboard
+          uri: lb://user-service
+          predicates:
+            - Path=/api/dashboard/**
+
+        # ── category-service ─────────────────────────────────────
+        - id: category-service
+          uri: lb://category-service
+          predicates:
+            - Path=/api/categories/**
+
+        # ── thread-service ───────────────────────────────────────
+        - id: thread-service-ai
+          uri: lb://thread-service
+          predicates:
+            - Path=/api/ai/**
+
+        - id: thread-service-stats
+          uri: lb://thread-service
+          predicates:
+            - Path=/api/threads/stats/**
+
+        - id: thread-service-api
+          uri: lb://thread-service
+          predicates:
+            - Path=/api/threads/**
+
+        - id: thread-service-wishlist
+          uri: lb://thread-service
+          predicates:
+            - Path=/api/wishlist/**
+
+        - id: thread-service-uploads
+          uri: lb://thread-service
+          predicates:
+            - Path=/uploads/threads/**
+
+        # ── post-service ─────────────────────────────────────────
+        - id: post-service-stats
+          uri: lb://post-service
+          predicates:
+            - Path=/api/posts/stats/**
+
+        - id: post-service-api
+          uri: lb://post-service
+          predicates:
+            - Path=/api/posts/**
+
+        - id: post-service-uploads
+          uri: lb://post-service
+          predicates:
+            - Path=/uploads/posts/**
+
+        # ── comment-service ──────────────────────────────────────
+        - id: comment-service-stats
+          uri: lb://comment-service
+          predicates:
+            - Path=/api/comments/stats/**
+
+        - id: comment-service
+          uri: lb://comment-service
+          predicates:
+            - Path=/api/comments/**
+
+        # ── messaging-service ────────────────────────────────────
+        - id: messaging-service-api
+          uri: lb://messaging-service
+          predicates:
+            - Path=/api/messages/**
+
+        - id: messaging-service-ws
+          uri: lb://messaging-service
+          predicates:
+            - Path=/ws/**
+
+        - id: messaging-service-uploads
+          uri: lb://messaging-service
+          predicates:
+            - Path=/uploads/messages/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: false
+    hostname: localhost
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
