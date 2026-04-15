@@ -27,6 +27,9 @@ public class Event {
     @Lob
     @Column(columnDefinition = "TEXT")
     String description;
+    @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    String imageUrl;
     String location;
     int capacite;
     LocalDateTime dateDebut;

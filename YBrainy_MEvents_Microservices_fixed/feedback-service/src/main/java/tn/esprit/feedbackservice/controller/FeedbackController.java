@@ -2,11 +2,14 @@ package tn.esprit.feedbackservice.controller;
 
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.feedbackservice.dto.EventStatsDto;
 import tn.esprit.feedbackservice.dto.FeedbackRequestDto;
+import tn.esprit.feedbackservice.dto.SpeechTranscriptionResponseDto;
 import tn.esprit.feedbackservice.entity.Feedback;
 import tn.esprit.feedbackservice.service.IFeedbackService;
+import tn.esprit.feedbackservice.service.SpeechToTextService;
 
 import java.util.List;
 
@@ -20,6 +23,7 @@ import java.util.List;
 public class FeedbackController {
 
     private final IFeedbackService feedbackService;
+    private final SpeechToTextService speechToTextService;
 
     // ── Student endpoints ─────────────────────────────────────────────────────
 
@@ -32,6 +36,11 @@ public class FeedbackController {
     @ResponseStatus(HttpStatus.CREATED)
     public Feedback submitFeedback(@RequestBody FeedbackRequestDto dto) {
         return feedbackService.submitFeedback(dto);
+    }
+
+    @PostMapping("/transcribe")
+    public SpeechTranscriptionResponseDto transcribeSpeech(@RequestParam("audio") MultipartFile audio) {
+        return new SpeechTranscriptionResponseDto(speechToTextService.transcribe(audio));
     }
 
     /**

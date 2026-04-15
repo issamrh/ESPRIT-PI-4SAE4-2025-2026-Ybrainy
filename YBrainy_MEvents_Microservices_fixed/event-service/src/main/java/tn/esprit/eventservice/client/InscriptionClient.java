@@ -22,6 +22,9 @@ public interface InscriptionClient {
 
     @GetMapping("/Inscription/count")
     long countConfirmedByEventId(@RequestParam("eventId") long eventId);
+
+    @GetMapping("/Inscription/student/{idStudent}/event-ids")
+    java.util.List<Long> getRegisteredEventIdsByStudent(@PathVariable("idStudent") long idStudent);
 }
 
 //import org.springframework.cloud.openfeign.FeignClient;
