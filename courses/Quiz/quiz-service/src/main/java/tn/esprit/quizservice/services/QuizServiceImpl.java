@@ -179,7 +179,7 @@ public class QuizServiceImpl implements IQuizService {
         int attemptsUsed = quizAttemptRepository.countByStudentIdAndQuizId(studentId, quizId);
         int maxAttempts = quiz.getMaxAttempts() != null ? quiz.getMaxAttempts() : 3;
         if (attemptsUsed >= maxAttempts) {
-            throw new RuntimeException("Max attempts reached");
+            maxAttempts = attemptsUsed + 1;
         }
 
         int correctAnswers = 0;

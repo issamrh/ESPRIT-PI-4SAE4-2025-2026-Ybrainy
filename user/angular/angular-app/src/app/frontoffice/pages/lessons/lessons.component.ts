@@ -7,6 +7,7 @@ import { CourseDetail, Lesson, ApiCourseProgress } from '../../models/course.mod
 import { CourseStoreService } from '../../services/course-store.service';
 import { CourseApiService } from '../../services/course-api.service';
 import { UserSessionService } from '../../../tracking/user-session.service';
+import { courseMediaUrl } from '../../utils/course-media-url';
 
 @Component({
   selector: 'app-lessons',
@@ -205,18 +206,11 @@ export class LessonsComponent implements OnInit, OnDestroy {
 
   safeContentPdfUrl(item: { type: string; contentUrl: string }): SafeResourceUrl {
     const raw = String(item.contentUrl ?? '').trim();
-    const u = (raw.startsWith('http://') || raw.startsWith('https://'))
-      ? raw
-      : '/api/courses/files/' + raw;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(u);
+    return this.sanitizer.bypassSecurityTrustResourceUrl(courseMediaUrl(raw));
   }
 
   contentMediaUrl(item: { type: string; contentUrl: string }): string {
-    const raw = String(item.contentUrl ?? '').trim();
-    if (!raw) return '';
-    if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('assets/')) return raw;
-    if (raw.startsWith('/api/') || raw.startsWith('/')) return raw;
-    return `/api/courses/files/${raw}`;
+    return courseMediaUrl(item.contentUrl);
   }
 
   private computeYoutubeEmbedUrl(raw: string): string {
@@ -277,9 +271,7 @@ export class LessonsComponent implements OnInit, OnDestroy {
   lessonVideoSrc(lesson: Lesson): string | null {
     const raw = (lesson.videoUrl || lesson.contentUrl || '').trim();
     if (!raw) return null;
-    if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('assets/')) return raw;
-    if (raw.startsWith('/api/')) return raw;
-    return `/api/courses/files/${raw}`;
+    return courseMediaUrl(raw);
   }
 
   youtubeEmbedUrl(lesson: Lesson): SafeResourceUrl {

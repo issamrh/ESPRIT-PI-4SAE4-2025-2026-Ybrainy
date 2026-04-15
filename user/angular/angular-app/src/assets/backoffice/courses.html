@@ -2423,7 +2423,8 @@
 	// API Configuration - connects to Spring Boot backend via API Gateway
 	const COURSE_GATEWAY_URL = 'http://localhost:8088';
 	const API_BASE_URL = `${COURSE_GATEWAY_URL}/api/courses`;
-	const QUIZ_BASE_URL = `${COURSE_GATEWAY_URL}/api/quizzes`;
+	const QUIZ_BASE_URL = `/api/quizzes`;
+	const QUIZ_GATEWAY_FALLBACK_URL = `${COURSE_GATEWAY_URL}/api/quizzes`;
 	const ML_BASE_URL = `${COURSE_GATEWAY_URL}/api/ml`;
 	window.ANTHROPIC_SETUP_DONE = true;
     if (!localStorage.getItem('ybrainy_openrouter_key')) { localStorage.setItem('ybrainy_openrouter_key', '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'); }
@@ -2438,7 +2439,10 @@
         opts = opts || {};
         const method = (opts.method || 'GET').toUpperCase();
         const isFormData = opts.body instanceof FormData;
-        const isCourseGatewayApi = String(url).startsWith(`${COURSE_GATEWAY_URL}/api/`);
+        const requestUrl = String(url);
+        const isCourseGatewayApi =
+            requestUrl.startsWith(`${COURSE_GATEWAY_URL}/api/`) ||
+            requestUrl.startsWith('/api/');
         if (isCourseGatewayApi) {
             // The local course gateway returns an empty 200 response for stale JWTs.
             // Course endpoints are open in dev, while permissions use requestingUserId/requestingRole.
@@ -2454,6 +2458,60 @@
             if (tok) opts.headers = { 'Authorization': 'Bearer ' + tok };
         }
         return fetch(url, opts);
+    }
+    async function quizFetch(pathAndQuery, opts) {
+        const value = String(pathAndQuery || '');
+        const relativePath = value.startsWith(QUIZ_BASE_URL)
+            ? value
+            : `${QUIZ_BASE_URL}${value.startsWith('?') || value.startsWith('/') ? value : `/${value}`}`;
+        const fallbackPath = relativePath.startsWith(QUIZ_BASE_URL)
+            ? relativePath.slice(QUIZ_BASE_URL.length)
+            : relativePath;
+        const fallbackUrl = `${QUIZ_GATEWAY_FALLBACK_URL}${fallbackPath}`;
+
+        try {
+            const response = await authFetch(relativePath, opts);
+            if (response.ok || (response.status !== 404 && response.status < 500)) {
+                return response;
+            }
+            return await authFetch(fallbackUrl, opts);
+        } catch (err) {
+            return authFetch(fallbackUrl, opts);
+        }
+    }
+    async function quizJson(pathAndQuery, opts, label) {
+        const value = String(pathAndQuery || '');
+        const relativePath = value.startsWith(QUIZ_BASE_URL)
+            ? value
+            : `${QUIZ_BASE_URL}${value.startsWith('?') || value.startsWith('/') ? value : `/${value}`}`;
+        const fallbackPath = relativePath.startsWith(QUIZ_BASE_URL)
+            ? relativePath.slice(QUIZ_BASE_URL.length)
+            : relativePath;
+        const fallbackUrl = `${QUIZ_GATEWAY_FALLBACK_URL}${fallbackPath}`;
+
+        const response = await quizFetch(pathAndQuery, opts);
+        const text = await response.text();
+        if (text && text.trim()) {
+            try {
+                return JSON.parse(text);
+            } catch (err) {
+                throw new Error(`${label || 'Quiz API'} returned invalid JSON`);
+            }
+        }
+
+        const fallbackResponse = await authFetch(fallbackUrl, opts);
+        const fallbackText = await fallbackResponse.text();
+        if (!fallbackResponse.ok) {
+            throw new Error(`HTTP ${fallbackResponse.status}`);
+        }
+        if (!fallbackText || !fallbackText.trim()) {
+            throw new Error(`${label || 'Quiz API'} returned an empty body`);
+        }
+        try {
+            return JSON.parse(fallbackText);
+        } catch (err) {
+            throw new Error(`${label || 'Quiz API'} returned invalid JSON`);
+        }
     }
     async function readJsonResponse(response, label) {
         const text = await response.text();
@@ -3847,9 +3905,7 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
 		const container = document.getElementById('quizList');
 		container.innerHTML = '<p class="text-muted small">Loading...</p>';
 		try {
-			const res = await authFetch(`${QUIZ_BASE_URL}?courseId=${quizManagerCourseId}`);
-			if (!res.ok) throw new Error('HTTP ' + res.status);
-			const quizzes = await res.json();
+			const quizzes = await quizJson(`?courseId=${quizManagerCourseId}`, undefined, 'Quiz list API');
 			if (!quizzes.length) {
 				container.innerHTML = '<p class="text-muted small">No quizzes yet. Create one below.</p>';
 				return;
@@ -3905,13 +3961,14 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
 			description: description || null,
 			timeLimitMinutes: timeLimit ? Number(timeLimit) : null,
 			passingScore: passingScore ? Number(passingScore) : 70,
+			maxAttempts: 3,
 		};
 		try {
 			const isEdit = editingQuizId !== null;
 			const url = isEdit
-				? `${QUIZ_BASE_URL}/${editingQuizId}`
-				: `${QUIZ_BASE_URL}?courseId=${quizManagerCourseId}`;
-			const res = await authFetch(url, {
+				? `/${editingQuizId}`
+				: `?courseId=${quizManagerCourseId}`;
+			const res = await quizFetch(url, {
 				method: isEdit ? 'PUT' : 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify(payload),
@@ -3928,7 +3985,7 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
 	async function deleteQuiz(quizId) {
 		if (!confirm('Delete this quiz and all its questions?')) return;
 		try {
-			const res = await authFetch(`${QUIZ_BASE_URL}/${quizId}`, { method: 'DELETE' });
+			const res = await quizFetch(`/${quizId}`, { method: 'DELETE' });
 			if (!res.ok) throw new Error('HTTP ' + res.status);
 			showToast('Quiz deleted', 'warning');
 			loadQuizList();
@@ -3993,9 +4050,7 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
 		const container = document.getElementById('questionsList');
 		container.innerHTML = '<p class="text-muted small">Loading...</p>';
 		try {
-			const res = await authFetch(`${QUIZ_BASE_URL}/${activeQuizId}/questions`);
-			if (!res.ok) throw new Error('HTTP ' + res.status);
-			const questions = await res.json();
+			const questions = await quizJson(`/${activeQuizId}/questions`, undefined, 'Question list API');
 			if (!questions.length) {
 				container.innerHTML = '<p class="text-muted small">No questions yet. Add one below.</p>';
 				return;
@@ -4072,10 +4127,10 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
 		if (options.some(o => !o.optionText)) { errEl.textContent = 'All option texts are required.'; return; }
 		const isEdit = editingQuestionId !== null;
 		const url = isEdit
-			? `${QUIZ_BASE_URL}/${activeQuizId}/questions/${editingQuestionId}`
-			: `${QUIZ_BASE_URL}/${activeQuizId}/questions`;
+			? `/${activeQuizId}/questions/${editingQuestionId}`
+			: `/${activeQuizId}/questions`;
 		try {
-			const res = await authFetch(url, {
+			const res = await quizFetch(url, {
 				method: isEdit ? 'PUT' : 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ questionText, options }),
@@ -4093,7 +4148,7 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
 	async function deleteQuestion(questionId) {
 		if (!confirm('Delete this question?')) return;
 		try {
-			const res = await authFetch(`${QUIZ_BASE_URL}/${activeQuizId}/questions/${questionId}`, { method: 'DELETE' });
+			const res = await quizFetch(`/${activeQuizId}/questions/${questionId}`, { method: 'DELETE' });
 			if (!res.ok) throw new Error('HTTP ' + res.status);
 			showToast('Question deleted', 'warning');
 			loadQuestions();
@@ -4152,8 +4207,8 @@ Respond with ONLY the 3 steps, no preamble or conclusion.`;
 			for (let i = 0; i < questions.length; i++) {
 				const q = questions[i];
 				statusEl.textContent = `Saving question ${i + 1} of ${questions.length}…`;
-				const saveRes = await authFetch(
-					`${QUIZ_BASE_URL}/${activeQuizId}/questions`,
+				const saveRes = await quizFetch(
+					`/${activeQuizId}/questions`,
 					{
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },

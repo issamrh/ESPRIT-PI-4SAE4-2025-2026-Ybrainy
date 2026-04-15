@@ -5,6 +5,7 @@ import { CourseDetail, Lesson } from '../../models/course.models';
 import { CourseStoreService } from '../../services/course-store.service';
 import { CourseApiService } from '../../services/course-api.service';
 import { UserSessionService } from '../../../tracking/user-session.service';
+import { courseMediaUrl } from '../../utils/course-media-url';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import confetti from 'canvas-confetti';
 
@@ -473,12 +474,7 @@ export class LessonDetailComponent implements OnInit, OnDestroy {
   }
 
   private toCourseFileUrl(raw: string): string {
-    const v = String(raw ?? '').trim();
-    if (!v) return '';
-    if (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('assets/')) return v;
-    if (v.startsWith('/api/')) return v;
-    if (v.startsWith('/')) return v;
-    return `/api/courses/files/${v}`;
+    return courseMediaUrl(raw);
   }
 
   private computeYoutubeEmbed(url: string): string {
@@ -525,10 +521,7 @@ export class LessonDetailComponent implements OnInit, OnDestroy {
 
     if (kind === 'PDF') {
       const raw = String(item.contentUrl ?? '').trim();
-      const u = (raw.startsWith('http://') || raw.startsWith('https://'))
-        ? raw
-        : '/api/courses/files/' + raw;
-      this.safePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(u);
+      this.safePdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(courseMediaUrl(raw));
       this.setAmbientFallback('rgba(17,24,39,.92)', 'rgba(54,93,247,.45)');
       return;
     }

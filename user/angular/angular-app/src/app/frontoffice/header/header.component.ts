@@ -381,6 +381,13 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
+    // Course payments are handled by CourseDetailComponent on /courses/:id.
+    // Do not treat their Stripe return as a cart/pack checkout.
+    const returnPath = url.split('?')[0] || '';
+    if (/^\/courses\/\d+$/i.test(returnPath)) {
+      return;
+    }
+
     const sessionId = params.get('session_id');
     if (!sessionId) {
       this.showCheckoutMessage(

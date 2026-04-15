@@ -4,6 +4,7 @@ import { BehaviorSubject, Subject, takeUntil } from 'rxjs';
 import { AiSearchResult, AiCourseItem, Course, MlRecommendation, MlRecommendationsResponse, MlQualityResult } from '../../models/course.models';
 import { CourseApiService, SpringPage } from '../../services/course-api.service';
 import { UserSessionService } from '../../../tracking/user-session.service';
+import { courseMediaUrl } from '../../utils/course-media-url';
 
 @Component({
   selector: 'app-courses',
@@ -303,6 +304,10 @@ export class CoursesComponent implements OnInit, AfterViewInit, OnDestroy {
     this.priceMax = 200;
     this.selectedDuration = '';
     this.page = 0;
+    this.aiSearchMode = false;
+    this.aiSearchQuery = '';
+    this.aiSearchResult = null;
+    this.aiSearchError = '';
     this.loadPage();
   }
 
@@ -397,11 +402,7 @@ export class CoursesComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   normalizeThumbnail(url: string): string {
-    const raw = String(url ?? '').trim();
-    if (!raw) return '';
-    if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('assets/')) return raw;
-    if (raw.startsWith('/api/')) return raw;
-    return `/api/courses/files/${raw}`;
+    return courseMediaUrl(url);
   }
 
   // ── Legacy handlers (kept for compatibility) ───────────────────────
@@ -581,38 +582,45 @@ export class CoursesComponent implements OnInit, AfterViewInit, OnDestroy {
       isPublished: publishedFilter,
     })
       .pipe(takeUntil(this.destroy$))
-      .subscribe((data: SpringPage<any>) => {
-        const content = Array.isArray(data?.content) ? data.content : [];
-        const mapped: Course[] = content.map((c: any) => ({
-          id: Number(c.id),
-          title: c.title ?? '',
-          description: c.description ?? '',
-          thumbnailUrl: (() => {
-            const raw = String(c.thumbnailUrl ?? c.thumbnailVideoPath ?? '').trim();
-            if (!raw) return '';
-            if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('assets/')) return raw;
-            if (raw.startsWith('/api/')) return raw;
-            return `/api/courses/files/${raw}`;
-          })(),
-          price: c.price ?? 0,
-          rating: c.rating ?? 0,
-          ratingCount: c.ratingCount ?? 0,
-          category: c.category ?? '',
-          level: c.level ?? '',
-          approximateDurationMinutes: c.approximateDurationMinutes ?? 0,
-          isPublished: c.isPublished ?? false,
-          offersCertificate: c.offersCertificate ?? false,
-          lessonCount: c.lessonCount ?? 0,
-          createdAt: c.createdAt,
-          updatedAt: c.updatedAt,
-        }));
+      .subscribe({
+        next: (data: SpringPage<any>) => {
+          const content = Array.isArray(data?.content) ? data.content : [];
+          const mapped: Course[] = content.map((c: any) => ({
+            id: Number(c.id),
+            title: c.title ?? '',
+            description: c.description ?? '',
+            thumbnailUrl: (() => {
+              const raw = String(c.thumbnailUrl ?? c.thumbnailVideoPath ?? '').trim();
+              return courseMediaUrl(raw);
+            })(),
+            price: c.price ?? 0,
+            rating: c.rating ?? 0,
+            ratingCount: c.ratingCount ?? 0,
+            category: c.category ?? '',
+            level: c.level ?? '',
+            approximateDurationMinutes: c.approximateDurationMinutes ?? 0,
+            isPublished: c.isPublished ?? false,
+            offersCertificate: c.offersCertificate ?? false,
+            lessonCount: c.lessonCount ?? 0,
+            createdAt: c.createdAt,
+            updatedAt: c.updatedAt,
+          }));
 
-        this.rawCourses = mapped;
-        this.totalPages = typeof data?.totalPages === 'number' ? data.totalPages : 1;
-        this.totalElements = typeof data?.totalElements === 'number' ? data.totalElements : mapped.length;
-        this.applyClientFilters();
-        this.loading = false;
-        this.loadCourseQuality(mapped);
+          this.rawCourses = mapped;
+          this.totalPages = typeof data?.totalPages === 'number' ? data.totalPages : 1;
+          this.totalElements = typeof data?.totalElements === 'number' ? data.totalElements : mapped.length;
+          this.applyClientFilters();
+          this.loading = false;
+          this.loadCourseQuality(mapped);
+        },
+        error: (err) => {
+          console.error('Failed to load courses from the API.', err);
+          this.rawCourses = [];
+          this._courses$.next([]);
+          this.totalPages = 1;
+          this.totalElements = 0;
+          this.loading = false;
+        }
       });
   }
 

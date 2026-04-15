@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { ConversionInsight, EnrolledCourse, StudentDashboard } from '../../models/course.models';
 import { CourseApiService } from '../../services/course-api.service';
 import { UserSessionService } from '../../../tracking/user-session.service';
+import { courseMediaUrl } from '../../utils/course-media-url';
 
 @Component({
   selector: 'app-student-dashboard',
@@ -97,9 +98,7 @@ export class StudentDashboardComponent implements OnInit, AfterViewInit {
   }
 
   getThumbnailUrl(course: EnrolledCourse): string {
-    if (!course.thumbnailUrl) return '';
-    if (course.thumbnailUrl.startsWith('http')) return course.thumbnailUrl;
-    return `/api/courses/files/${course.thumbnailUrl}`;
+    return courseMediaUrl(course.thumbnailUrl);
   }
 
   private requireAuth(): number {

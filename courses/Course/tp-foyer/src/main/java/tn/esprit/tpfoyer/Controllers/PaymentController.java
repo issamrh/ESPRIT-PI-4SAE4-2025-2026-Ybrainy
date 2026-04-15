@@ -8,6 +8,7 @@ import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import com.stripe.param.checkout.SessionCreateParams;
+import tn.esprit.tpfoyer.Dto.EnrollmentDTO;
 import tn.esprit.tpfoyer.Dto.CheckoutSessionRequest;
 import tn.esprit.tpfoyer.Dto.CheckoutSessionResponse;
 import tn.esprit.tpfoyer.Entities.Course;
@@ -24,7 +25,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import java.util.Map;
 
@@ -88,6 +91,37 @@ public class PaymentController {
         Session session = Session.create(params);
 
         return ResponseEntity.ok(new CheckoutSessionResponse(session.getId(), session.getUrl()));
+    }
+
+    @PostMapping("/confirm-checkout-session")
+    public ResponseEntity<?> confirmCheckoutSession(@RequestBody Map<String, String> request) throws Exception {
+        String sessionId = request.get("sessionId");
+        if (sessionId == null || sessionId.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "sessionId is required"));
+        }
+
+        Session session = Session.retrieve(sessionId);
+        if (!"paid".equalsIgnoreCase(session.getPaymentStatus())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Checkout session is not paid yet"));
+        }
+
+        Map<String, String> metadata = session.getMetadata();
+        if (metadata == null || !metadata.containsKey("studentId")) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Missing studentId in Stripe metadata"));
+        }
+
+        Long studentId = Long.parseLong(metadata.get("studentId"));
+        String paymentIntentId = session.getPaymentIntent() != null
+                ? session.getPaymentIntent()
+                : session.getId();
+
+        List<EnrollmentDTO> enrollments = confirmPaidEnrollments(metadata, studentId, paymentIntentId);
+        return ResponseEntity.ok(Map.of(
+                "sessionId", sessionId,
+                "paymentIntentId", paymentIntentId,
+                "enrollments", enrollments
+        ));
     }
 
     @PostMapping("/webhook")
@@ -172,6 +206,42 @@ public class PaymentController {
         }
 
         return ResponseEntity.ok("Received");
+    }
+
+    private List<EnrollmentDTO> confirmPaidEnrollments(
+            Map<String, String> metadata,
+            Long studentId,
+            String paymentIntentId) {
+        List<EnrollmentDTO> enrollments = new ArrayList<>();
+
+        if (metadata.containsKey("pathId")) {
+            Long pathId = Long.parseLong(metadata.get("pathId"));
+            LearningPath path = learningPathRepository.findById(pathId).orElse(null);
+            if (path != null && path.getCourseIds() != null) {
+                String[] courseIdArr = path.getCourseIds().split(",");
+                for (String cidStr : courseIdArr) {
+                    try {
+                        Long courseId = Long.parseLong(cidStr.trim());
+                        Course course = courseRepository.findById(courseId).orElse(null);
+                        if (course != null && course.getPrice() != null
+                                && course.getPrice().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                            enrollments.add(enrollmentService.enrollStudentWithPayment(
+                                    studentId, courseId, paymentIntentId));
+                        }
+                    } catch (Exception e) {
+                        log.warn("[Stripe confirm] Failed to enroll in course {}: {}", cidStr, e.getMessage());
+                    }
+                }
+            }
+            return enrollments;
+        }
+
+        if (metadata.containsKey("courseId")) {
+            Long courseId = Long.parseLong(metadata.get("courseId"));
+            enrollments.add(enrollmentService.enrollStudentWithPayment(studentId, courseId, paymentIntentId));
+        }
+
+        return enrollments;
     }
 
     @GetMapping("/config")

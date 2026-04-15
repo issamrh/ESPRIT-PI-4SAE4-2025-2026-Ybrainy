@@ -121,8 +121,7 @@ public class MLController {
                     .count();
 
             long paidEnrollments = enrollments.stream()
-                    .filter(e -> e.getPaymentIntentId() != null
-                            && !e.getPaymentIntentId().isBlank())
+                    .filter(this::isPaidEnrollment)
                     .count();
 
             // Fetch real quiz score from Quiz service
@@ -320,8 +319,7 @@ public class MLController {
             // Step 3: Identify converted students (those with at least one paid enrollment)
             Set<Long> convertedStudentIds = byStudent.entrySet().stream()
                 .filter(entry -> entry.getValue().stream()
-                    .anyMatch(e -> e.getPaymentIntentId() != null
-                        && !e.getPaymentIntentId().isEmpty()))
+                    .anyMatch(this::isPaidEnrollment))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
 
@@ -418,5 +416,16 @@ public class MLController {
             return ResponseEntity.internalServerError()
                 .body(Map.of("error", e.getMessage()));
         }
+    }
+
+    private boolean isPaidEnrollment(Enrollment enrollment) {
+        if (enrollment.getPaymentIntentId() != null && !enrollment.getPaymentIntentId().isBlank()) {
+            return true;
+        }
+
+        return courseRepository.findById(enrollment.getCourseId())
+                .map(course -> course.getPrice() != null
+                        && course.getPrice().compareTo(java.math.BigDecimal.ZERO) > 0)
+                .orElse(false);
     }
 }

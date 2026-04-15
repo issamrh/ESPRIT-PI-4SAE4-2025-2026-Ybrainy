@@ -3,13 +3,10 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Course, CourseDetail, CourseRequestDTO, Lesson } from '../models/course.models';
 import { CourseApiService, ApiCourse, ApiLesson, ApiLessonDetail } from './course-api.service';
+import { courseMediaUrl } from '../utils/course-media-url';
 
 function normalizeCourseMediaUrl(raw: string | undefined | null): string {
-  const v = String(raw ?? '').trim();
-  if (!v) return '';
-  if (v.startsWith('http://') || v.startsWith('https://') || v.startsWith('assets/')) return v;
-  if (v.startsWith('/api/')) return v;
-  return `/api/courses/files/${v}`;
+  return courseMediaUrl(raw);
 }
 
 function mapLesson(api: { id: number; title: string; description?: string; type?: string; videoUrl?: string; durationMinutes?: number }): Lesson {

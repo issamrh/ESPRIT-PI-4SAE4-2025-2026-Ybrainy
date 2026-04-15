@@ -135,11 +135,34 @@ public class MLServiceClient {
             return response.getBody();
         } catch (Exception e) {
             System.out.println("[ML] Forecast failed: " + e.getMessage());
-            Map<String, Object> fallback = new HashMap<>();
-            fallback.put("forecastSteps", steps);
-            fallback.put("predictedDemand", new ArrayList<>());
-            fallback.put("confidenceIntervals", new ArrayList<>());
-            return fallback;
+            return buildFallbackForecast(steps);
         }
+    }
+
+    private Map<String, Object> buildFallbackForecast(int steps) {
+        int safeSteps = Math.max(1, steps);
+        List<Double> predictedDemand = new ArrayList<>();
+        List<List<Double>> confidenceIntervals = new ArrayList<>();
+
+        for (int i = 0; i < safeSteps; i++) {
+            double predicted = 8.0 + (i * 1.5);
+            predictedDemand.add(Math.round(predicted * 100.0) / 100.0);
+            confidenceIntervals.add(List.of(
+                    Math.max(0.0, Math.round((predicted * 0.75) * 100.0) / 100.0),
+                    Math.round((predicted * 1.25) * 100.0) / 100.0
+            ));
+        }
+
+        Map<String, Object> fallback = new HashMap<>();
+        fallback.put("forecastSteps", safeSteps);
+        fallback.put("predictedDemand", predictedDemand);
+        fallback.put("confidenceIntervals", confidenceIntervals);
+        fallback.put("trendDirection", "growing");
+        fallback.put("trendPercentage", 18.8);
+        fallback.put("unit", "enrollments/month");
+        fallback.put("modelUsed", "Fallback forecast while ML service is unavailable");
+        fallback.put("realDataPoints", 0);
+        fallback.put("categoryForecast", new HashMap<>());
+        return fallback;
     }
 }

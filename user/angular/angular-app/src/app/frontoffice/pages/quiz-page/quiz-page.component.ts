@@ -77,9 +77,14 @@ export class QuizPageComponent implements OnInit, OnDestroy {
 
   loadQuizzes(): void {
     this.loading = true;
+    this.error = '';
     this.api.getQuizzesByCourse(this.courseId).subscribe({
       next: (data) => { this.quizzes = data; this.loading = false; },
-      error: () => { this.error = 'Could not load quizzes.'; this.loading = false; },
+      error: (err) => {
+        console.error('Could not load quizzes', err);
+        this.error = 'Could not load quizzes.';
+        this.loading = false;
+      },
     });
   }
 
@@ -90,6 +95,7 @@ export class QuizPageComponent implements OnInit, OnDestroy {
     this.questions = [];
     this.currentQuestionIndex = 0;
     this.showReview = false;
+    this.error = '';
     this.api.getQuizQuestions(this.courseId, quiz.id).subscribe({
       next: (qs) => {
         this.questions = qs;
@@ -191,7 +197,12 @@ export class QuizPageComponent implements OnInit, OnDestroy {
           },
         });
       },
-      error: () => { this.error = 'Submission failed.'; this.submitting = false; },
+      error: (err) => {
+        this.error = err instanceof Error && err.message
+          ? `Submission failed: ${err.message}`
+          : 'Submission failed.';
+        this.submitting = false;
+      },
       });
     } catch {
       return; // redirected to login

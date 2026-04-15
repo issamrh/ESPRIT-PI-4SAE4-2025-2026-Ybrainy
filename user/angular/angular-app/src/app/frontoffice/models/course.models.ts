@@ -103,6 +103,16 @@ export interface CheckoutSessionResponse {
   checkoutUrl: string;
 }
 
+export interface CheckoutConfirmRequest {
+  sessionId: string;
+}
+
+export interface CheckoutConfirmResponse {
+  sessionId: string;
+  paymentIntentId: string;
+  enrollments: ApiEnrollment[];
+}
+
 export interface EnrollmentCheckResponse {
   enrolled: boolean;
 }

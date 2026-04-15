@@ -55,8 +55,14 @@ public class EnrollmentServiceImpl implements IEnrollmentService {
         if (!courseRepository.existsById(courseId)) {
             throw new RuntimeException("Course not found: " + courseId);
         }
-        if (enrollmentRepository.existsByStudentIdAndCourseId(studentId, courseId)) {
-            throw new RuntimeException("Already enrolled");
+        var existing = enrollmentRepository.findByStudentIdAndCourseId(studentId, courseId);
+        if (existing.isPresent()) {
+            Enrollment enrollment = existing.get();
+            if (enrollment.getPaymentIntentId() == null || enrollment.getPaymentIntentId().isBlank()) {
+                enrollment.setPaymentIntentId(paymentIntentId);
+                enrollment = enrollmentRepository.save(enrollment);
+            }
+            return toDTO(enrollment);
         }
         Enrollment enrollment = Enrollment.builder()
                 .studentId(studentId)

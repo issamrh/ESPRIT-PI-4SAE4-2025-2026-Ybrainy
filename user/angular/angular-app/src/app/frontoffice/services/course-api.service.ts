@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 import {
   CourseRequestDTO,
   ApiEnrollment,
@@ -18,6 +19,8 @@ import {
   MlQualityResult,
   AiSearchResult,
   LearningPath,
+  CheckoutConfirmRequest,
+  CheckoutConfirmResponse,
   CheckoutSessionRequest,
   CheckoutSessionResponse,
   EnrollmentCheckResponse,
@@ -125,8 +128,89 @@ export class CourseApiService {
     const url = qs.toString() ? `${this.baseUrl}?${qs.toString()}` : this.baseUrl;
 
     return this.http.get<SpringPage<ApiCourse>>(url).pipe(
-      catchError(() => of({ content: [] }))
+      catchError((err) => {
+        console.warn('HttpClient course list failed; retrying public gateway fetch.', err);
+        return this.fetchPublicCoursePage(url);
+      })
     );
+  }
+
+  private fetchPublicCoursePage(url: string): Observable<SpringPage<ApiCourse>> {
+    return this.fetchPublicJson<SpringPage<ApiCourse>>(url);
+  }
+
+  private fetchPublicJson<T>(url: string, fallback?: T): Observable<T> {
+    const absoluteUrl = `${environment.apiBaseUrl.replace(/\/$/, '')}${url}`;
+
+    return from(
+      fetch(absoluteUrl, {
+        method: 'GET',
+        credentials: 'omit',
+        headers: { Accept: 'application/json' },
+      }).then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`Course list request failed with HTTP ${response.status}`);
+        }
+
+        const text = await response.text();
+        if (!text.trim()) {
+          if (fallback !== undefined) return fallback;
+          throw new Error('Public gateway returned an empty response');
+        }
+
+        return JSON.parse(text) as T;
+      })
+    );
+  }
+
+  private fetchSameOriginOrGatewayJson<T>(url: string, fallback: T): Observable<T> {
+    const absoluteUrl = `${environment.apiBaseUrl.replace(/\/$/, '')}${url}`;
+
+    return from(
+      this.fetchJson<T>(url).catch((sameOriginError) => {
+        console.warn('Same-origin public fetch failed; retrying gateway.', sameOriginError);
+        return this.fetchJson<T>(absoluteUrl);
+      }).catch((gatewayError) => {
+        console.warn('Gateway public fetch failed; using fallback.', gatewayError);
+        return fallback;
+      })
+    );
+  }
+
+  private async fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
+    const response = await fetch(url, {
+      method: init?.method ?? 'GET',
+      credentials: 'omit',
+      headers: {
+        Accept: 'application/json',
+        ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(init?.headers ?? {}),
+      },
+      body: init?.body,
+    });
+
+    const text = await response.text();
+    if (!response.ok) {
+      const backendMessage = this.extractFetchErrorMessage(text);
+      throw new Error(backendMessage || `Request failed with HTTP ${response.status}`);
+    }
+
+    if (!text.trim()) {
+      throw new Error('Request returned an empty response');
+    }
+
+    return JSON.parse(text) as T;
+  }
+
+  private extractFetchErrorMessage(text: string): string {
+    if (!text.trim()) return '';
+
+    try {
+      const parsed = JSON.parse(text) as { message?: string; error?: string };
+      return parsed.message || parsed.error || '';
+    } catch {
+      return text.length <= 160 ? text : '';
+    }
   }
 
   listByCategory(category: string): Observable<SpringPage<ApiCourse>> {
@@ -249,31 +333,45 @@ export class CourseApiService {
 
   /** GET /api/quizzes?courseId={courseId} */
   getQuizzesByCourse(courseId: number): Observable<ApiQuiz[]> {
-    return this.http.get<ApiQuiz[]>(`${this.quizBaseUrl}?courseId=${courseId}`).pipe(
-      catchError(() => of([] as ApiQuiz[]))
+    return this.fetchSameOriginOrGatewayJson<ApiQuiz[]>(
+      `${this.quizBaseUrl}?courseId=${courseId}`,
+      [] as ApiQuiz[]
     );
   }
 
   /** GET /api/quizzes/{quizId}/questions */
   getQuizQuestions(courseId: number, quizId: number): Observable<ApiQuestion[]> {
-    return this.http.get<ApiQuestion[]>(`${this.quizBaseUrl}/${quizId}/questions`).pipe(
-      catchError(() => of([] as ApiQuestion[]))
+    return this.fetchSameOriginOrGatewayJson<ApiQuestion[]>(
+      `${this.quizBaseUrl}/${quizId}/questions`,
+      [] as ApiQuestion[]
     );
   }
 
   /** POST /api/quizzes/{quizId}/submit?studentId={studentId} */
   submitQuiz(courseId: number, quizId: number, studentId: number, responses: ApiQuizResponse[]): Observable<ApiQuizResult> {
-    return this.http.post<ApiQuizResult>(
-      `${this.quizBaseUrl}/${quizId}/submit?studentId=${studentId}`,
-      { studentId, answers: responses }
+    const url = `${this.quizBaseUrl}/${quizId}/submit?studentId=${studentId}`;
+    const body = { studentId, answers: responses };
+
+    return from(
+      this.fetchJson<ApiQuizResult>(`${environment.apiBaseUrl.replace(/\/$/, '')}${url}`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }).catch((gatewayError) => {
+        console.warn('Gateway quiz submit failed; retrying same-origin proxy.', gatewayError);
+        return this.fetchJson<ApiQuizResult>(url, {
+          method: 'POST',
+          body: JSON.stringify(body),
+        });
+      })
     );
   }
 
   /** GET /api/quizzes/{quizId}/leaderboard */
   getLeaderboard(courseId: number, quizId: number): Observable<ApiLeaderboardEntry[]> {
-    return this.http.get<ApiLeaderboardEntry[]>(
-      `${this.quizBaseUrl}/${quizId}/leaderboard`
-    ).pipe(catchError(() => of([] as ApiLeaderboardEntry[])));
+    return this.fetchSameOriginOrGatewayJson<ApiLeaderboardEntry[]>(
+      `${this.quizBaseUrl}/${quizId}/leaderboard`,
+      [] as ApiLeaderboardEntry[]
+    );
   }
 
   // ==================== REVIEWS ====================
@@ -320,7 +418,10 @@ export class CourseApiService {
   /** GET /api/enrollments/student/{studentId} */
   getStudentEnrollments(studentId: number): Observable<ApiEnrollment[]> {
     return this.http.get<ApiEnrollment[]>(`${this.enrollmentUrl}/student/${studentId}`).pipe(
-      catchError(() => of([] as ApiEnrollment[]))
+      catchError((err) => {
+        console.warn('HttpClient enrollments failed; retrying public gateway fetch.', err);
+        return this.fetchPublicJson<ApiEnrollment[]>(`${this.enrollmentUrl}/student/${studentId}`, [] as ApiEnrollment[]);
+      })
     );
   }
 
@@ -339,6 +440,11 @@ export class CourseApiService {
   /** POST /api/payments/create-checkout-session */
   createCheckoutSession(request: CheckoutSessionRequest): Observable<CheckoutSessionResponse> {
     return this.http.post<CheckoutSessionResponse>('/api/payments/create-checkout-session', request);
+  }
+
+  /** POST /api/payments/confirm-checkout-session */
+  confirmCheckoutSession(request: CheckoutConfirmRequest): Observable<CheckoutConfirmResponse> {
+    return this.http.post<CheckoutConfirmResponse>('/api/payments/confirm-checkout-session', request);
   }
 
   /** GET /api/payments/config */
@@ -443,5 +549,3 @@ export class CourseApiService {
     ).pipe(catchError(() => of({})));
   }
 }
-
-

@@ -24,6 +24,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
   enrollment: any = null;
 
   private readonly sub = new Subscription();
+  private handledCheckoutSessionId = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -70,13 +71,34 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
       this.route.queryParams.subscribe((params) => {
         if (params['payment'] === 'success' && this.courseId && !this.enrolled) {
           const id = +this.courseId;
+          const sessionId = String(params['session_id'] ?? '');
           if (!isNaN(id)) {
             try {
-              const studentId = this.requireAuth();
-              // Enroll via API in case webhook was slow
-              this.api.enroll(studentId, id).subscribe({
-                next: () => { this.enrolled = true; },
-                error: () => { this.checkEnrollment(id); },
+              this.requireAuth();
+              if (!sessionId || this.handledCheckoutSessionId === sessionId) {
+                this.checkEnrollment(id);
+                return;
+              }
+
+              this.handledCheckoutSessionId = sessionId;
+              this.enrolling = true;
+              this.enrollError = '';
+              this.api.confirmCheckoutSession({ sessionId }).subscribe({
+                next: (response) => {
+                  this.enrollment = response.enrollments.find(e => e.courseId === id) ?? response.enrollments[0] ?? null;
+                  this.enrolled = !!this.enrollment;
+                  this.enrolling = false;
+                  this.router.navigate([], {
+                    relativeTo: this.route,
+                    queryParams: {},
+                    replaceUrl: true,
+                  });
+                },
+                error: () => {
+                  this.enrolling = false;
+                  this.enrollError = 'Payment succeeded, but enrollment confirmation failed. Please refresh or try again.';
+                  this.checkEnrollment(id);
+                },
               });
             } catch {
               // not logged in, ignore Stripe redirect
