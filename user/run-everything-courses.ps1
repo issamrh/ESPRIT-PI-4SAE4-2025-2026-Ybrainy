@@ -1,14 +1,17 @@
 param(
     [string]$CoursesRoot = "..\courses",
+    [string]$CartRoot = "..\payment\cart",
     [string]$MavenCommand = "",
     [int]$EurekaPort = 8071,
     [int]$GatewayPort = 8088,
     [int]$UserPort = 8899,
     [int]$CoursePort = 8093,
     [int]$QuizPort = 8094,
+    [int]$CartPort = 8954,
     [int]$MlPort = 5000,
     [switch]$SkipUserService,
     [switch]$SkipQuizService,
+    [switch]$SkipCartService,
     [switch]$SkipMlService,
     [switch]$FullWait,
     [switch]$SkipWait,
@@ -341,6 +344,10 @@ function Start-PythonModule {
 }
 
 $coursesRootPath = Resolve-ExistingPath -Path $CoursesRoot -Label "Courses backend root"
+$cartRootPath = $null
+if (-not $SkipCartService) {
+    $cartRootPath = Resolve-ExistingPath -Path $CartRoot -Label "Cart backend root"
+}
 $eurekaDir = Require-ProjectDir -ParentDir $coursesRootPath -Name "Eureka" -Candidates @("p-r-k\Eureka")
 $gatewayDir = Require-ProjectDir -ParentDir $coursesRootPath -Name "API Gateway" -Candidates @("p-r-k\ApiGateway\ApiGateway", "p-r-k\ApiGateway")
 $courseDir = Require-ProjectDir -ParentDir $coursesRootPath -Name "Course Service" -Candidates @("Course\tp-foyer")
@@ -376,6 +383,9 @@ Write-Host " - Course Service     http://localhost:$CoursePort"
 if (-not $SkipQuizService) {
     Write-Host " - Quiz Service       http://localhost:$QuizPort"
 }
+if (-not $SkipCartService) {
+    Write-Host " - Cart Service       http://localhost:$CartPort"
+}
 if (-not $SkipMlService) {
     Write-Host " - ML Service         http://localhost:$MlPort"
 }
@@ -388,6 +398,7 @@ if (-not (Test-TcpPort -Port 3306)) {
 
 Write-Host "Notes:"
 Write-Host " - Angular course pages normally call the gateway at http://localhost:$GatewayPort."
+Write-Host " - Angular pack cart calls the cart service directly at http://localhost:$CartPort/api/cart."
 Write-Host " - The courses gateway routes users/auth/tracking to the current user project as breadandbutteruser."
 Write-Host " - Course and quiz ports default to $CoursePort/$QuizPort to avoid forum port conflicts."
 Write-Host " - Python ML dependencies must already be installed for the Python version used by 'python app.py'."
@@ -456,6 +467,20 @@ if (-not $SkipQuizService) {
     }
 }
 
+if (-not $SkipCartService) {
+    $mainServices += @{
+        Name = "Cart Service"
+        Dir = $cartRootPath
+        Port = $CartPort
+        Health = "http://localhost:$CartPort/api/cart"
+        EurekaName = "cart-service"
+        Env = @{
+            SERVER_PORT = "$CartPort"
+            EUREKA_CLIENT_SERVICEURL_DEFAULTZONE = $eurekaDefaultZone
+        }
+    }
+}
+
 foreach ($service in $mainServices) {
     $repoDir = Join-Path $mavenRepoRoot (Get-SafeFolderName -Value $service.Name)
     if (-not (Test-Path -LiteralPath $repoDir -PathType Container)) {
@@ -506,6 +531,7 @@ Write-Host " - http://localhost:$GatewayPort/api/courses"
 Write-Host " - http://localhost:$GatewayPort/api/enrollments"
 Write-Host " - http://localhost:$GatewayPort/api/quizzes"
 Write-Host " - http://localhost:$GatewayPort/api/ml"
+Write-Host " - http://localhost:$CartPort/api/cart"
 Write-Host ""
 if (-not $FullWait) {
     Write-Host "Services may need another minute to finish booting in their own windows."
