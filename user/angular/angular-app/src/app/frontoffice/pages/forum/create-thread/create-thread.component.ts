@@ -26,6 +26,7 @@ export class CreateThreadComponent implements OnInit, OnDestroy {
   submitting = false;
   submitAttempted = false;
   error: string | null = null;
+  checkerVisible = false;
 
   generating = false;
   aiError: string | null = null;
@@ -225,7 +226,7 @@ export class CreateThreadComponent implements OnInit, OnDestroy {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   }
 
-  submit(): void {
+  openChecker(): void {
     this.submitAttempted = true;
     this.error = null;
 
@@ -244,6 +245,25 @@ export class CreateThreadComponent implements OnInit, OnDestroy {
       this.form.get('authorId')?.setErrors({ invalid: true });
       return;
     }
+
+    this.checkerVisible = true;
+  }
+
+  onCheckerConfirm(): void {
+    this.checkerVisible = false;
+    this.submit();
+  }
+
+  onCheckerClosed(): void {
+    this.checkerVisible = false;
+  }
+
+  private submit(): void {
+    const title = String(this.form.value.title ?? '');
+    const body = String(this.form.value.body ?? '');
+    const authorId = Number(this.form.value.authorId);
+    const categoryIdRaw = this.form.value.categoryId;
+    const categoryId = categoryIdRaw === null || categoryIdRaw === '' ? null : Number(categoryIdRaw);
 
     if (this.submitting) return;
     this.submitting = true;

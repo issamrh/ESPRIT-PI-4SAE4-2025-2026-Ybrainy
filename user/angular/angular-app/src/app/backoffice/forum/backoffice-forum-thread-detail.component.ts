@@ -105,32 +105,54 @@ export class BackofficeForumThreadDetailComponent implements OnInit, OnDestroy {
     );
   }
 
+  private getThreadAuthorId(): number | null {
+    return this.thread?.author?.id ?? this.thread?.authorId ?? null;
+  }
+
+  private getPostAuthorId(p: PostResponse): number | null {
+    return p.author?.id ?? p.authorId ?? null;
+  }
+
+  private getCommentAuthorId(c: CommentResponse): number | null {
+    return c.author?.id ?? c.authorId ?? null;
+  }
+
   lock(): void {
     if (!this.thread) return;
-    this.subs.add(this.threadApi.lock(this.thread.id, this.thread.author.id).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Lock failed') }));
+    const authorId = this.getThreadAuthorId();
+    if (authorId === null) { this.error = 'Thread author is missing'; return; }
+    this.subs.add(this.threadApi.lock(this.thread.id, authorId).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Lock failed') }));
   }
 
   unlock(): void {
     if (!this.thread) return;
-    this.subs.add(this.threadApi.unlock(this.thread.id, this.thread.author.id).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Unlock failed') }));
+    const authorId = this.getThreadAuthorId();
+    if (authorId === null) { this.error = 'Thread author is missing'; return; }
+    this.subs.add(this.threadApi.unlock(this.thread.id, authorId).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Unlock failed') }));
   }
 
   close(): void {
     if (!this.thread) return;
-    this.subs.add(this.threadApi.close(this.thread.id, this.thread.author.id).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Close failed') }));
+    const authorId = this.getThreadAuthorId();
+    if (authorId === null) { this.error = 'Thread author is missing'; return; }
+    this.subs.add(this.threadApi.close(this.thread.id, authorId).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Close failed') }));
   }
 
   reopen(): void {
     if (!this.thread) return;
-    this.subs.add(this.threadApi.reopen(this.thread.id, this.thread.author.id).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Reopen failed') }));
+    const authorId = this.getThreadAuthorId();
+    if (authorId === null) { this.error = 'Thread author is missing'; return; }
+    this.subs.add(this.threadApi.reopen(this.thread.id, authorId).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Reopen failed') }));
   }
 
   deleteThread(): void {
     if (!this.thread) return;
+    const authorId = this.getThreadAuthorId();
+    if (authorId === null) { this.error = 'Thread author is missing'; return; }
     if (!confirm(`Delete thread #${this.thread.id}?`)) return;
 
     this.subs.add(
-      this.threadApi.delete(this.thread.id, this.thread.author.id).subscribe({
+      this.threadApi.delete(this.thread.id, authorId).subscribe({
         next: () => this.back(),
         error: (e) => (this.error = e?.message ?? 'Delete failed'),
       })
@@ -138,9 +160,11 @@ export class BackofficeForumThreadDetailComponent implements OnInit, OnDestroy {
   }
 
   deletePost(p: PostResponse): void {
+    const authorId = this.getPostAuthorId(p);
+    if (authorId === null) { this.error = 'Post author is missing'; return; }
     if (!confirm(`Delete post #${p.id}?`)) return;
     this.subs.add(
-      this.postApi.delete(p.id, p.author.id).subscribe({
+      this.postApi.delete(p.id, authorId).subscribe({
         next: () => this.load(),
         error: (e) => (this.error = e?.message ?? 'Delete post failed'),
       })
@@ -148,9 +172,11 @@ export class BackofficeForumThreadDetailComponent implements OnInit, OnDestroy {
   }
 
   deleteComment(c: CommentResponse): void {
+    const authorId = this.getCommentAuthorId(c);
+    if (authorId === null) { this.error = 'Comment author is missing'; return; }
     if (!confirm(`Delete comment #${c.id}?`)) return;
     this.subs.add(
-      this.commentApi.delete(c.id, c.author.id).subscribe({
+      this.commentApi.delete(c.id, authorId).subscribe({
         next: () => this.load(),
         error: (e) => (this.error = e?.message ?? 'Delete comment failed'),
       })

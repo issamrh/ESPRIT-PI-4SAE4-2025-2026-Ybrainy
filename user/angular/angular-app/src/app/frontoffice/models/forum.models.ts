@@ -39,7 +39,7 @@ export interface ThreadResponse {
   mediaUrl?: string | null;
   mediaType?: string | null;
   status: ThreadStatus;
-  author: AuthorResponse;
+  author: AuthorResponse | null;
   authorId?: number;
   category: CategoryResponse | null;
   categoryId?: number | null;
@@ -51,6 +51,11 @@ export interface ThreadResponse {
   likeCount: number;
   dislikeCount: number;
   savedByCurrentUser?: boolean;
+  aiAnalyzed?: boolean;
+  aiOverallScore?: number | null;
+  aiLabel?: string | null;
+  aiLabelColor?: string | null;
+  aiSummary?: string | null;
 }
 
 export interface ThreadRequest {
@@ -70,7 +75,7 @@ export interface PostResponse {
   fileType?: string | null;
   mediaUrl?: string | null;
   mediaType?: string | null;
-  author: AuthorResponse;
+  author: AuthorResponse | null;
   authorId?: number;
   threadId: number;
   threadTitle?: string;
@@ -90,7 +95,7 @@ export interface PostRequest {
 export interface CommentResponse {
   id: number;
   body: string;
-  author: AuthorResponse;
+  author: AuthorResponse | null;
   authorId?: number;
   postId: number;
   threadId?: number;
@@ -185,6 +190,18 @@ export interface PerformanceInsight {
 
 export type ReactionStats = Record<string, number>;
 
+export interface LeaderboardEntry {
+  userId: number;
+  username: string;
+  level: number;
+  levelTitle: string;
+  xp: number;
+  threadCount: number;
+  hqRate: number;
+  mlTotalAnalyzed: number;
+  rankPosition: number;
+}
+
 export interface UserDashboard {
   totalThreadsCreated: number;
   totalPostsCreated: number;
@@ -212,4 +229,12 @@ export interface UserDashboard {
   userPercentile: number;
   rankPosition: number;
   performanceInsights: PerformanceInsight[];
+  mlHqRate?: number;
+  mlHqCount?: number;
+  mlLqEditCount?: number;
+  mlLqCloseCount?: number;
+  mlTotalAnalyzed?: number;
+  mlAvailable?: boolean;
+  predictedNextWeekPosts?: number;
+  topLeaderboard?: LeaderboardEntry[];
 }

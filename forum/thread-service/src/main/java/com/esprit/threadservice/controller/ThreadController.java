@@ -3,11 +3,15 @@ package com.esprit.threadservice.controller;
 import com.esprit.threadservice.dto.ThreadRequest;
 import com.esprit.threadservice.dto.ThreadResponse;
 import com.esprit.threadservice.model.ThreadStatus;
+import com.esprit.threadservice.service.FileStorageService;
 import com.esprit.threadservice.service.ThreadService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -16,6 +20,7 @@ import java.util.List;
 public class ThreadController {
 
     private final ThreadService threadService;
+    private final FileStorageService fileStorageService;
 
     @GetMapping
     public ResponseEntity<List<ThreadResponse>> getAll(
@@ -44,8 +49,24 @@ public class ThreadController {
         return ResponseEntity.ok(threadService.getByAuthor(authorId, userId));
     }
 
-    @PostMapping
-    public ResponseEntity<ThreadResponse> create(@RequestBody ThreadRequest request) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ThreadResponse> create(
+            @RequestParam String title,
+            @RequestParam String body,
+            @RequestParam Long authorId,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) MultipartFile image,
+            @RequestParam(required = false) MultipartFile file) throws IOException {
+        ThreadRequest request = new ThreadRequest();
+        request.setTitle(title);
+        request.setBody(body);
+        request.setAuthorId(authorId);
+        request.setCategoryId(categoryId);
+        MultipartFile media = image != null ? image : file;
+        if (media != null && !media.isEmpty()) {
+            request.setMediaUrl(fileStorageService.store(media));
+            request.setMediaType(media.getContentType());
+        }
         return ResponseEntity.ok(threadService.create(request));
     }
 

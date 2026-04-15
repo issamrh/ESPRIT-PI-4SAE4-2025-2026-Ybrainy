@@ -28,6 +28,7 @@ public class ThreadService {
     private final UserFeignClient userFeignClient;
     private final CategoryFeignClient categoryFeignClient;
     private final ForumEventPublisher eventPublisher;
+    private final ThreadAiService threadAiService;
 
     public List<ThreadResponse> getAll(Long currentUserId) {
         return threadRepository.findByStatusNot(ThreadStatus.CLOSED)
@@ -66,6 +67,9 @@ public class ThreadService {
                 .build();
         thread = threadRepository.save(thread);
         eventPublisher.publishThreadCreated(thread.getId(), thread.getAuthorId(), thread.getTitle());
+        // Trigger async AI scoring — runs in background, does not block response
+        final Long savedId = thread.getId();
+        threadAiService.scoreAndSaveThread(savedId);
         return toResponse(thread, request.getAuthorId());
     }
 
@@ -126,8 +130,9 @@ public class ThreadService {
         // Map mediaUrl/mediaType → imageUrl/fileUrl/fileType for Angular
         String mediaUrl  = thread.getMediaUrl();
         String mediaType = thread.getMediaType();
-        String imageUrl  = "IMAGE".equalsIgnoreCase(mediaType) ? mediaUrl : null;
-        String fileUrl   = "FILE".equalsIgnoreCase(mediaType)  ? mediaUrl : null;
+        boolean isImage  = mediaType != null && mediaType.startsWith("image/");
+        String imageUrl  = isImage ? mediaUrl : null;
+        String fileUrl   = (!isImage) ? mediaUrl : null;
         String fileType  = mediaType;
 
         return ThreadResponse.builder()
@@ -152,6 +157,11 @@ public class ThreadService {
                 .savedByCurrentUser(saved)
                 .createdAt(thread.getCreatedAt())
                 .updatedAt(thread.getUpdatedAt())
+                .aiAnalyzed(thread.isAiAnalyzed())
+                .aiOverallScore(thread.getAiOverallScore())
+                .aiLabel(thread.getAiLabel())
+                .aiLabelColor(thread.getAiLabelColor())
+                .aiSummary(thread.getAiSummary())
                 .build();
     }
 }

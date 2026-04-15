@@ -4,7 +4,9 @@ import com.esprit.userservice.dto.dashboard.*;
 import com.esprit.userservice.exception.ResourceNotFoundException;
 import com.esprit.userservice.feign.CommentStatsFeignClient;
 import com.esprit.userservice.feign.PostStatsFeignClient;
+import com.esprit.userservice.feign.ThreadMlFeignClient;
 import com.esprit.userservice.feign.ThreadStatsFeignClient;
+import com.esprit.userservice.model.LevelConfig;
 import com.esprit.userservice.model.User;
 import com.esprit.userservice.repository.UserRepository;
 import com.esprit.userservice.repository.UserXpEventRepository;
@@ -25,6 +27,7 @@ public class DashboardService {
     private final ThreadStatsFeignClient threadFeign;
     private final PostStatsFeignClient postFeign;
     private final CommentStatsFeignClient commentFeign;
+    private final ThreadMlFeignClient threadMlFeign;
 
     public UserDashboardResponse getDashboard(Long userId) {
         User user = userRepository.findById(userId)
@@ -104,6 +107,17 @@ public class DashboardService {
                 avgUpvotes, commAvgUpvotes, downvotes, totalReactions,
                 totalPositive, engagementRate, commAvgEngagement, totalThreads);
 
+        // ML quality stats for the current user
+        MlQualityStatsDto mlStats = safeCall(
+                () -> threadMlFeign.getMlQualityForUser(userId),
+                MlQualityStatsDto.builder().available(false).build());
+
+        // Predict next week posts (weighted average of last 4 weeks)
+        int predictedNextWeek = predictNextWeekPosts(weekly);
+
+        // Leaderboard: top 5 users by XP
+        List<LeaderboardEntryDto> leaderboard = buildLeaderboard(userId, rankedIds);
+
         return UserDashboardResponse.builder()
                 .totalThreadsCreated(totalThreads)
                 .totalPostsCreated(totalPosts)
@@ -138,6 +152,14 @@ public class DashboardService {
                 .userPercentile(percentile)
                 .rankPosition(rankPosition)
                 .performanceInsights(insights)
+                .mlHqRate(mlStats.getHqRate())
+                .mlHqCount(mlStats.getHqCount())
+                .mlLqEditCount(mlStats.getLqEditCount())
+                .mlLqCloseCount(mlStats.getLqCloseCount())
+                .mlTotalAnalyzed(mlStats.getTotalAnalyzed())
+                .mlAvailable(mlStats.isAvailable())
+                .predictedNextWeekPosts(predictedNextWeek)
+                .topLeaderboard(leaderboard)
                 .build();
     }
 
@@ -232,6 +254,56 @@ public class DashboardService {
             log.warn("Feign call failed, using fallback: {}", e.getMessage());
             return fallback;
         }
+    }
+
+    /** Predict next week total activity (threads+posts+comments) using weighted average of last 4 weeks. */
+    private int predictNextWeekPosts(List<DayActivityDto> weekly) {
+        if (weekly == null || weekly.isEmpty()) return 0;
+        int n = Math.min(4, weekly.size());
+        List<DayActivityDto> recent = weekly.subList(weekly.size() - n, weekly.size());
+        // Weighted: latest week has weight n, oldest has weight 1
+        double weightedSum = 0;
+        double totalWeight = 0;
+        for (int i = 0; i < recent.size(); i++) {
+            double w = i + 1;
+            DayActivityDto d = recent.get(i);
+            weightedSum += w * (d.getThreadsCount() + d.getPostsCount() + d.getCommentsCount());
+            totalWeight += w;
+        }
+        return (int) Math.round(totalWeight == 0 ? 0 : weightedSum / totalWeight);
+    }
+
+    /** Build top-5 leaderboard from users ranked by XP. */
+    private List<LeaderboardEntryDto> buildLeaderboard(Long currentUserId, List<Long> rankedIds) {
+        int limit = Math.min(5, rankedIds.size());
+        List<LeaderboardEntryDto> result = new ArrayList<>();
+        for (int i = 0; i < limit; i++) {
+            Long uid = rankedIds.get(i);
+            try {
+                User u = userRepository.findById(uid).orElse(null);
+                if (u == null) continue;
+                // Thread count from stats feign
+                long threadCount = safeCall(() -> threadFeign.getUserStats(uid).getThreadCount(), 0L);
+                // ML quality
+                MlQualityStatsDto ml = safeCall(
+                        () -> threadMlFeign.getMlQualityForUser(uid),
+                        MlQualityStatsDto.builder().available(false).build());
+                result.add(LeaderboardEntryDto.builder()
+                        .userId(uid)
+                        .username(u.getUsername())
+                        .level(u.getLevel())
+                        .levelTitle(LevelConfig.getTitle(u.getLevel()))
+                        .xp((int) u.getXp())
+                        .threadCount(threadCount)
+                        .hqRate(ml.getHqRate())
+                        .mlTotalAnalyzed(ml.getTotalAnalyzed())
+                        .rankPosition(i + 1)
+                        .build());
+            } catch (Exception e) {
+                log.warn("Leaderboard entry failed for user #{}: {}", uid, e.getMessage());
+            }
+        }
+        return result;
     }
 
     private double round2(double value) {

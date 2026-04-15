@@ -26,7 +26,22 @@ export class ThreadApiService {
   }
 
   create(input: ThreadRequest, image?: File | null, file?: File | null): Observable<ThreadResponse> {
-    return this.http.post<ThreadResponse>(this.base, input);
+    const formData = new FormData();
+    formData.append('title', input.title ?? '');
+    formData.append('body', input.body ?? '');
+    formData.append('authorId', String(input.authorId ?? ''));
+
+    if (input.categoryId != null) {
+      formData.append('categoryId', String(input.categoryId));
+    }
+    if (image) {
+      formData.append('image', image);
+    }
+    if (file) {
+      formData.append('file', file);
+    }
+
+    return this.http.post<ThreadResponse>(this.base, formData);
   }
 
   update(id: number, userId: number, input: Partial<ThreadRequest>): Observable<ThreadResponse> {

@@ -106,8 +106,9 @@ public class PostService {
 
         String mediaUrl  = post.getMediaUrl();
         String mediaType = post.getMediaType();
-        String imageUrl  = "IMAGE".equalsIgnoreCase(mediaType) ? mediaUrl : null;
-        String fileUrl   = "FILE".equalsIgnoreCase(mediaType)  ? mediaUrl : null;
+        boolean isImage  = mediaType != null && mediaType.startsWith("image/");
+        String imageUrl  = isImage ? mediaUrl : null;
+        String fileUrl   = (!isImage) ? mediaUrl : null;
 
         return PostResponse.builder()
                 .id(post.getId())

@@ -19,6 +19,7 @@ import { ResourcesComponent } from './pages/resources/resources.component';
 import { AboutComponent } from './pages/about/about.component';
 import { ForumComponent } from './pages/forum/forum.component';
 import { CreateThreadComponent } from './pages/forum/create-thread/create-thread.component';
+import { AiThreadCheckerModalComponent } from './pages/forum/ai-thread-checker-modal/ai-thread-checker-modal.component';
 import { DraftsComponent } from './pages/forum/drafts/drafts.component';
 import { ThreadDetailComponent } from './pages/forum/thread-detail/thread-detail.component';
 import { CalendarComponent } from './pages/calendar/calendar.component';
@@ -76,6 +77,7 @@ import { PrefooterCtaComponent } from './home/prefooter-cta/prefooter-cta.compon
     AboutComponent,
     ForumComponent,
     CreateThreadComponent,
+    AiThreadCheckerModalComponent,
     DraftsComponent,
     ThreadDetailComponent,
     CalendarComponent,

@@ -34,4 +34,10 @@ public class ThreadResponse {
     private boolean savedByCurrentUser;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    // AI quality fields
+    private boolean aiAnalyzed;
+    private Integer aiOverallScore;
+    private String aiLabel;
+    private String aiLabelColor;
+    private String aiSummary;
 }

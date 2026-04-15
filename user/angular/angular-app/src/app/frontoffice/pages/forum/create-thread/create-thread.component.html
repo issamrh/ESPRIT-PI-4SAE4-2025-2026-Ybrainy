@@ -39,7 +39,7 @@
           </div>
         </div>
 
-        <form [formGroup]="form" (ngSubmit)="submit()" class="cp-form">
+        <form [formGroup]="form" (ngSubmit)="openChecker()" class="cp-form">
           <div class="cp-field-wrap">
             <div class="cp-title-row">
               <input
@@ -124,7 +124,7 @@
 
           <div class="cp-actions">
             <button type="submit" class="cp-btn cp-btn-primary" [disabled]="submitting">
-              {{ submitting ? 'Posting...' : 'Post' }}
+              {{ submitting ? 'Posting...' : 'Review and publish' }}
             </button>
           </div>
         </form>
@@ -149,3 +149,11 @@
     </div>
   </div>
 </div>
+
+<app-ai-thread-checker-modal
+  [title]="form.value.title ?? ''"
+  [body]="form.value.body ?? ''"
+  [visible]="checkerVisible"
+  (confirm)="onCheckerConfirm()"
+  (closed)="onCheckerClosed()">
+</app-ai-thread-checker-modal>

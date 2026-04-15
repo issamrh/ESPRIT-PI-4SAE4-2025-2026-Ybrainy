@@ -42,6 +42,20 @@ public class UserDashboardResponse {
     private int rankPosition;
     private List<PerformanceInsightDto> performanceInsights;
 
+    // ── ML quality analysis ───────────────────────────────────────────────────
+    private double mlHqRate;
+    private int mlHqCount;
+    private int mlLqEditCount;
+    private int mlLqCloseCount;
+    private int mlTotalAnalyzed;
+    private boolean mlAvailable;
+
+    // ── Prediction ────────────────────────────────────────────────────────────
+    private int predictedNextWeekPosts;
+
+    // ── Leaderboard ───────────────────────────────────────────────────────────
+    private List<LeaderboardEntryDto> topLeaderboard;
+
     @Getter @Setter
     @NoArgsConstructor @AllArgsConstructor
     @Builder

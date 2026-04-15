@@ -127,6 +127,9 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_RABBITMQ_HOST: rabbitmq
+      ML_PREDICT_URL: http://predict-service:5001/predict
+    volumes:
+      - uploads_threads:/app/uploads/threads
 
   post-service:
     build: ./post-service
@@ -149,6 +152,8 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_RABBITMQ_HOST: rabbitmq
+    volumes:
+      - uploads_posts:/app/uploads/posts
 
   comment-service:
     build: ./comment-service
@@ -190,6 +195,32 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/forum_messages?useSSL=false&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
+    volumes:
+      - uploads_messages:/app/uploads/messages
+
+  # ── ML Predict Service ────────────────────────────────────────────────────────
+
+  predict-service:
+    build: ./predict-service
+    container_name: ybrainy-predict
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+
+  # ── Frontend ──────────────────────────────────────────────────────────────────
+
+  angular:
+    build: ./angular/angular-app
+    container_name: ybrainy-angular
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+      - messaging-service
 
 volumes:
   mysql_data:
+  uploads_threads:
+  uploads_posts:
+  uploads_messages:

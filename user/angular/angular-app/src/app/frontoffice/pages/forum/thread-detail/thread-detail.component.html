@@ -36,7 +36,7 @@
               <div class="rd-thread-meta">
                 <span class="rd-chip rd-chip-category" *ngIf="thread.category">{{ thread.category.name }}</span>
                 <span [ngClass]="'rd-chip rd-chip-' + thread.status.toLowerCase()">{{ thread.status }}</span>
-                <span class="rd-muted">Posted by {{ thread.author.username }} • {{ thread.createdAt | date:'medium' }}</span>
+                <span class="rd-muted">Posted by {{ thread.author?.username ?? 'Unknown user' }} • {{ thread.createdAt | date:'medium' }}</span>
               </div>
 
               <!-- Owner-only actions -->
@@ -203,12 +203,52 @@
           <span>This is your thread. Other users can post replies and comments here. You can create a <a routerLink="/forum/create">new thread</a>.</span>
         </div>
 
+        <div *ngIf="!loading && !error && canSummarize" class="rd-card rd-summary-card">
+          <div class="rd-summary-header">
+            <div class="rd-summary-title">
+              <span class="rd-summary-icon">AI</span>
+              <span>Discussion Summary</span>
+              <span class="rd-summary-badge">{{ posts.length }} posts</span>
+            </div>
+            <button
+              *ngIf="!aiSummary && !aiSummaryLoading"
+              type="button"
+              class="rd-btn-summarize"
+              (click)="summarize()">
+              Summarize discussion
+            </button>
+            <button
+              *ngIf="aiSummary && !aiSummaryLoading"
+              type="button"
+              class="rd-btn-summarize rd-btn-summarize-refresh"
+              (click)="summarize()">
+              Refresh
+            </button>
+          </div>
+
+          <div *ngIf="aiSummaryLoading" class="rd-summary-loading">
+            <span class="rd-summary-spinner"></span>
+            <span>Analyzing {{ posts.length }} posts...</span>
+          </div>
+
+          <div *ngIf="aiSummaryError && !aiSummaryLoading" class="rd-summary-error">
+            {{ aiSummaryError }}
+          </div>
+
+          <div *ngIf="aiSummary && !aiSummaryLoading" class="rd-summary-result">
+            <p class="rd-summary-text">{{ aiSummary }}</p>
+            <p class="rd-summary-meta" *ngIf="aiSummaryPostCount !== null">
+              Generated from {{ aiSummaryPostCount }} post{{ aiSummaryPostCount === 1 ? '' : 's' }}.
+            </p>
+          </div>
+        </div>
+
         <!-- Posts list -->
         <div *ngIf="!loading && !error" class="rd-posts">
           <div *ngIf="posts.length === 0" class="rd-card rd-empty">No posts yet. Be the first to respond!</div>
 
           <div *ngFor="let p of posts" class="rd-card rd-post">
-            <div class="rd-muted">{{ p.author.username }} • {{ p.createdAt | date:'medium' }}</div>
+            <div class="rd-muted">{{ p.author?.username ?? 'Unknown user' }} • {{ p.createdAt | date:'medium' }}</div>
             <div *ngIf="p.author?.id === auth.currentUserId" class="rd-post-actions">
               <button type="button" class="rd-btn rd-btn-sm" (click)="ensurePostEditForm(p)" [disabled]="isLocked">✏️ Edit</button>
               <button type="button" class="rd-btn rd-btn-sm rd-btn-danger" (click)="deletePost(p)">🗑 Delete</button>
@@ -263,7 +303,7 @@
               <div *ngIf="(commentsByPostId[p.id] || []).length === 0" class="rd-muted">No comments yet.</div>
 
               <div *ngFor="let c of (commentsByPostId[p.id] || [])" class="rd-comment">
-                <div class="rd-muted">{{ c.author.username }} • {{ c.createdAt | date:'medium' }}</div>
+                <div class="rd-muted">{{ c.author?.username ?? 'Unknown user' }} • {{ c.createdAt | date:'medium' }}</div>
                 <div *ngIf="c.author?.id === auth.currentUserId" class="rd-comment-actions">
                   <button type="button" class="rd-btn rd-btn-sm" (click)="ensureCommentEditForm(c)" [disabled]="isLocked">✏️ Edit</button>
                   <button type="button" class="rd-btn rd-btn-sm rd-btn-danger" (click)="deleteComment(c)">🗑 Delete</button>

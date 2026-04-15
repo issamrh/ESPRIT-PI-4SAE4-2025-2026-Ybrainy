@@ -50,26 +50,40 @@ export class BackofficeForumThreadsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/dashboard/forum/threads', threadId]);
   }
 
+  private getAuthorId(t: ThreadResponse): number | null {
+    return t.author?.id ?? t.authorId ?? null;
+  }
+
   lock(t: ThreadResponse): void {
-    this.subs.add(this.threadApi.lock(t.id, t.author.id).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Lock failed') }));
+    const authorId = this.getAuthorId(t);
+    if (authorId === null) { this.error = 'Thread author is missing'; return; }
+    this.subs.add(this.threadApi.lock(t.id, authorId).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Lock failed') }));
   }
 
   unlock(t: ThreadResponse): void {
-    this.subs.add(this.threadApi.unlock(t.id, t.author.id).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Unlock failed') }));
+    const authorId = this.getAuthorId(t);
+    if (authorId === null) { this.error = 'Thread author is missing'; return; }
+    this.subs.add(this.threadApi.unlock(t.id, authorId).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Unlock failed') }));
   }
 
   close(t: ThreadResponse): void {
-    this.subs.add(this.threadApi.close(t.id, t.author.id).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Close failed') }));
+    const authorId = this.getAuthorId(t);
+    if (authorId === null) { this.error = 'Thread author is missing'; return; }
+    this.subs.add(this.threadApi.close(t.id, authorId).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Close failed') }));
   }
 
   reopen(t: ThreadResponse): void {
-    this.subs.add(this.threadApi.reopen(t.id, t.author.id).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Reopen failed') }));
+    const authorId = this.getAuthorId(t);
+    if (authorId === null) { this.error = 'Thread author is missing'; return; }
+    this.subs.add(this.threadApi.reopen(t.id, authorId).subscribe({ next: () => this.load(), error: (e) => (this.error = e?.message ?? 'Reopen failed') }));
   }
 
   deleteThread(t: ThreadResponse): void {
+    const authorId = this.getAuthorId(t);
+    if (authorId === null) { this.error = 'Thread author is missing'; return; }
     if (!confirm(`Delete thread #${t.id}?`)) return;
     this.subs.add(
-      this.threadApi.delete(t.id, t.author.id).subscribe({
+      this.threadApi.delete(t.id, authorId).subscribe({
         next: () => this.load(),
         error: (e) => (this.error = e?.message ?? 'Delete failed'),
       })

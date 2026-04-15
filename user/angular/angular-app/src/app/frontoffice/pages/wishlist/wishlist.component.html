@@ -28,7 +28,7 @@
           <div class="wl-thread-meta">
             <span class="wl-chip wl-chip-category" *ngIf="t.category">{{ t.category.name }}</span>
             <span [ngClass]="'wl-chip wl-chip-' + t.status.toLowerCase()">{{ t.status }}</span>
-            <span class="wl-muted">by {{ t.author.username }} • {{ t.createdAt | date:'mediumDate' }}</span>
+            <span class="wl-muted">by {{ t.author?.username ?? 'Unknown user' }} • {{ t.createdAt | date:'mediumDate' }}</span>
           </div>
           <div class="wl-thread-title">{{ t.title }}</div>
           <div class="wl-thread-text">{{ t.body }}</div>

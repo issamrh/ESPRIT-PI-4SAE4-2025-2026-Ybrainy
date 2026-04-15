@@ -33,7 +33,7 @@
             <a (click)="openThread(t.id)" style="cursor:pointer; text-decoration:underline;">{{ t.title }}</a>
           </td>
           <td>{{ t.status }}</td>
-          <td>{{ t.author.username }}</td>
+          <td>{{ t.author?.username ?? 'Unknown user' }}</td>
           <td>{{ t.createdAt | date:'medium' }}</td>
           <td>
             <div class="bo-btn-row">

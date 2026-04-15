@@ -37,6 +37,21 @@ public class ForumThread {
     private String mediaUrl;
     private String mediaType;
 
+    // AI quality scoring fields (nullable — populated async after creation)
+    private Integer aiOverallScore;
+
+    @Column(length = 30)
+    private String aiLabel;
+
+    @Column(length = 20)
+    private String aiLabelColor;
+
+    @Column(length = 500)
+    private String aiSummary;
+
+    @Builder.Default
+    private boolean aiAnalyzed = false;
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;

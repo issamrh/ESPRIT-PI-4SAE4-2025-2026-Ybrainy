@@ -5,7 +5,7 @@ export const environment = {
   apiUrl: 'http://localhost:8095/api',
   cartApiUrl: 'http://localhost:8094/api',
   financeApiUrl: 'http://localhost:8093/api/finance',
-  forumApiUrl: 'http://localhost:8080',
+  forumApiUrl: 'http://localhost:8090',
   forumWsUrl: 'http://localhost:8086',
   googleIdpHint: 'google',
   keycloakUrl: 'http://localhost:9190',

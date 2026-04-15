@@ -2,10 +2,12 @@ package com.esprit.threadservice.service;
 
 import com.esprit.threadservice.dto.AiChatRequest;
 import com.esprit.threadservice.dto.AiChatResponse;
+import com.esprit.threadservice.dto.ThreadQualityScore;
 import com.esprit.threadservice.model.ForumThread;
 import com.esprit.threadservice.repository.ThreadRepository;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,12 +96,72 @@ public class AiGenerationService {
     private String apiBaseUrl;
 
     private final RestClient restClient;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
     private ThreadRepository threadRepository;
 
     public AiGenerationService() {
         this.restClient = RestClient.builder().build();
+    }
+
+    private static final String THREAD_SUMMARIZE_PROMPT =
+            "You are an expert forum discussion analyst. Given a forum thread title, its original question, " +
+            "and all the answers/posts, write a concise summary (4-6 sentences) that covers:\n" +
+            "1. What the original problem or question was\n" +
+            "2. The main solutions or answers proposed\n" +
+            "3. The conclusion or best approach recommended\n\n" +
+            "Rules:\n" +
+            "- Write in the same language as the thread (French or English)\n" +
+            "- Be direct and actionable — someone reading this should understand what to do without reading all posts\n" +
+            "- Highlight if there is a best answer marked\n" +
+            "- Do not use markdown formatting\n" +
+            "- Do not start with 'Summary:' or any label\n" +
+            "- Return only the summary paragraph, nothing else";
+
+    private static final String THREAD_SCORE_PROMPT =
+            "You are a forum content quality evaluator. Analyze the given forum thread and return a JSON object (no markdown, no code block, raw JSON only) with this exact structure:\n" +
+            "{\n" +
+            "  \"clarity\": <int 1-10>,\n" +
+            "  \"detail\": <int 1-10>,\n" +
+            "  \"usefulness\": <int 1-10>,\n" +
+            "  \"overall\": <int 1-10>,\n" +
+            "  \"label\": <\"Excellent\"|\"Bon\"|\"Moyen\"|\"Faible\">,\n" +
+            "  \"labelColor\": <\"#22c55e\" for Excellent, \"#3b82f6\" for Bon, \"#f59e0b\" for Moyen, \"#ef4444\" for Faible>,\n" +
+            "  \"summary\": <one sentence summary of the thread in French>,\n" +
+            "  \"strengths\": [<up to 3 short strengths in French>],\n" +
+            "  \"improvements\": [<up to 3 short improvement suggestions in French>],\n" +
+            "  \"improvedVersion\": <rewritten thread body, improved, in the same language as the original>\n" +
+            "}\n" +
+            "Rules: overall = average of clarity+detail+usefulness. " +
+            "Excellent = overall>=8, Bon = overall>=6, Moyen = overall>=4, Faible = overall<4. " +
+            "Return ONLY raw JSON, no extra text.";
+
+    public ThreadQualityScore scoreThread(String title, String body) {
+        String plainBody = body != null ? body.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim() : "";
+        String userMessage = "Thread title: \"" + title + "\"\n\nThread body:\n" + plainBody;
+        // Use 1400 tokens — enough for full JSON including improvedVersion
+        List<Map<String, Object>> messages = List.of(
+                Map.of("role", "system", "content", THREAD_SCORE_PROMPT),
+                Map.of("role", "user", "content", userMessage)
+        );
+        String raw = callGroqMessages(messages, 1400);
+        // Strip markdown code fences if model wraps response
+        String json = raw.replaceAll("(?s)^```[a-z]*\\n?", "").replaceAll("```$", "").trim();
+        try {
+            return objectMapper.readValue(json, ThreadQualityScore.class);
+        } catch (Exception e) {
+            log.warn("Failed to parse AI score JSON: {}. Raw: {}", e.getMessage(), json);
+            // Return a fallback so async task doesn't crash
+            return ThreadQualityScore.builder()
+                    .clarity(5).detail(5).usefulness(5).overall(5)
+                    .label("Moyen").labelColor("#f59e0b")
+                    .summary("Analyse non disponible.")
+                    .strengths(java.util.Collections.emptyList())
+                    .improvements(java.util.Collections.emptyList())
+                    .improvedVersion("")
+                    .build();
+        }
     }
 
     public String generateThreadBody(String title) {
@@ -189,6 +251,36 @@ public class AiGenerationService {
                 .draftTitle(draftTitle)
                 .draftBody(draftBody)
                 .build();
+    }
+
+    public String summarizeThread(String threadTitle, String threadBody,
+                                  List<com.esprit.threadservice.feign.PostFeignClient.PostSummary> posts) {
+        StringBuilder userMessage = new StringBuilder();
+        userMessage.append("Thread title: \"").append(threadTitle).append("\"\n\n");
+
+        String plainBody = threadBody != null
+                ? threadBody.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim()
+                : "";
+        if (!plainBody.isBlank()) {
+            if (plainBody.length() > 500) plainBody = plainBody.substring(0, 500) + "...";
+            userMessage.append("Original question:\n").append(plainBody).append("\n\n");
+        }
+
+        userMessage.append("Answers (").append(posts.size()).append(" total):\n");
+        for (int i = 0; i < posts.size(); i++) {
+            var post = posts.get(i);
+            String author = post.getAuthor() != null ? post.getAuthor().getUsername() : "User";
+            String body = post.getBody() != null
+                    ? post.getBody().replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim()
+                    : "";
+            if (body.length() > 400) body = body.substring(0, 400) + "...";
+            userMessage.append("\nAnswer ").append(i + 1)
+                    .append(post.isBestAnswer() ? " [BEST ANSWER]" : "")
+                    .append(" by ").append(author).append(":\n")
+                    .append(body).append("\n");
+        }
+
+        return callGroq(THREAD_SUMMARIZE_PROMPT, userMessage.toString());
     }
 
     private List<String> extractKeywords(String text) {

@@ -5,7 +5,7 @@ export const environment = {
   apiUrl: 'https://api.ybrainy.com/api',
   cartApiUrl: 'https://api.ybrainy.com/api',
   financeApiUrl: 'https://api.ybrainy.com/api/finance',
-  forumApiUrl: 'http://localhost:8080',
+  forumApiUrl: 'http://localhost:8090',
   forumWsUrl: 'http://localhost:8086',
   googleIdpHint: 'google',
   keycloakUrl: 'http://localhost:9190',

@@ -43,10 +43,15 @@ spring:
           predicates:
             - Path=/api/ai/**
 
+        - id: thread-service-stats
+          uri: lb://thread-service
+          predicates:
+            - Path=/api/threads/stats/**
+
         - id: thread-service-api
           uri: lb://thread-service
           predicates:
-            - Path=/api/**
+            - Path=/api/threads/**
 
         - id: thread-service-wishlist
           uri: lb://thread-service
@@ -59,6 +64,11 @@ spring:
             - Path=/uploads/threads/**
 
         # ── post-service ─────────────────────────────────────────
+        - id: post-service-stats
+          uri: lb://post-service
+          predicates:
+            - Path=/api/posts/stats/**
+
         - id: post-service-api
           uri: lb://post-service
           predicates:
@@ -70,6 +80,11 @@ spring:
             - Path=/uploads/posts/**
 
         # ── comment-service ──────────────────────────────────────
+        - id: comment-service-stats
+          uri: lb://comment-service
+          predicates:
+            - Path=/api/comments/stats/**
+
         - id: comment-service
           uri: lb://comment-service
           predicates:
@@ -96,7 +111,8 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka/
   instance:
-    prefer-ip-address: true
+    prefer-ip-address: false
+    hostname: localhost
 
 management:
   endpoints:

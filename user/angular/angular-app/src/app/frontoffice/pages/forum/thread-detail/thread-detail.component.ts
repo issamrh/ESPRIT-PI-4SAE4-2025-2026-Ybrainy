@@ -67,6 +67,11 @@ export class ThreadDetailComponent implements OnInit, OnDestroy {
 
   interactionError: string | null = null;
 
+  aiSummary: string | null = null;
+  aiSummaryLoading = false;
+  aiSummaryError: string | null = null;
+  aiSummaryPostCount: number | null = null;
+
   private readonly subs = new Subscription();
 
   constructor(
@@ -256,6 +261,32 @@ export class ThreadDetailComponent implements OnInit, OnDestroy {
   get isOwnThread(): boolean {
     const uid = this.auth.currentUserId;
     return uid !== null && this.thread?.author?.id === uid;
+  }
+
+  get canSummarize(): boolean {
+    return this.posts.length >= 2;
+  }
+
+  summarize(): void {
+    if (!this.threadId || this.aiSummaryLoading) return;
+
+    this.aiSummaryLoading = true;
+    this.aiSummaryError = null;
+    this.aiSummary = null;
+
+    this.subs.add(
+      this.aiService.summarizeThread(this.threadId).subscribe({
+        next: (response) => {
+          this.aiSummary = response.summary;
+          this.aiSummaryPostCount = Number.parseInt(response.postCount, 10);
+          this.aiSummaryLoading = false;
+        },
+        error: () => {
+          this.aiSummaryError = 'Summary generation failed. Please try again.';
+          this.aiSummaryLoading = false;
+        },
+      })
+    );
   }
 
   ngOnInit(): void {
@@ -484,7 +515,7 @@ export class ThreadDetailComponent implements OnInit, OnDestroy {
     const body = String(fg.value.body ?? '');
     this.subs.add(
       this.postApi
-        .update(p.id, { body, threadId: this.threadId, authorId: p.author.id })
+        .update(p.id, { body, threadId: this.threadId, authorId: p.author?.id ?? p.authorId ?? this.auth.currentUserId ?? 0 })
         .subscribe({
           next: () => {
             delete this.postEditForms[p.id];
@@ -523,7 +554,7 @@ export class ThreadDetailComponent implements OnInit, OnDestroy {
     const body = String(fg.value.body ?? '');
     this.subs.add(
       this.commentApi
-        .update(c.id, { body, postId: c.postId, authorId: c.author.id })
+        .update(c.id, { body, postId: c.postId, authorId: c.author?.id ?? c.authorId ?? this.auth.currentUserId ?? 0 })
         .subscribe({
           next: () => {
             delete this.commentEditForms[c.id];

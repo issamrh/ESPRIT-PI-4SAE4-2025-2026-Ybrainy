@@ -2,11 +2,15 @@ package com.esprit.postservice.controller;
 
 import com.esprit.postservice.dto.PostRequest;
 import com.esprit.postservice.dto.PostResponse;
+import com.esprit.postservice.service.FileStorageService;
 import com.esprit.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -15,6 +19,7 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
+    private final FileStorageService fileStorageService;
 
     @GetMapping
     public ResponseEntity<List<PostResponse>> getAll() {
@@ -41,15 +46,42 @@ public class PostController {
         return ResponseEntity.ok(postService.getByAuthor(authorId));
     }
 
-    @PostMapping
-    public ResponseEntity<PostResponse> create(@RequestBody PostRequest request) {
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<PostResponse> create(
+            @RequestParam String body,
+            @RequestParam Long authorId,
+            @RequestParam Long threadId,
+            @RequestParam(required = false) MultipartFile image,
+            @RequestParam(required = false) MultipartFile file) throws IOException {
+        PostRequest request = new PostRequest();
+        request.setBody(body);
+        request.setAuthorId(authorId);
+        request.setThreadId(threadId);
+        MultipartFile media = image != null ? image : file;
+        if (media != null && !media.isEmpty()) {
+            request.setMediaUrl(fileStorageService.store(media));
+            request.setMediaType(media.getContentType());
+        }
         return ResponseEntity.ok(postService.create(request));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> update(
             @PathVariable Long id,
-            @RequestBody PostRequest request) {
+            @RequestParam String body,
+            @RequestParam Long authorId,
+            @RequestParam Long threadId,
+            @RequestParam(required = false) MultipartFile image,
+            @RequestParam(required = false) MultipartFile file) throws IOException {
+        PostRequest request = new PostRequest();
+        request.setBody(body);
+        request.setAuthorId(authorId);
+        request.setThreadId(threadId);
+        MultipartFile media = image != null ? image : file;
+        if (media != null && !media.isEmpty()) {
+            request.setMediaUrl(fileStorageService.store(media));
+            request.setMediaType(media.getContentType());
+        }
         return ResponseEntity.ok(postService.update(id, request));
     }
 

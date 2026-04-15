@@ -213,7 +213,7 @@
               <div class="rd-thread-meta">
                 <span class="rd-chip rd-chip-category" *ngIf="t.category">{{ t.category.name }}</span>
                 <span [ngClass]="'rd-chip rd-chip-' + t.status.toLowerCase()">{{ t.status }}</span>
-                <span class="rd-muted">by {{ t.author.username }} • {{ t.createdAt | date:'mediumDate' }}</span>
+                <span class="rd-muted">by {{ t.author?.username ?? 'Unknown user' }} • {{ t.createdAt | date:'mediumDate' }}</span>
                 <span *ngIf="isOwnThread(t)" class="rd-own-badge">Your thread</span>
               </div>
               <div class="rd-thread-title">{{ t.title }}</div>

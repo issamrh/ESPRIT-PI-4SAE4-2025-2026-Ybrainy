@@ -23,6 +23,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('xpCanvas')       xpCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('donutCanvas')    donutCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('barCanvas')      barCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('mlCanvas')       mlCanvas!: ElementRef<HTMLCanvasElement>;
 
   data: UserDashboard | null = null;
   loading = true;
@@ -33,6 +34,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
   animUpvotes  = 0;
   animRatio    = 0;
   animRank     = 0;
+  animHqRate   = 0;
 
   private charts: Chart[] = [];
   private subs = new Subscription();
@@ -80,9 +82,10 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     this.animateCount('animUpvotes', this.data.totalUpvotesReceived, 1000);
     this.animateCount('animRatio',   Math.round(this.positiveRatioPct), 900);
     this.animateCount('animRank',    this.data.rankPosition,          700);
+    this.animateCount('animHqRate',  Math.round(this.data.mlHqRate ?? 0), 1100);
   }
 
-  private animateCount(prop: 'animPosts'|'animUpvotes'|'animRatio'|'animRank',
+  private animateCount(prop: 'animPosts'|'animUpvotes'|'animRatio'|'animRank'|'animHqRate',
                         target: number, duration: number): void {
     const start = performance.now();
     const tick = (now: number) => {
@@ -109,6 +112,7 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
       this.buildXpChart();
       this.buildDonutChart();
       this.buildBarChart();
+      this.buildMlChart();
     }, 50);
   }
 
@@ -226,12 +230,77 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
     this.charts.push(chart);
   }
 
+  private buildMlChart(): void {
+    if (!this.mlCanvas || !this.data?.mlAvailable || (this.data.mlTotalAnalyzed ?? 0) === 0) return;
+
+    const data = this.data;
+    const chart = new Chart(this.mlCanvas.nativeElement, {
+      type: 'doughnut',
+      data: {
+        labels: ['High Quality', 'Needs Editing', 'Likely to Struggle'],
+        datasets: [
+          {
+            data: [data.mlHqCount ?? 0, data.mlLqEditCount ?? 0, data.mlLqCloseCount ?? 0],
+            backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'],
+            borderWidth: 0,
+            hoverOffset: 8,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '68%',
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: '#94a3b8', padding: 12, boxWidth: 12 },
+          },
+          tooltip: {
+            callbacks: {
+              label: (context) => ` ${context.label}: ${context.raw} threads`,
+            },
+          },
+        },
+        animation: { duration: 900, easing: 'easeInOutQuart' },
+      },
+    });
+    this.charts.push(chart);
+  }
+
   // ── Computed helpers ───────────────────────────────────────────────────────
 
   get positiveRatioPct(): number {
     if (!this.data) return 0;
     const total = this.data.totalPositiveReactions + this.data.totalNegativeReactions;
     return total === 0 ? 0 : Math.round(this.data.totalPositiveReactions / total * 100);
+  }
+
+  get currentUserId(): number | null {
+    return this.auth.currentUserId;
+  }
+
+  get mlLabelColor(): string {
+    const rate = this.data?.mlHqRate ?? 0;
+    if (rate >= 70) return '#22c55e';
+    if (rate >= 40) return '#f59e0b';
+    return '#ef4444';
+  }
+
+  get mlLabel(): string {
+    const rate = this.data?.mlHqRate ?? 0;
+    if (rate >= 70) return 'Excellent';
+    if (rate >= 40) return 'Average';
+    return 'Needs work';
+  }
+
+  leaderboardInitials(username: string): string {
+    return username ? username.substring(0, 2).toUpperCase() : '??';
+  }
+
+  leaderboardAvatarColor(rank: number): string {
+    const colors = ['#667eea', '#10b981', '#f59e0b', '#ef4444', '#a78bfa'];
+    return colors[(rank - 1) % colors.length];
   }
 
   statusBadge(userVal: number, commVal: number): 'above' | 'below' | 'avg' {

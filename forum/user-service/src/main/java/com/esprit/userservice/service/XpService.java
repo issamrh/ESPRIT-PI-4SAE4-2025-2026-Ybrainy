@@ -22,8 +22,16 @@ public class XpService {
 
     @Transactional
     public XpAwardResult awardXp(Long userId, XpSource source) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        User user = userRepository.findById(userId).orElseGet(() -> {
+            String suffix = String.valueOf(userId);
+            userRepository.insertPlaceholderUser(
+                    userId,
+                    "user-" + suffix,
+                    "user-" + suffix + "@forum.local"
+            );
+            return userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        });
 
         int amount = source.getAmount();
         int oldLevel = user.getLevel();

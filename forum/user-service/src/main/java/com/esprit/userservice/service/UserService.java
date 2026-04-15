@@ -22,10 +22,7 @@ public class UserService {
     private final UserXpEventRepository xpEventRepository;
 
     public UserProfileResponse getProfile(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
-
-        //profile
+        User user = findOrCreatePlaceholderUser(userId);
         return toProfile(user);
     }
 
@@ -46,8 +43,7 @@ public class UserService {
     }
 
     public UserProfileResponse updateProfile(Long userId, UpdateProfileRequest req) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+        User user = findOrCreatePlaceholderUser(userId);
 
         if (req.getUsername() != null && !req.getUsername().isBlank()) {
             user.setUsername(req.getUsername());
@@ -55,6 +51,20 @@ public class UserService {
 
         userRepository.save(user);
         return toProfile(user);
+    }
+
+    public User findOrCreatePlaceholderUser(Long userId) {
+        return userRepository.findById(userId).orElseGet(() -> {
+            String suffix = String.valueOf(userId);
+            userRepository.insertPlaceholderUser(
+                    userId,
+                    "user-" + suffix,
+                    "user-" + suffix + "@forum.local"
+            );
+
+            return userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+        });
     }
 
     public List<XpEventResponse> getRecentXp(Long userId) {
