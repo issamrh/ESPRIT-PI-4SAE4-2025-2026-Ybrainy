@@ -6,7 +6,21 @@ export const apiPrefixInterceptor: HttpInterceptorFn = (req, next) => {
 
   // Only prefix same-origin relative API and uploads calls.
   if (url.startsWith('/api/') || url === '/api' || url.startsWith('/uploads/')) {
-    const prefixed = environment.forumApiUrl.replace(/\/$/, '') + url;
+    const courseApiPrefixes = [
+      '/api/courses',
+      '/api/quizzes',
+      '/api/enrollments',
+      '/api/payments',
+      '/api/learning-paths',
+      '/api/instructor',
+      '/api/students',
+      '/api/ml',
+      '/api/certificates',
+    ];
+    const targetBase = courseApiPrefixes.some((prefix) => url === prefix || url.startsWith(`${prefix}/`))
+      ? environment.apiBaseUrl
+      : environment.forumApiUrl;
+    const prefixed = targetBase.replace(/\/$/, '') + url;
     return next(req.clone({ url: prefixed }));
   }
 
