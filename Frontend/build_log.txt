@@ -1,0 +1,60 @@
+[33m❯[39m Building...
+[32m✔[39m Building...
+Application bundle generation failed. [7.583 seconds]
+
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module '../../../../services/event.service' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/frontoffice/pages/events/events.component.ts:3:29:
+[37m      3 │ import { EventService } from [32m'../../../../services/event.service'[37m;
+        ╵                              [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2307: Cannot find module '../../../../models/event.model' or its corresponding type declarations.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/frontoffice/pages/events/events.component.ts:4:22:
+[37m      4 │ import { Event } from [32m'../../../../models/event.model'[37m;
+        ╵                       [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS-992003: No suitable injection token for parameter 'eventService' of class 'EventsComponent'.
+  Consider using the @Inject decorator to specify an injection token.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/frontoffice/pages/events/events.component.ts:17:22:
+[37m      17 │   constructor(private [32meventService[37m: EventService) { }
+         ╵                       [32m~~~~~~~~~~~~[0m
+
+  This type does not have a value, so it cannot be used as injection token.
+
+    src/app/frontoffice/pages/events/events.component.ts:17:36:
+[37m      17 │   constructor(private eventService: [32mEventService[37m) { }
+         ╵                                     [32m~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS7006: Parameter 'data' implicitly has an 'any' type.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/frontoffice/pages/events/events.component.ts:25:13:
+[37m      25 │       next: ([32mdata[37m) => {
+         ╵              [32m~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS7006: Parameter 'e' implicitly has an 'any' type.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/frontoffice/pages/events/events.component.ts:27:34:
+[37m      27 │         this.events = data.filter([32me[37m => e.statut === 'PUBLIE');
+         ╵                                   [32m^[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS7006: Parameter 'error' implicitly has an 'any' type.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/frontoffice/pages/events/events.component.ts:29:14:
+[37m      29 │       error: ([32merror[37m) => {
+         ╵               [32m~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS7006: Parameter 'error' implicitly has an 'any' type.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/frontoffice/pages/events/events.component.ts:40:14:
+[37m      40 │       error: ([32merror[37m) => {
+         ╵               [32m~~~~~[0m
+
+[39m[22m
