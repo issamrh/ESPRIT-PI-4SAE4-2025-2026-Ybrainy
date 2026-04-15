@@ -72,7 +72,7 @@
         ⏰ Time's up! Submitting your answers...
       </div>
 
-      <div *ngIf="questions.length === 0 && !error" class="fo-qz-state" style="padding: 1.5rem;">
+      <div *ngIf="questionsLoading && !error" class="fo-qz-state" style="padding: 1.5rem;">
         Loading questions…
       </div>
 

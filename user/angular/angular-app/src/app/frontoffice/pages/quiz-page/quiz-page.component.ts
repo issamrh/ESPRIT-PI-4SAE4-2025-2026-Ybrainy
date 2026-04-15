@@ -22,6 +22,7 @@ export class QuizPageComponent implements OnInit, OnDestroy {
   quizzes: ApiQuiz[] = [];
   selectedQuiz: ApiQuiz | null = null;
   questions: ApiQuestion[] = [];
+  questionsLoading = false;
   responses = new Map<number, number | null>();
   quizResult: ApiQuizResult | null = null;
   loading = false;
@@ -96,15 +97,20 @@ export class QuizPageComponent implements OnInit, OnDestroy {
     this.currentQuestionIndex = 0;
     this.showReview = false;
     this.error = '';
+    this.questionsLoading = true;
     this.api.getQuizQuestions(this.courseId, quiz.id).subscribe({
       next: (qs) => {
         this.questions = qs;
+        this.questionsLoading = false;
         this.stopTimer();
         if (quiz.timeLimitMinutes && quiz.timeLimitMinutes > 0) {
           this.startTimer(quiz.timeLimitMinutes);
         }
       },
-      error: () => { this.error = 'Questions unavailable.'; },
+      error: () => {
+        this.questionsLoading = false;
+        this.error = 'Questions unavailable.';
+      },
     });
   }
 
@@ -154,9 +160,16 @@ export class QuizPageComponent implements OnInit, OnDestroy {
     this.showReview = false;
     this.showAnswerReview = false;
     this.showLeaderboard = false;
+    this.questionsLoading = true;
     this.api.getQuizQuestions(this.courseId, this.selectedQuiz.id).subscribe({
-      next: (qs) => { this.questions = qs; },
-      error: () => { this.error = 'Questions unavailable.'; },
+      next: (qs) => {
+        this.questions = qs;
+        this.questionsLoading = false;
+      },
+      error: () => {
+        this.questionsLoading = false;
+        this.error = 'Questions unavailable.';
+      },
     });
   }
 
