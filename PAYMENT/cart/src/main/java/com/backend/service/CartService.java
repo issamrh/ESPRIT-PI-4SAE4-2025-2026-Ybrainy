@@ -12,12 +12,14 @@ import com.backend.dto.payment.PaymentStripeCheckoutSessionRequestDTO;
 import com.backend.dto.payment.PaymentStripeCheckoutVerificationRequestDTO;
 import com.backend.entity.Cart;
 import com.backend.entity.CartHistory;
+import com.backend.events.PaymentCompletedEvent;
 import com.backend.entity.CartItem;
 import com.backend.entity.enums.CartAction;
 import com.backend.entity.enums.CartStatus;
 import com.backend.exception.BusinessRuleException;
 import com.backend.exception.ResourceNotFoundException;
 import com.backend.mapper.CartMapper;
+import com.backend.messaging.PaymentEventPublisher;
 import com.backend.repository.CartHistoryRepository;
 import com.backend.repository.CartRepository;
 import feign.FeignException;
@@ -26,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +46,7 @@ public class CartService {
     private final PaymentServiceClient paymentServiceClient;
     private final CheckoutEmailService checkoutEmailService;
     private final CheckoutIdentityService checkoutIdentityService;
+    private final PaymentEventPublisher paymentEventPublisher;
 
     public CartResponseDTO getActiveCart(Long userId) {
         log.info("Fetching active cart for user: {}", userId);
@@ -188,6 +192,7 @@ public class CartService {
         }
 
         CartResponseDTO checkedOutCart = checkout(userId);
+        paymentEventPublisher.publishPaymentCompleted(toPaymentCompletedEvent(checkedOutCart, request.getSessionId()));
         String recipientEmail = checkoutIdentityService.resolveEmailFromBearerOrDefault(authorization);
         checkoutEmailService.sendCheckoutReceipt(recipientEmail, checkedOutCart);
         return checkedOutCart;
@@ -201,6 +206,26 @@ public class CartService {
                 .collect(Collectors.toList());
     }
 
+    private PaymentCompletedEvent toPaymentCompletedEvent(CartResponseDTO cart, String sessionId) {
+        return PaymentCompletedEvent.builder()
+                .cartId(cart.getId())
+                .userId(cart.getUserId())
+                .totalAmount(cart.getTotalAmount())
+                .currency("usd")
+                .paymentMethod("STRIPE")
+                .stripeSessionId(sessionId)
+                .paidAt(LocalDateTime.now())
+                .items(cart.getItems().stream()
+                        .map(item -> PaymentCompletedEvent.Item.builder()
+                                .packId(item.getPackId())
+                                .packTitle(item.getPackTitle())
+                                .quantity(item.getQuantity())
+                                .price(item.getPriceAtPurchase())
+                                .subtotal(item.getSubtotal())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build();
+    }
     private boolean isCheckoutSessionPaid(String sessionId) {
         try {
             PaymentStripeCheckoutVerificationRequestDTO request = new PaymentStripeCheckoutVerificationRequestDTO();

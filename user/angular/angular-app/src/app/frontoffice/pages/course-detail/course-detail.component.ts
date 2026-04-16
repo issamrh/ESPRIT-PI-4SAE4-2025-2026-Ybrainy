@@ -85,7 +85,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
               this.enrollError = '';
               this.api.confirmCheckoutSession({ sessionId }).subscribe({
                 next: (response) => {
-                  this.enrollment = response.enrollments.find(e => e.courseId === id) ?? response.enrollments[0] ?? null;
+                  this.enrollment = response?.enrollments?.find((e: any) => e.courseId === id) ?? response?.enrollments?.[0] ?? null;
                   this.enrolled = !!this.enrollment;
                   this.enrolling = false;
                   this.router.navigate([], {
@@ -118,8 +118,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     try {
       const studentId = this.requireAuth();
       this.api.getStudentEnrollments(studentId).subscribe({
-        next: (enrollments) => {
-          this.enrollment = enrollments.find(e => e.courseId === courseId) ?? null;
+        next: (enrollments: any) => {
+          this.enrollment = enrollments?.find((e: any) => e.courseId === courseId) ?? null;
           this.enrolled = !!this.enrollment;
         },
         error: () => {

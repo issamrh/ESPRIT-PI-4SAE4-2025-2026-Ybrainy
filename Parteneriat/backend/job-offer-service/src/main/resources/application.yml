@@ -61,7 +61,7 @@ huggingface:
 
 gemini:
   api:
-    key: ${GEMINI_API_KEY:AIzaSyDrqjQtcL4uKTXmMJ29Iggtu6p74M7THTc}
+    key: ${GEMINI_API_KEY:AIzaSyB8cp7gO--5B6Af-es5VAT0Ho0AkE8kiuQ}
     url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com/v1beta/models}
     model: ${GEMINI_API_MODEL:gemini-2.5-flash}
     # Modeles essayes dans l ordre pour EDITER la photo (sortie image). Separateur: virgule.
