@@ -22,6 +22,7 @@ import { CalendarComponent } from './pages/calendar/calendar.component';
 import { CoursesComponent } from './pages/courses/courses.component';
 import { LessonsComponent } from './pages/lessons/lessons.component';
 import { TemplateMirrorComponent } from './pages/template-mirror/template-mirror.component';
+import { CodeLabComponent } from './pages/codelab/codelab.component';
 
 // Section components
 import { HeroSectionComponent } from './home/hero-section/hero-section.component';
@@ -52,6 +53,7 @@ import { PrefooterCtaComponent } from './home/prefooter-cta/prefooter-cta.compon
     CoursesComponent,
     LessonsComponent,
     TemplateMirrorComponent,
+    CodeLabComponent,
     HeroSectionComponent,
     TrustLogosComponent,
     WhyYbrainyComponent,

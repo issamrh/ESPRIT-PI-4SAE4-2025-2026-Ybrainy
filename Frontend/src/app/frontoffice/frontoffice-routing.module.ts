@@ -12,6 +12,7 @@ import { CalendarComponent } from './pages/calendar/calendar.component';
 import { CoursesComponent } from './pages/courses/courses.component';
 import { LessonsComponent } from './pages/lessons/lessons.component';
 import { TemplateMirrorComponent } from './pages/template-mirror/template-mirror.component';
+import { CodeLabComponent } from './pages/codelab/codelab.component';
 
 const routes: Routes = [
   {
@@ -29,6 +30,7 @@ const routes: Routes = [
       { path: 'courses', component: CoursesComponent },
       { path: 'courses/:courseId/lessons', component: LessonsComponent },
       { path: 'template', component: TemplateMirrorComponent },
+      { path: 'codelab', component: CodeLabComponent },
     ]
   }
 ];

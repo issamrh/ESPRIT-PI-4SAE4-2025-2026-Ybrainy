@@ -45,6 +45,21 @@
   transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 }
 
+.fo-static-page ::ng-deep .hero-codelab-button,
+.fo-static-page .hero-codelab-button {
+  flex-basis: 100%;
+  max-width: 320px;
+  background: linear-gradient(135deg, #1d2459, #2f5fff);
+  color: #ffffff;
+  box-shadow: 0 20px 46px rgba(29, 36, 89, 0.28);
+}
+
+.fo-static-page ::ng-deep .hero-codelab-button:hover,
+.fo-static-page .hero-codelab-button:hover {
+  background: linear-gradient(135deg, #25307a, #3f74ff);
+  color: #ffffff;
+}
+
 .fo-static-page ::ng-deep .hero-recommend-button:hover,
 .fo-static-page .hero-recommend-button:hover {
   transform: translateY(-2px);

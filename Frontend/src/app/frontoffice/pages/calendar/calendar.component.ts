@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { SafeHtml } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { FrontofficeStaticPageService } from '../../services/frontoffice-static-page.service';
 import { FrontofficeUiInitService } from '../../services/frontoffice-ui-init.service';
@@ -76,7 +77,8 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
   constructor(
     private staticPage: FrontofficeStaticPageService,
     private uiInit: FrontofficeUiInitService,
-    private http: HttpClient
+    private http: HttpClient,
+    private router: Router
   ) {}
 
   async ngAfterViewInit(): Promise<void> {
@@ -188,6 +190,20 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
       injectedRecommendationButton.textContent = 'Show Recommended Event';
       heroUpcomingButton.parentElement.classList.add('hero-events-actions');
       heroUpcomingButton.parentElement.appendChild(injectedRecommendationButton);
+    }
+
+    const heroCodelabButton = pageRoot.querySelector(
+      '[data-open-codelab-trigger="true"]'
+    ) as HTMLAnchorElement | null;
+    if (!heroCodelabButton && heroUpcomingButton?.parentElement) {
+      const injectedCodeLabButton = document.createElement('a');
+      injectedCodeLabButton.className = 'hero-recommend-button hero-codelab-button';
+      injectedCodeLabButton.setAttribute('href', 'javascript:void(0)');
+      injectedCodeLabButton.setAttribute('role', 'button');
+      injectedCodeLabButton.setAttribute('data-open-codelab-trigger', 'true');
+      injectedCodeLabButton.textContent = 'Open CodeLab Simulator';
+      heroUpcomingButton.parentElement.classList.add('hero-events-actions');
+      heroUpcomingButton.parentElement.appendChild(injectedCodeLabButton);
     }
 
     if (heroUpcomingButton?.parentElement) {
@@ -370,6 +386,18 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
       };
       heroRecommendationButton.addEventListener('click', onHeroRecommendation);
       this.cleanupFns.push(() => heroRecommendationButton.removeEventListener('click', onHeroRecommendation));
+    }
+
+    const heroCodelabButton = pageRoot.querySelector(
+      '[data-open-codelab-trigger="true"]'
+    ) as HTMLAnchorElement | null;
+    if (heroCodelabButton) {
+      const onHeroCodelab = (event: Event) => {
+        event.preventDefault();
+        void this.router.navigate(['/codelab']);
+      };
+      heroCodelabButton.addEventListener('click', onHeroCodelab);
+      this.cleanupFns.push(() => heroCodelabButton.removeEventListener('click', onHeroCodelab));
     }
 
     const heroRecommendationSlot = pageRoot.querySelector('.hero-recommendation-slot') as HTMLElement | null;
