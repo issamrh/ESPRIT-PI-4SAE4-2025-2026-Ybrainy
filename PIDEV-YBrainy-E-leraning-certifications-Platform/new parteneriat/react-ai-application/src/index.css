@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-primary: #4d44b5;
+  --brand-secondary: #fb7d5b;
+  --brand-deep: #1e1a46;
+  --brand-ink: #49528d;
+  --brand-soft: #f2f5ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Nunito Sans', sans-serif;
+  color: var(--brand-deep);
+  background:
+    radial-gradient(circle at 10% 15%, rgba(77, 68, 181, 0.16), transparent 34%),
+    radial-gradient(circle at 85% 20%, rgba(251, 125, 91, 0.2), transparent 36%),
+    linear-gradient(145deg, #eef2ff 0%, #f8fbff 52%, #fff6f2 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.textured-bg {
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.3) 1px, transparent 1px),
+    radial-gradient(rgba(77, 68, 181, 0.12) 1px, transparent 1px);
+  background-position: 0 0, 14px 14px;
+  background-size: 28px 28px;
+}
+
+.glass-card {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.72));
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(12px);
+}
+
+.scrollbar-fancy {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(77, 68, 181, 0.5) rgba(77, 68, 181, 0.08);
+}
+
+.scrollbar-fancy::-webkit-scrollbar {
+  width: 10px;
+}
+
+.scrollbar-fancy::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--brand-primary), var(--brand-secondary));
+  border-radius: 999px;
+}

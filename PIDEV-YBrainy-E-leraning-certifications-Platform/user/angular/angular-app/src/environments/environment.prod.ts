@@ -1,0 +1,15 @@
+export const environment = {
+  production: true,
+  apiBaseUrl: 'https://api.ybrainy.com',
+  courseApiBaseUrl: 'https://api.ybrainy.com',
+  partnerApiBaseUrl: 'https://api.ybrainy.com',
+  apiUrl: 'https://api.ybrainy.com/api',
+  cartApiUrl: 'https://api.ybrainy.com/api',
+  financeApiUrl: 'https://api.ybrainy.com/api/finance',
+  forumApiUrl: 'https://api.ybrainy.com',
+  forumWsUrl: 'https://api.ybrainy.com',
+  googleIdpHint: 'google',
+  keycloakUrl: 'http://localhost:9190',
+  keycloakRealm: 'microservices',
+  keycloakClientId: 'angular-client',
+};

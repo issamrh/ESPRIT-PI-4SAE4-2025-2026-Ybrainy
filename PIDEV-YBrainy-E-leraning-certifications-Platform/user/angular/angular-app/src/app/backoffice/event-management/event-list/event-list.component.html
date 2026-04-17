@@ -1,0 +1,98 @@
+<div class="event-list-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-title">
+      <h2>Event Management</h2>
+      <p class="subtitle">Manage all platform events</p>
+    </div>
+    <button class="btn-create" (click)="createEvent()">
+      <span class="icon">+</span> New Event
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <input
+      class="filter-input"
+      type="text"
+      placeholder="Search by name, location..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="onSearch()"
+    />
+    <select class="filter-select" [(ngModel)]="filterType" (ngModelChange)="applyFilters()">
+      <option value="">All Types</option>
+      <option *ngFor="let t of eventTypes" [value]="t">{{ t }}</option>
+    </select>
+    <select class="filter-select" [(ngModel)]="filterStatus" (ngModelChange)="applyFilters()">
+      <option value="">All Statuses</option>
+      <option *ngFor="let s of eventStatuses" [value]="s">{{ s }}</option>
+    </select>
+    <button class="btn-refresh" (click)="loadEvents()" title="Refresh">&#8635;</button>
+  </div>
+
+  <!-- Error alerts -->
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <div *ngIf="deleteError" class="alert alert-error">{{ deleteError }}</div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading events…</p>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && filteredEvents.length === 0 && !error" class="empty-state">
+    <div class="empty-icon">📅</div>
+    <h3>No events found</h3>
+    <p *ngIf="searchTerm || filterType || filterStatus">Try adjusting your search or filters.</p>
+    <p *ngIf="!searchTerm && !filterType && !filterStatus">Create your first event to get started.</p>
+    <button class="btn-create" (click)="createEvent()">Create Event</button>
+  </div>
+
+  <!-- Events table -->
+  <div *ngIf="!loading && filteredEvents.length > 0" class="table-wrapper">
+    <table class="events-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Location</th>
+          <th>Capacity</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let event of filteredEvents; let i = index">
+          <td class="cell-id">{{ event.idEvent }}</td>
+          <td class="cell-name">
+            <span class="event-name">{{ event.name }}</span>
+            <small class="event-desc" *ngIf="event.description">{{ event.description | slice:0:60 }}{{ event.description.length > 60 ? '…' : '' }}</small>
+          </td>
+          <td><span class="type-badge" [ngClass]="getTypeClass(event.type)">{{ event.type }}</span></td>
+          <td><span class="status-badge" [ngClass]="getStatusClass(event.statut)">{{ event.statut }}</span></td>
+          <td>{{ event.location || '—' }}</td>
+          <td class="cell-center">{{ event.capacite }}</td>
+          <td>{{ formatDate(event.dateDebut) }}</td>
+          <td>{{ formatDate(event.dateFin) }}</td>
+          <td class="cell-actions">
+            <button class="btn-edit" (click)="editEvent(event)" title="Edit">✏️</button>
+            <button
+              class="btn-delete"
+              (click)="deleteEvent(event)"
+              [disabled]="deletingId === event.idEvent"
+              title="Delete"
+            >
+              <span *ngIf="deletingId === event.idEvent">…</span>
+              <span *ngIf="deletingId !== event.idEvent">🗑️</span>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="table-footer">Showing {{ filteredEvents.length }} of {{ events.length }} events</div>
+  </div>
+</div>

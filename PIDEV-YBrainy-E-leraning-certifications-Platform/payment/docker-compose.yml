@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  mysqldb:
+    image: mysql:8.0
+    container_name: mysqldb
+    ports: ["3306:3306"]
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=elearning_platform
+    restart: always
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports: ["5672:5672", "15672:15672"]
+    restart: always
+
+  discovery-server:
+    build: ./discovery-server
+    image: issamriahi99/discovery-server:1.0.0
+    container_name: discovery-server
+    ports: ["8761:8761"]
+
+  api-gateway:
+    build: ./api-gateway
+    image: issamriahi99/api-gateway:1.0.0
+    container_name: api-gateway
+    ports: ["8091:8091"]
+    depends_on: [discovery-server]
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+
+  cart-service:
+    build: ./cart
+    image: issamriahi99/cart-service:1.0.0
+    container_name: cart-service
+    ports: ["8954:8954"]
+    depends_on: [mysqldb, rabbitmq, discovery-server]
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/elearning_platform?createDatabaseIfNotExist=true&useSSL=false
+      - RABBITMQ_HOST=rabbitmq
+      - YBRAINY_EUREKA_URL=http://discovery-server:8761/eureka/
+
+  finance-service:
+    build: ./finance
+    image: issamriahi99/finance-service:1.0.0
+    container_name: finance-service
+    ports: ["8995:8995"]
+    depends_on: [mysqldb, rabbitmq, discovery-server]
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/elearning_platform?createDatabaseIfNotExist=true&useSSL=false
+      - RABBITMQ_HOST=rabbitmq
+      - YBRAINY_EUREKA_URL=http://discovery-server:8761/eureka/
+
+  payment-service:
+    build: ./Payment
+    image: issamriahi99/payment-service:1.0.0
+    container_name: payment-service
+    ports: ["8095:8095"]
+    depends_on: [mysqldb, rabbitmq, discovery-server]
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/elearning_platform?createDatabaseIfNotExist=true&useSSL=false
+      - RABBITMQ_HOST=rabbitmq
+      - YBRAINY_EUREKA_URL=http://discovery-server:8761/eureka/

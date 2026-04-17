@@ -1,0 +1,221 @@
+version: "3.9"
+
+# ── Run the full app from Docker Hub images (no source code needed) ───────────
+# Usage: docker compose -f docker-compose.hub.yml up
+#
+# Replace hos77 with your Docker Hub username before using this file.
+
+services:
+
+  mysql:
+    image: mysql:8.0
+    container_name: ybrainy-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: forum_users
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-databases.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: ybrainy-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  eureka:
+    image: hos77/ybrainy-eureka:latest
+    container_name: ybrainy-eureka
+    ports:
+      - "8761:8761"
+
+  config-server:
+    image: hos77/ybrainy-config-server:latest
+    container_name: ybrainy-config
+    ports:
+      - "8888:8888"
+    depends_on:
+      - eureka
+
+  api-gateway:
+    image: hos77/ybrainy-api-gateway:latest
+    container_name: ybrainy-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka
+      - config-server
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+
+  user-service:
+    image: hos77/ybrainy-user-service:latest
+    container_name: ybrainy-user
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka:
+        condition: service_started
+    environment:
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/forum_users?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_RABBITMQ_HOST: rabbitmq
+
+  category-service:
+    image: hos77/ybrainy-category-service:latest
+    container_name: ybrainy-category
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka:
+        condition: service_started
+    environment:
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/forum_categories?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+
+  thread-service:
+    image: hos77/ybrainy-thread-service:latest
+    container_name: ybrainy-thread
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka:
+        condition: service_started
+    environment:
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/forum_threads?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_RABBITMQ_HOST: rabbitmq
+      ML_PREDICT_URL: http://predict-service:5001/predict
+    volumes:
+      - uploads_threads:/app/uploads/threads
+
+  post-service:
+    image: hos77/ybrainy-post-service:latest
+    container_name: ybrainy-post
+    ports:
+      - "8084:8084"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka:
+        condition: service_started
+    environment:
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/forum_posts?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_RABBITMQ_HOST: rabbitmq
+    volumes:
+      - uploads_posts:/app/uploads/posts
+
+  comment-service:
+    image: hos77/ybrainy-comment-service:latest
+    container_name: ybrainy-comment
+    ports:
+      - "8085:8085"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka:
+        condition: service_started
+    environment:
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/forum_comments?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_RABBITMQ_HOST: rabbitmq
+
+  messaging-service:
+    image: hos77/ybrainy-messaging-service:latest
+    container_name: ybrainy-messaging
+    ports:
+      - "8086:8086"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      config-server:
+        condition: service_started
+      eureka:
+        condition: service_started
+    environment:
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/forum_messages?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+    volumes:
+      - uploads_messages:/app/uploads/messages
+
+  predict-service:
+    image: hos77/ybrainy-predict-service:latest
+    container_name: ybrainy-predict
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+
+  angular:
+    image: hos77/ybrainy-angular:latest
+    container_name: ybrainy-angular
+    restart: unless-stopped
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+      - messaging-service
+
+volumes:
+  mysql_data:
+  uploads_threads:
+  uploads_posts:
+  uploads_messages:

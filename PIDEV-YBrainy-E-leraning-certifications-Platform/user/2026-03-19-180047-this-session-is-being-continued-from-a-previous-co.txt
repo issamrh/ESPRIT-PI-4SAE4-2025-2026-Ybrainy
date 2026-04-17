@@ -1,0 +1,595 @@
+ ▐▛███▜▌   Claude Code v2.1.79
+▝▜█████▛▘  Sonnet 4.6 · Claude Pro
+  ▘▘ ▝▝    ~\OneDrive\Desktop\PIDEV-YBrainy-E-leraning-certifications-Platf…
+
+✻ Conversation compacted (ctrl+o for history)
+
+
+  Searched for 3 patterns, read 5 files (ctrl+o to expand)
+
+● Now I have all the data needed. Here is the complete audit report:
+
+  ---
+  ML AUDIT REPORT — YBrainy Platform
+
+  Date: 2026-03-19 | Branch: user-management-coursesINTEGRATED
+
+  ---
+  SECTION 1 — FEATURE INVENTORY
+
+  #: 1
+  Feature: DSO2 — ML Course Recommendations
+  Type: sklearn KNN
+  Entry Point: GET /api/ml/recommendations
+  Status: ✅ Wired end-to-end
+  ────────────────────────────────────────
+  #: 2
+  Feature: DSO3 — Course Quality Prediction
+  Type: sklearn Classifier
+  Entry Point: GET /api/ml/course/{id}/quality, POST 
+    /api/ml/courses/quality-batch
+  Status: ✅ Wired end-to-end
+  ────────────────────────────────────────
+  #: 3
+  Feature: DSO1 — Student Conversion Prediction
+  Type: sklearn Classifier
+  Entry Point: GET /api/ml/student/{studentId}/conversion
+  Status: ⚠️ Backend only, no Angular consumer
+  ────────────────────────────────────────
+  #: 4
+  Feature: DSO4 — Demand Forecast (ARIMA)
+  Type: statsmodels ARIMA
+  Entry Point: GET /api/ml/forecast?steps=N
+  Status: ⚠️ Backend only, no Angular consumer
+  ────────────────────────────────────────
+  #: 5
+  Feature: AI Search
+  Type: OpenRouter LLM
+  Entry Point: POST /api/courses/search/ai
+  Status: ✅ Wired end-to-end
+  ────────────────────────────────────────
+  #: 6
+  Feature: AI Learning Path Generator
+  Type: OpenRouter LLM
+  Entry Point: POST /api/learning-paths/generate
+  Status: ✅ Wired end-to-end
+  ────────────────────────────────────────
+  #: 7
+  Feature: AI Quiz Question Generator
+  Type: OpenRouter LLM
+  Entry Point: Direct browser → OpenRouter
+  Status: ✅ Works but architecturally risky
+  ────────────────────────────────────────
+  #: 8
+  Feature: Certificate AI Remark
+  Type: OpenRouter LLM
+  Entry Point: CertificateServiceImpl
+  Status: ⚠️ Backend only, tied to certificate generation
+
+  ---
+  SECTION 2 — DATA FLOWS
+
+  Flask ML Service (http://localhost:5000)
+
+  Angular → /api/ml/** → API Gateway → course-service MLController
+           → MLServiceClient (RestTemplate)
+           → Flask app.py (localhost:5000)
+           → joblib models (models/*.pkl)
+
+  Flask endpoints:
+  - POST /predict/conversion — 6 engagement features → probability + label
+  (DSO1)
+  - POST /recommend — category + level → top-N from synthetic DataFrame (DSO2)
+  - POST /predict/quality — 7 structural features → HIGH/LOW + confidence (DSO3)
+  - GET /forecast/demand?steps=N — ARIMA forecast N steps ahead (DSO4)
+  - GET /health — model load status for all 4 DSOs
+
+  Model files present (11/11):
+  dso1_conversion_model.pkl  dso1_scaler.pkl
+  dso2_knn_model.pkl  dso2_feature_matrix.pkl  dso2_course_df.pkl
+  dso2_scaler.pkl  dso2_le_subject.pkl  dso2_le_level.pkl
+  dso3_quality_model.pkl  dso3_scaler.pkl
+  dso4_arima_model.pkl
+
+  OpenRouter LLM (stepfun/step-3.5-flash:free)
+
+  Server-side calls (via AiSearchServiceImpl, LearningPathServiceImpl, 
+  CertificateServiceImpl):
+  Angular → API Gateway → course-service Service
+           → RestTemplate → https://openrouter.ai/api/v1/chat/completions
+           → JSON parsing → DB read/write → response
+
+  Client-side direct call (backoffice AI quiz generator):
+  courses.html aiGenerateBtn
+  → fetch('https://openrouter.ai/api/v1/chat/completions', key from
+  localStorage)
+  → parse JSON response
+  → POST /api/quizzes/{quizId}/questions (via authFetch)
+
+  ---
+  SECTION 3 — WORKING vs BROKEN
+
+  ┌──────────────────┬─────────────────┬───────────────────────────────────┐
+  │     Feature      │    Working?     │               Notes               │
+  ├──────────────────┼─────────────────┼───────────────────────────────────┤
+  │ DSO2             │ ✅ If Flask     │ Loads on CoursesComponent init;   │
+  │ Recommendations  │ running         │ uses enrollment to pick category  │
+  ├──────────────────┼─────────────────┼───────────────────────────────────┤
+  │ DSO3 Quality     │ ✅ If Flask     │ Batch call after every page load; │
+  │ Badge            │ running         │  shown as badge on course cards   │
+  ├──────────────────┼─────────────────┼───────────────────────────────────┤
+  │                  │ ✅ If           │ aiSearchMode toggle; shows        │
+  │ AI Search        │ OpenRouter key  │ results inline on courses page    │
+  │                  │ valid           │                                   │
+  ├──────────────────┼─────────────────┼───────────────────────────────────┤
+  │                  │ ✅ If           │ /learning-paths page; save +      │
+  │ AI Learning Path │ OpenRouter key  │ Stripe enroll works               │
+  │                  │ valid           │                                   │
+  ├──────────────────┼─────────────────┼───────────────────────────────────┤
+  │ AI Quiz          │ ✅ Functional   │ Direct browser fetch; key from    │
+  │ Generator        │                 │ localStorage                      │
+  ├──────────────────┼─────────────────┼───────────────────────────────────┤
+  │ DSO1 Conversion  │ ⚠️ Dead code    │ Endpoint exists, no component     │
+  │                  │                 │ calls it                          │
+  ├──────────────────┼─────────────────┼───────────────────────────────────┤
+  │ DSO4 Forecast    │ ⚠️ Dead code    │ Endpoint exists, no component     │
+  │                  │                 │ calls it                          │
+  ├──────────────────┼─────────────────┼───────────────────────────────────┤
+  │ Quiz score in    │ ⚠️ Stubbed null │ getBestQuizScore() returns null   │
+  │ certs            │                 │ after quiz-service extraction     │
+  ├──────────────────┼─────────────────┼───────────────────────────────────┤
+  │ Flask startup    │ ⚠️ Manual       │ No Eureka registration; must run  │
+  │                  │                 │ start.bat separately              │
+  └──────────────────┴─────────────────┴───────────────────────────────────┘
+
+  ---
+  SECTION 4 — ML SERVICE DETAILS
+
+  Location: C:\Users\azizs\OneDrive\Desktop\YBRAINY\ML-Service\
+
+  Stack (requirements.txt):
+  flask==3.0.3
+  flask-cors==4.0.0
+  scikit-learn==1.5.1
+  joblib==1.4.2
+  numpy==1.26.4
+  pandas==2.2.2
+  statsmodels==0.14.2
+
+  Startup: python app.py or start.bat → binds 0.0.0.0:5000
+
+  DSO2 critical detail: The /recommend endpoint uses dso2_course_df.pkl — a
+  synthetic/offline dataset loaded at startup. It does not query the live
+  ybrainy_courses MySQL database. Recommendations will never match actual
+  courses a student can enroll in via the platform.
+
+  DSO3 inputs required by Spring backend (built from course entity fields):
+  numLectures, contentDuration, lessonTypeVariety, pctVideoLessons,
+  numLessons, certEncoded, levelEncoded
+
+  Fallback behavior in MLServiceClient.java: All 4 methods catch Exception and
+  return safe default values (empty lists, null, etc.) — Flask going down does
+  not crash Spring.
+
+  ---
+  SECTION 5 — OPENROUTER USAGE
+
+  Model: stepfun/step-3.5-flash:free (all 3 server-side features)
+
+  API key location — TWO hardcoded instances:
+
+  ┌────────────────────────────────────┬─────┬──────────────────────────────┐
+  │              Location              │ Lin │           Context            │
+  │                                    │  e  │                              │
+  ├────────────────────────────────────┼─────┼──────────────────────────────┤
+  │ course-service/src/main/resources/ │ ~li │ openrouter.api.key=sk-or-v1- │
+  │ application.properties             │ ne  │ 7747...                      │
+  ├────────────────────────────────────┼─────┼──────────────────────────────┤
+  │ angular/angular-app/src/assets/bac │     │ localStorage.setItem('ybrain │
+  │ koffice/courses.html               │ 42  │ y_openrouter_key',           │
+  │                                    │     │ 'sk-or-v1-7747...')          │
+  └────────────────────────────────────┴─────┴──────────────────────────────┘
+
+  The backoffice key is publicly visible — any user who opens DevTools →
+  Application → LocalStorage sees it. The HTML source itself contains the
+  default value before it even hits localStorage.
+
+  ---
+  SECTION 6 — ANGULAR ML INTEGRATION
+
+  CourseApiService ML methods:
+
+  ┌────────────────────────────────┬─────┬─────────────────────────────────┐
+  │             Method             │ HTT │            Endpoint             │
+  │                                │  P  │                                 │
+  ├────────────────────────────────┼─────┼─────────────────────────────────┤
+  │ getMLRecommendations(category, │ GET │ /api/ml/recommendations         │
+  │  level, topN)                  │     │                                 │
+  ├────────────────────────────────┼─────┼─────────────────────────────────┤
+  │ getCourseQualityBatch(courseId │ POS │ /api/ml/courses/quality-batch   │
+  │ s[])                           │ T   │                                 │
+  ├────────────────────────────────┼─────┼─────────────────────────────────┤
+  │ aiSearch(query)                │ POS │ /api/courses/search/ai          │
+  │                                │ T   │                                 │
+  ├────────────────────────────────┼─────┼─────────────────────────────────┤
+  │ generateLearningPath(studentId │ POS │ /api/learning-paths/generate    │
+  │ , goal)                        │ T   │                                 │
+  ├────────────────────────────────┼─────┼─────────────────────────────────┤
+  │ saveLearningPath(path,         │ POS │ /api/learning-paths/save        │
+  │ whyJson)                       │ T   │                                 │
+  ├────────────────────────────────┼─────┼─────────────────────────────────┤
+  │ enrollInPath(pathId,           │ POS │ /api/learning-paths/{pathId}/en │
+  │ studentId)                     │ T   │ roll                            │
+  └────────────────────────────────┴─────┴─────────────────────────────────┘
+
+  Components consuming ML:
+
+  ┌─────────────────────────────┬────────────────────────────────────────────┐
+  │          Component          │               Features Used                │
+  ├─────────────────────────────┼────────────────────────────────────────────┤
+  │ CoursesComponent            │ DSO2 Recommendations (overlay), DSO3       │
+  │                             │ Quality badges, AI Search                  │
+  ├─────────────────────────────┼────────────────────────────────────────────┤
+  │ AiLearningPathPageComponent │ AI Learning Path generate + save + enroll  │
+  ├─────────────────────────────┼────────────────────────────────────────────┤
+  │ courses.html (backoffice)   │ AI Quiz Question Generator                 │
+  └─────────────────────────────┴────────────────────────────────────────────┘
+
+  DSO2 recommendation strategy (CoursesComponent.loadMLRecommendations):
+  1. Get student enrollments → take first enrolled courseId
+  2. Fetch that course to get its category + level
+  3. Call getMLRecommendations(category, level, 5)
+  4. If unauthenticated (userId = 0): defaults to PROGRAMMING / BEGINNER
+
+  ---
+  SECTION 7 — INTEGRATION GAPS
+
+  ┌─────────────┬──────────┬────────────────────────────────────────────────┐
+  │     Gap     │ Severity │                  Description                   │
+  ├─────────────┼──────────┼────────────────────────────────────────────────┤
+  │ DSO2        │          │ Flask recommendations come from a pkl          │
+  │ synthetic   │ HIGH     │ DataFrame, never from the real course DB.      │
+  │ data        │          │ Students see suggestions they may not be able  │
+  │             │          │ to enroll in                                   │
+  ├─────────────┼──────────┼────────────────────────────────────────────────┤
+  │ API key in  │ HIGH     │ OpenRouter key hardcoded in backoffice HTML    │
+  │ HTML source │          │ line 42 — visible to all browser users         │
+  ├─────────────┼──────────┼────────────────────────────────────────────────┤
+  │ Direct      │          │ AI quiz generator bypasses gateway, auth, rate │
+  │ browser →   │ MEDIUM   │  limiting, and error logging                   │
+  │ OpenRouter  │          │                                                │
+  ├─────────────┼──────────┼────────────────────────────────────────────────┤
+  │ Flask not   │          │ Spring ml.service.url=http://localhost:5000 is │
+  │ in Eureka   │ MEDIUM   │  hardcoded — breaks on any deployment beyond   │
+  │             │          │ localhost                                      │
+  ├─────────────┼──────────┼────────────────────────────────────────────────┤
+  │ DSO1 + DSO4 │ LOW      │ Two Flask models deployed and loaded, two      │
+  │  dead code  │          │ Spring endpoints exist, but nothing calls them │
+  ├─────────────┼──────────┼────────────────────────────────────────────────┤
+  │ Quiz score  │          │ Post-extraction: getBestQuizScore() returns    │
+  │ stubbed     │ LOW      │ null, so certificate AI remarks may omit quiz  │
+  │ null        │          │ performance                                    │
+  ├─────────────┼──────────┼────────────────────────────────────────────────┤
+  │ Flask       │          │ No Eureka health check integration; if Flask   │
+  │ manual      │ LOW      │ dies, Spring silently returns defaults         │
+  │ startup     │          │                                                │
+  └─────────────┴──────────┴────────────────────────────────────────────────┘
+
+  ---
+  SECTION 8 — FLASK → SPRING FEATURE MATRIX
+
+  Flask Endpoint: POST /predict/conversion
+  Spring Endpoint: GET /api/ml/student/{id}/conversion
+  MLController Method: getStudentConversion()
+  Angular Call: ❌ None
+  Visible to User: ❌ No
+  ────────────────────────────────────────
+  Flask Endpoint: POST /recommend
+  Spring Endpoint: GET /api/ml/recommendations
+  MLController Method: getRecommendations()
+  Angular Call: ✅ getMLRecommendations()
+  Visible to User: ✅ Overlay panel
+  ────────────────────────────────────────
+  Flask Endpoint: POST /predict/quality
+  Spring Endpoint: GET /api/ml/course/{id}/quality + POST 
+    /api/ml/courses/quality-batch
+  MLController Method: getCourseQuality() / getQualityBatch()
+  Angular Call: ✅ getCourseQualityBatch()
+  Visible to User: ✅ Quality badge
+  ────────────────────────────────────────
+  Flask Endpoint: GET /forecast/demand
+  Spring Endpoint: GET /api/ml/forecast
+  MLController Method: getForecast()
+  Angular Call: ❌ None
+  Visible to User: ❌ No
+
+  ---
+  SECTION 9 — PRIORITY FIXES (Scorecard)
+
+  Priority: 🔴 P1
+  Fix: Move OpenRouter key out of HTML (backoffice line 42) — use env var or
+    server-side proxy
+  Effort: Low
+  Impact: Security
+  ────────────────────────────────────────
+  Priority: 🔴 P1
+  Fix: Move OpenRouter key out of application.properties — use
+    ${OPENROUTER_API_KEY} env var
+  Effort: Low
+  Impact: Security
+  ────────────────────────────────────────
+  Priority: 🟠 P2
+  Fix: Route AI quiz generation through a Spring endpoint instead of direct
+    browser → OpenRouter
+  Effort: Medium
+  Impact: Security + Audit trail
+  ────────────────────────────────────────
+  Priority: 🟠 P2
+  Fix: Make Flask URL configurable (${ML_SERVICE_URL:http://localhost:5000}) for
+
+    deployment
+  Effort: Low
+  Impact: DevOps
+  ────────────────────────────────────────
+  Priority: 🟡 P3
+  Fix: Connect DSO2 to live course DB — after recommendation, map course titles
+    to real courseId via DB lookup
+  Effort: High
+  Impact: Correctness
+  ────────────────────────────────────────
+  Priority: 🟡 P3
+  Fix: Implement quiz score cross-service call in CertificateServiceImpl — call
+    quiz-service /api/quizzes/{quizId}/leaderboard or a dedicated endpoint
+  Effort: Medium
+  Impact: Feature completeness
+  ────────────────────────────────────────
+  Priority: 🟢 P4
+  Fix: Surface DSO1 conversion scores in student dashboard
+  Effort: Medium
+  Impact: New feature
+  ────────────────────────────────────────
+  Priority: 🟢 P4
+  Fix: Surface DSO4 demand forecast in backoffice analytics
+  Effort: Medium
+  Impact: New feature
+  ────────────────────────────────────────
+  Priority: 🟢 P4
+  Fix: Add Flask health check poll at gateway startup to surface GET /health
+    results in Spring actuator
+  Effort: Low
+  Impact: Observability
+
+  ---
+  Summary scorecard:
+
+  ┌───────────────────────────┬─────────────────────────────────────────┐
+  │         Category          │                  Score                  │
+  ├───────────────────────────┼─────────────────────────────────────────┤
+  │ Flask ML models loaded    │ 4/4 ✅                                  │
+  ├───────────────────────────┼─────────────────────────────────────────┤
+  │ Flask → Spring wired      │ 4/4 ✅                                  │
+  ├───────────────────────────┼─────────────────────────────────────────┤
+  │ Spring → Angular wired    │ 2/4 ✅ (DSO1, DSO4 not surfaced)        │
+  ├───────────────────────────┼─────────────────────────────────────────┤
+  │ OpenRouter features wired │ 3/3 ✅                                  │
+  ├───────────────────────────┼─────────────────────────────────────────┤
+  │ Security posture          │ ⚠️ Key exposed in 2 places              │
+  ├───────────────────────────┼─────────────────────────────────────────┤
+  │ Production readiness      │ ⚠️ localhost URLs, manual Flask startup │
+  ├───────────────────────────┼─────────────────────────────────────────┤
+  │ Data correctness          │ ⚠️ DSO2 synthetic data mismatch         │
+  └───────────────────────────┴─────────────────────────────────────────┘
+
+✻ Crunched for 10m 10s
+
+❯ Do NOT modify anything. Read-only audit.                                      
+                                                                                
+STEP 1 — Show DSO1 and DSO4 endpoint responses:                                 
+                                                                                
+Run these curl commands and show full output:                                   
+                                                                                
+curl -s "http://localhost:8082/api/ml/student/1/conversion"                     
+                                                                                
+curl -s "http://localhost:8082/api/ml/forecast?steps=6"                         
+                                                                                
+STEP 2 — Show current student dashboard component:                              
+                                                                                
+Read this file completely:                                                      
+C:\Users\azizs\OneDrive\Desktop\PIDEV-YBrainy-E-leraning-certifications-Platfor 
+m-UserManagelent\angular\angular-app\src\app\frontoffice\pages\student-dashboar 
+d\student-dashboard.component.ts                                                
+                                                                                
+Also show:                                                                      
+student-dashboard.component.html (first 80 lines)                               
+                                                                                
+STEP 3 — Show backoffice analytics:                                             
+                                                                                
+grep -n "analytics\|forecast\|chart\|stat\|revenue\|enrollment"                 
+"C:\Users\azizs\OneDrive\Desktop\PIDEV-YBrainy-E-leraning-certifications-Platfo 
+rm-UserManagelent\angular\angular-app\src\assets\backoffice\courses.html" |     
+head -30                                                                        
+                                                                                
+Also show the MLController.java from Course service:                            
+find C:\Users\azizs\OneDrive\Desktop\YBRAINY\Course\tp-foyer\src -name          
+"MLController.java"                                                             
+Read that file completely.                                                      
+                                                                                
+Show everything, no summarizing.                                                
+
+● Bash(curl -s "http://localhost:8082/api/ml/student/1/conversion")
+  ⎿  {
+       "avgCompletionRate": 33,
+       "conversionProbability": 0.0453,
+     … +5 lines (ctrl+o to expand)
+
+  Searched for 2 patterns, read 3 files (ctrl+o to expand)
+
+● ---
+  STEP 1 — DSO1 and DSO4 Live Responses
+
+  curl -s "http://localhost:8082/api/ml/student/1/conversion"
+  {
+    "avgCompletionRate": 33,
+    "conversionProbability": 0.0453,
+    "percentage": 4.5,
+    "totalEnrollments": 3,
+    "paidEnrollments": 0,
+    "conversionLabel": "LOW"
+  }
+
+  curl -s "http://localhost:8082/api/ml/forecast?steps=6"
+  {
+    "forecastSteps": 6,
+    "predictedDemand": [1185.04, 1199.54, 1214.04, 1228.54, 1243.05, 1257.55],
+    "confidenceIntervals": [
+      [1164.40, 1205.68],
+      [1170.08, 1229.00],
+      [1177.64, 1250.45],
+      [1186.14, 1270.95],
+      [1195.22, 1290.87],
+      [1204.71, 1310.38]
+    ]
+  }
+
+  Both endpoints are live and returning real data. Flask is running. Student 1
+  has 3 enrollments, 0 paid, 33% avg completion → 4.5% conversion probability
+  (LOW). Forecast is a steadily rising ARIMA trend, ~14 units/step.
+
+  ---
+  STEP 2 — Student Dashboard Component
+
+  student-dashboard.component.ts (full, 87 lines above)
+
+  student-dashboard.component.html (lines 1–80):
+
+  <div class="sd-page">
+
+    <!-- Header -->
+    <div class="sd-header">
+      <h1>My Learning Dashboard</h1>
+      <p>Track your progress, certificates, and learning journey.</p>
+    </div>
+
+    <!-- Skeleton while loading -->
+    <ng-container *ngIf="loading">
+      <div class="sd-skeleton">
+        <div class="sk-stats">
+          <div class="sk-card-big shimmer"></div>
+          ...
+        </div>
+        <div class="sk-grid">
+          <div class="sk-card shimmer"></div>
+          ...
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Dashboard content -->
+    <ng-container *ngIf="!loading && dashboard">
+
+      <!-- Stat cards -->
+      <div class="sd-stats">
+        <div class="stat-card enrolled">
+          <div class="stat-icon">📚</div>
+          <div class="stat-number">{{ dashboard.totalEnrolled }}</div>
+          <div class="stat-label">Enrolled Courses</div>
+        </div>
+        <div class="stat-card completed">
+          <div class="stat-icon">🏆</div>
+          <div class="stat-number">{{ dashboard.totalCompleted }}</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card inprogress">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-number">{{ dashboard.totalInProgress }}</div>
+          <div class="stat-label">In Progress</div>
+        </div>
+        <div class="stat-card certs">
+          <div class="stat-icon">🎓</div>
+          <div class="stat-number">{{ dashboard.totalCertificates }}</div>
+          <div class="stat-label">Certificates</div>
+        </div>
+      </div>
+
+      <!-- Average progress bar -->
+      <div class="sd-avg-bar">
+        <span>Overall Progress</span>
+        <div class="avg-bar-track">
+          <div class="avg-bar-fill" 
+  [style.width.%]="dashboard.averageProgress"></div>
+        </div>
+        <span>{{ dashboard.averageProgress | number:'1.0-0' }}%</span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="sd-tabs">
+        <button class="tab-btn" [class.active]="activeTab === 'all'"
+                (click)="activeTab = 'all'">
+          All Courses ({{ dashboard.totalEnrolled }})
+        </button>
+        <button class="tab-btn" [class.active]="activeTab === 'active'"
+                (click)="activeTab = 'active'">
+          In Progress ({{ dashboard.totalInProgress }})
+        </button>
+
+  No DSO1 conversion data anywhere in the student dashboard — the component only
+   calls getStudentDashboard() → /api/students/{studentId}/dashboard. The
+  conversionProbability, conversionLabel, and percentage fields from DSO1 are
+  completely absent from the student-facing UI.
+
+  ---
+  STEP 3 — Backoffice Analytics grep
+
+  575:   <p>Jame Smith commented on your status</p>         ← template artifact
+  1357: <div class="bo-stats-bar" id="boStatsBar">
+  1358:   <div class="bo-stat-card">
+  1359:     <div class="bo-stat-icon">📚</div>
+  1361:     <div class="bo-stat-num" id="statTotalCourses">—</div>
+  1362:     <div class="bo-stat-label">Total Courses</div>
+  1365:   <div class="bo-stat-card">
+  1366:     <div class="bo-stat-icon">✅</div>
+  1368:     <div class="bo-stat-num" id="statPublished">—</div>
+  1369:     <div class="bo-stat-label">Published</div>
+  1372:   <div class="bo-stat-card">
+  1373:     <div class="bo-stat-icon">📝</div>
+  1375:     <div class="bo-stat-num" id="statDrafts">—</div>
+  1376:     <div class="bo-stat-label">Drafts</div>
+  1379:   <div class="bo-stat-card">
+  1380:     <div class="bo-stat-icon">👥</div>
+  1382:     <div class="bo-stat-num" id="statCategories">—</div>
+  1383:     <div class="bo-stat-label">Categories</div>
+  1509:   <div class="bo-select" data-icon="bar_chart">
+  1510:     <label>Level</label>
+
+  No forecast, revenue, enrollment, analytics, or chart keywords appear in the 
+  backoffice HTML. The backoffice stats bar (bo-stats-bar) shows only: Total
+  Courses, Published, Drafts, Categories. DSO4 forecast data is not wired
+  anywhere in the backoffice.
+
+  ---
+  STEP 3 — MLController.java (complete, 225 lines above)
+
+  Key observations from the full source:
+
+  DSO1 /student/{studentId}/conversion (lines 45–97):
+  - Pulls real DB data: enrollmentRepository.findByStudentId(),
+  lessonProgressRepository.findByEnrollmentId()
+  - Computes: completionRate (avg of enrollment percentages / 100), timeSpent
+  (sum of timeSpentSeconds / 60), videosWatched (count of COMPLETED lesson
+  progress), paidEnrollments (count with non-blank paymentIntentId)
+  - Passes to Flask: timeSpent, completionRate, 50.0 (hardcoded quizScores), 
+  videosWatched, enrollments.size(), 0.0 (hardcoded forumReads)
+  - quizScores is hardcoded to 50.0 and forumReads is hardcoded to 0.0 — two of
+  six DSO1 features are placeholder constants
+
+  DSO3 quality (lines 101–216):
+  - Single: looks up course + lessons from DB, derives all 7 features from real
+  data
+  - Batch: same logic in a loop, skips on exception per course; no parallel
+  processing
+  - System.out.println debug logging left in production code (lines 104, 107,
+  141–147, 154, 157–158, 213)
+
+  DSO4 /forecast (lines 220–224):
+  - One-liner passthrough to mlClient.getForecast(steps) — no Spring-side data
+  enrichment

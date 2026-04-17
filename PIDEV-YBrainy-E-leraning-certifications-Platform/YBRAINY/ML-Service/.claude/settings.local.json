@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python export_datasets.py)",
+      "Bash(python -c ':*)",
+      "Bash(python -c \"pass\")",
+      "Bash(python3 -c ':*)",
+      "Bash(py --version)",
+      "Bash(python3:*)",
+      "Bash(python:*)"
+    ]
+  }
+}

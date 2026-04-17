@@ -1,0 +1,45 @@
+server:
+  port: ${FORUM_USER_PORT:8191}
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/forum_users?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    connection-timeout: 5000
+    listener:
+      simple:
+        missing-queues-fatal: false
+        retry:
+          enabled: true
+          initial-interval: 5000
+          max-attempts: 3
+          multiplier: 2.0
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 105MB
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${YBRAINY_EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: false
+    hostname: localhost
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

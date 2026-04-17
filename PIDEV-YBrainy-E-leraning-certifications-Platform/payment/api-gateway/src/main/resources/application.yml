@@ -1,0 +1,34 @@
+server:
+  port: 8091
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: cart-service
+          uri: lb://cart-service
+          predicates:
+            - Path=/api/cart/**
+        - id: scraper-service
+          uri: lb://scraper-service
+          predicates:
+            - Path=/api/scraper/**
+        - id: finance-service
+          uri: lb://finance-service
+          predicates:
+            - Path=/api/finance/**
+        - id: payment-service
+          uri: lb://payment-service
+          predicates:
+            - Path=/api/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
