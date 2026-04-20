@@ -9,7 +9,7 @@ import tn.esprit.inscriptionservice.dto.UserDto;
 import java.util.List;
 import java.util.Optional;
 
-@FeignClient(name = "user-service")
+@FeignClient(name = "breadandbutteruser")
 public interface UserClient {
 
     @GetMapping("/User/{id}")
@@ -34,7 +34,7 @@ public interface UserClient {
 ///**
 // * Feign client that delegates user queries to user-service.
 // */
-//@FeignClient(name = "user-service")
+//@FeignClient(name = "breadandbutteruser")
 //public interface UserClient {
 //
 //    @GetMapping("/User/ids-by-role")

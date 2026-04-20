@@ -20,6 +20,8 @@ volumes:
   postgres-data:
   mongodb-data:
   rabbitmq-data:
+  course-uploads:
+  lesson-uploads:
 
 services:
 
@@ -157,6 +159,8 @@ services:
       SPRING_RABBITMQ_USERNAME: guest
       SPRING_RABBITMQ_PASSWORD: guest
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      KEYCLOAK_BASE_URL: http://host.docker.internal:9190
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://host.docker.internal:9190/realms/microservices
     depends_on:
       mysql:
         condition: service_healthy
@@ -189,6 +193,9 @@ services:
       SPRING_RABBITMQ_PASSWORD: guest
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
       SPRING_CONFIG_IMPORT: "optional:configserver:http://config-server:8888"
+      FILE_UPLOAD_DIR: /app/uploads
+    volumes:
+      - course-uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -239,6 +246,9 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ""
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      FILE_UPLOAD_DIR: /app/uploads
+    volumes:
+      - lesson-uploads:/app/uploads
     depends_on:
       mysql:
         condition: service_healthy
@@ -638,8 +648,14 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ""
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: "5672"
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
     depends_on:
       mysql:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       eureka:
         condition: service_healthy
@@ -659,8 +675,14 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ""
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: "5672"
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
     depends_on:
       mysql:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       eureka:
         condition: service_healthy
@@ -701,8 +723,14 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ""
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: "5672"
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
     depends_on:
       mysql:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
       eureka:
         condition: service_healthy

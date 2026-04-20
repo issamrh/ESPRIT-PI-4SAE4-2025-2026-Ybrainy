@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(
         name = "${services.user.name:breadandbutteruser}",
-        url = "${services.user.url:http://localhost:8899}",
         path = "/api/users/internal",
         contextId = "personalityUserClient"
 )

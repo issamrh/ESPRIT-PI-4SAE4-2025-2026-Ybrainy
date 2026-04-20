@@ -1,300 +1,46 @@
 {
-  "/api/personalities": {
-    "target": "http://localhost:8096",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/behaviors": {
-    "target": "http://localhost:8096",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/partnerships": {
-    "target": "http://localhost:8081",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/offers": {
-    "target": "http://localhost:8187",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/applications": {
-    "target": "http://localhost:8187",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/generate-application": {
-    "target": "http://localhost:8187",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/auth": {
+  "/api": {
     "target": "http://localhost:8088",
     "secure": false,
     "changeOrigin": true,
-    "logLevel": "debug"
+    "logLevel": "debug",
+    "pathRewrite": {}
   },
-  "/api/users": {
+  "/Event": {
     "target": "http://localhost:8088",
     "secure": false,
     "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/warnings": {
-    "target": "http://localhost:8088",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/ban-appeals": {
-    "target": "http://localhost:8088",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/tracking": {
-    "target": "http://localhost:8088",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/courses": {
-    "target": "http://localhost:8088",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/quizzes": {
-    "target": "http://localhost:8088",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/enrollments": {
-    "target": "http://localhost:8088",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/learning-paths": {
-    "target": "http://localhost:8088",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/ml": {
-    "target": "http://localhost:8088",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/certificates": {
-    "target": "http://localhost:8088",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/notes": {
-    "target": "http://localhost:8086",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/lessons": {
-    "target": "http://localhost:8084",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/instructor": {
-    "target": "http://localhost:8082",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/students": {
-    "target": "http://localhost:8082",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/appeals": {
-    "target": "http://localhost:8189",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/bans": {
-    "target": "http://localhost:8189",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/events": {
-    "target": "http://localhost:9001",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/recommendations": {
-    "target": "http://localhost:9001",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/inscriptions": {
-    "target": "http://localhost:9002",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/event-users": {
-    "target": "http://localhost:9003",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/feedbacks": {
-    "target": "http://localhost:9004",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/predict": {
-    "target": "http://localhost:5001",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/payments": {
-    "target": "http://localhost:8082",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/packs": {
-    "target": "http://localhost:8095",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/cart": {
-    "target": "http://localhost:8954",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/finance": {
-    "target": "http://localhost:8995",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/categories": {
-    "target": "http://localhost:8180",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/wishlist": {
-    "target": "http://localhost:8181",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/ai": {
-    "target": "http://localhost:8181",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/dashboard": {
-    "target": "http://localhost:8185",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/forum-users": {
-    "target": "http://localhost:8185",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/threads": {
-    "target": "http://localhost:8181",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/posts": {
-    "target": "http://localhost:8182",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/comments": {
-    "target": "http://localhost:8183",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/messages": {
-    "target": "http://localhost:8184",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/api/notifications": {
-    "target": "http://localhost:8185",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
-  "/ws": {
-    "target": "http://localhost:8184",
-    "secure": false,
-    "changeOrigin": true,
-    "ws": true,
     "logLevel": "debug"
   },
   "/Inscription": {
-    "target": "http://localhost:9002",
+    "target": "http://localhost:8088",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/Feedback": {
-    "target": "http://localhost:9004",
+    "target": "http://localhost:8088",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/User": {
-    "target": "http://localhost:9003",
+    "target": "http://localhost:8088",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
-  "/event-api": {
-    "target": "http://localhost:9001",
+  "/uploads": {
+    "target": "http://localhost:8088",
     "secure": false,
     "changeOrigin": true,
-    "logLevel": "debug",
-    "pathRewrite": {
-      "^/event-api": "/api"
-    }
+    "logLevel": "debug"
   },
-  "/Event": {
-    "target": "http://localhost:9001",
+  "/ws": {
+    "target": "http://localhost:8088",
     "secure": false,
     "changeOrigin": true,
+    "ws": true,
     "logLevel": "debug"
   }
 }
