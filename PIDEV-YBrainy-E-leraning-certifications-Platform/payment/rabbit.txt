@@ -1,6 +1,0 @@
-cd "D:\4eme\project pi\PIDEV-YBrainy-E-leraning-certifications-Platform\payment"
-powershell.exe -ExecutionPolicy Bypass -File .\run-rabbitmq.ps1
-
-
-http://localhost:15672
-guest / guest
