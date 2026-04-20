@@ -6,7 +6,7 @@ import { UserProfileResponse, XpEventResponse } from '../models/forum.models';
 
 @Injectable({ providedIn: 'root' })
 export class UserApiService {
-  private readonly base = '/api/users';
+  private readonly base = '/api/forum-users';
 
   constructor(private http: HttpClient) {}
 
