@@ -40,6 +40,13 @@ public class UserController {
     private final AvatarStorageService avatarStorageService;
 
     /** Internal service-to-service lookup — no JWT required. Gateway permits this path. */
+    @GetMapping("/internal/by-keycloak/{keycloakId}")
+    public ResponseEntity<InternalUserResponse> getUserByKeycloakId(@PathVariable String keycloakId) {
+        return userService.getInternalUserByKeycloakId(keycloakId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/internal/{id}")
     public ResponseEntity<InternalUserResponse> getUserByIdInternal(@PathVariable Long id) {
         try {

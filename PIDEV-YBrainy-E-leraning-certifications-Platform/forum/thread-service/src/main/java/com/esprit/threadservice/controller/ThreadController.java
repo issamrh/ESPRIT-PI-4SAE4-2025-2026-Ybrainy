@@ -51,16 +51,17 @@ public class ThreadController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ThreadResponse> create(
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
             @RequestParam String title,
             @RequestParam String body,
-            @RequestParam Long authorId,
+            @RequestParam(required = false) Long authorId,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) MultipartFile image,
             @RequestParam(required = false) MultipartFile file) throws IOException {
         ThreadRequest request = new ThreadRequest();
         request.setTitle(title);
         request.setBody(body);
-        request.setAuthorId(authorId);
+        request.setAuthorId(xUserId > 0 ? xUserId : authorId);
         request.setCategoryId(categoryId);
         MultipartFile media = image != null ? image : file;
         if (media != null && !media.isEmpty()) {
@@ -73,39 +74,56 @@ public class ThreadController {
     @PutMapping("/{id}")
     public ResponseEntity<ThreadResponse> update(
             @PathVariable Long id,
-            @RequestParam Long userId,
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
+            @RequestParam(required = false) Long userId,
             @RequestBody ThreadRequest request) {
-        return ResponseEntity.ok(threadService.update(id, userId, request));
+        long effectiveUserId = xUserId > 0 ? xUserId : (userId != null ? userId : 0L);
+        return ResponseEntity.ok(threadService.update(id, effectiveUserId, request));
     }
 
     @PatchMapping("/{id}/lock")
     public ResponseEntity<ThreadResponse> lock(
-            @PathVariable Long id, @RequestParam Long userId) {
-        return ResponseEntity.ok(threadService.updateStatus(id, userId, ThreadStatus.LOCKED));
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
+            @RequestParam(required = false) Long userId) {
+        long effectiveUserId = xUserId > 0 ? xUserId : (userId != null ? userId : 0L);
+        return ResponseEntity.ok(threadService.updateStatus(id, effectiveUserId, ThreadStatus.LOCKED));
     }
 
     @PatchMapping("/{id}/unlock")
     public ResponseEntity<ThreadResponse> unlock(
-            @PathVariable Long id, @RequestParam Long userId) {
-        return ResponseEntity.ok(threadService.updateStatus(id, userId, ThreadStatus.OPEN));
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
+            @RequestParam(required = false) Long userId) {
+        long effectiveUserId = xUserId > 0 ? xUserId : (userId != null ? userId : 0L);
+        return ResponseEntity.ok(threadService.updateStatus(id, effectiveUserId, ThreadStatus.OPEN));
     }
 
     @PatchMapping("/{id}/close")
     public ResponseEntity<ThreadResponse> close(
-            @PathVariable Long id, @RequestParam Long userId) {
-        return ResponseEntity.ok(threadService.updateStatus(id, userId, ThreadStatus.CLOSED));
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
+            @RequestParam(required = false) Long userId) {
+        long effectiveUserId = xUserId > 0 ? xUserId : (userId != null ? userId : 0L);
+        return ResponseEntity.ok(threadService.updateStatus(id, effectiveUserId, ThreadStatus.CLOSED));
     }
 
     @PatchMapping("/{id}/reopen")
     public ResponseEntity<ThreadResponse> reopen(
-            @PathVariable Long id, @RequestParam Long userId) {
-        return ResponseEntity.ok(threadService.updateStatus(id, userId, ThreadStatus.OPEN));
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
+            @RequestParam(required = false) Long userId) {
+        long effectiveUserId = xUserId > 0 ? xUserId : (userId != null ? userId : 0L);
+        return ResponseEntity.ok(threadService.updateStatus(id, effectiveUserId, ThreadStatus.OPEN));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
-            @PathVariable Long id, @RequestParam Long userId) {
-        threadService.delete(id, userId);
+            @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
+            @RequestParam(required = false) Long userId) {
+        long effectiveUserId = xUserId > 0 ? xUserId : (userId != null ? userId : 0L);
+        threadService.delete(id, effectiveUserId);
         return ResponseEntity.noContent().build();
     }
 }
