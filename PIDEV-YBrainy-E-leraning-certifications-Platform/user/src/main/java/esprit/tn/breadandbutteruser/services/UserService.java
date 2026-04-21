@@ -1180,4 +1180,10 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found: " + userId));
         return InternalUserResponse.fromUser(user);
     }
+
+    @Transactional(readOnly = true)
+    public Optional<InternalUserResponse> getInternalUserByKeycloakId(String keycloakId) {
+        return userRepository.findByKeycloakUserId(keycloakId)
+                .map(InternalUserResponse::fromUser);
+    }
 }

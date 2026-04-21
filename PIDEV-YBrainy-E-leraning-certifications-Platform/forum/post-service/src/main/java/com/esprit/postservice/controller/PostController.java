@@ -48,14 +48,15 @@ public class PostController {
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> create(
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
             @RequestParam String body,
-            @RequestParam Long authorId,
+            @RequestParam(required = false) Long authorId,
             @RequestParam Long threadId,
             @RequestParam(required = false) MultipartFile image,
             @RequestParam(required = false) MultipartFile file) throws IOException {
         PostRequest request = new PostRequest();
         request.setBody(body);
-        request.setAuthorId(authorId);
+        request.setAuthorId(xUserId > 0 ? xUserId : authorId);
         request.setThreadId(threadId);
         MultipartFile media = image != null ? image : file;
         if (media != null && !media.isEmpty()) {
@@ -68,14 +69,15 @@ public class PostController {
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<PostResponse> update(
             @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
             @RequestParam String body,
-            @RequestParam Long authorId,
+            @RequestParam(required = false) Long authorId,
             @RequestParam Long threadId,
             @RequestParam(required = false) MultipartFile image,
             @RequestParam(required = false) MultipartFile file) throws IOException {
         PostRequest request = new PostRequest();
         request.setBody(body);
-        request.setAuthorId(authorId);
+        request.setAuthorId(xUserId > 0 ? xUserId : authorId);
         request.setThreadId(threadId);
         MultipartFile media = image != null ? image : file;
         if (media != null && !media.isEmpty()) {
@@ -88,15 +90,19 @@ public class PostController {
     @PatchMapping("/{id}/best-answer")
     public ResponseEntity<PostResponse> markBestAnswer(
             @PathVariable Long id,
-            @RequestParam Long userId) {
-        return ResponseEntity.ok(postService.markBestAnswer(id, userId));
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
+            @RequestParam(required = false) Long userId) {
+        long effectiveUserId = xUserId > 0 ? xUserId : (userId != null ? userId : 0L);
+        return ResponseEntity.ok(postService.markBestAnswer(id, effectiveUserId));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @PathVariable Long id,
-            @RequestParam Long userId) {
-        postService.delete(id, userId);
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
+            @RequestParam(required = false) Long userId) {
+        long effectiveUserId = xUserId > 0 ? xUserId : (userId != null ? userId : 0L);
+        postService.delete(id, effectiveUserId);
         return ResponseEntity.noContent().build();
     }
 }

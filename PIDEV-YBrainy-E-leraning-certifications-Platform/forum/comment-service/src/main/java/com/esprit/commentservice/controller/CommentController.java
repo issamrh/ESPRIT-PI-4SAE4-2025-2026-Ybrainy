@@ -47,22 +47,29 @@ public class CommentController {
     }
 
     @PostMapping
-    public ResponseEntity<CommentResponse> create(@RequestBody CommentRequest request) {
+    public ResponseEntity<CommentResponse> create(
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
+            @RequestBody CommentRequest request) {
+        if (xUserId > 0) request.setAuthorId(xUserId);
         return ResponseEntity.ok(commentService.create(request));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<CommentResponse> update(
             @PathVariable Long id,
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
             @RequestBody CommentRequest request) {
+        if (xUserId > 0) request.setAuthorId(xUserId);
         return ResponseEntity.ok(commentService.update(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
             @PathVariable Long id,
-            @RequestParam Long userId) {
-        commentService.delete(id, userId);
+            @RequestHeader(value = "X-User-Id", required = false, defaultValue = "0") Long xUserId,
+            @RequestParam(required = false) Long userId) {
+        long effectiveUserId = xUserId > 0 ? xUserId : (userId != null ? userId : 0L);
+        commentService.delete(id, effectiveUserId);
         return ResponseEntity.noContent().build();
     }
 }
