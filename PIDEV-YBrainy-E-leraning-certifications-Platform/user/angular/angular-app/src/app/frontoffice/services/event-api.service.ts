@@ -13,20 +13,42 @@ export interface ImageGenerationResponse {
   generatedByAi: boolean;
 }
 
+export interface EventAnalyticsTrend {
+  currentLabel: string;
+  currentTotal: number;
+  previousLabel: string;
+  previousTotal: number;
+  labels: string[];
+  currentData: number[];
+  previousData: number[];
+}
+
+export interface EventAnalyticsOverview {
+  range: string;
+  labels: string[];
+  eventCounts: number[];
+  registrations: number[];
+  activeEvents: number[];
+}
+
 export interface EventAnalytics {
-  totalEvents: number;
-  upcomingEvents: number;
-  ongoingEvents: number;
-  completedEvents: number;
-  cancelledEvents: number;
-  totalCapacity: number;
-  eventsByType: { [key: string]: number };
+  trend: EventAnalyticsTrend;
+  overview: EventAnalyticsOverview;
 }
 
 export interface EventAssignmentResponse {
   message: string;
   event?: Event;
   studentId?: number;
+}
+
+export interface PendingInscription {
+  idInscription: number;
+  idStudent: number;
+  idEvent: number;
+  eventName: string;
+  dateInscription: string;
+  statut: string;
 }
 
 /**
@@ -91,5 +113,15 @@ export class EventApiService {
 
   assignStudentToEvent(eventId: number, studentId: number): Observable<EventAssignmentResponse> {
     return this.http.post<EventAssignmentResponse>(`${this.base}/${eventId}/assign/${studentId}`, {});
+  }
+
+  // ==================== INSCRIPTIONS ====================
+
+  getPendingInscriptions(): Observable<PendingInscription[]> {
+    return this.http.get<PendingInscription[]>('/Inscription/pending');
+  }
+
+  updateInscriptionStatus(idInscription: number, status: 'CONFIRMEE' | 'ANNULEE'): Observable<void> {
+    return this.http.put<void>(`/Inscription/${idInscription}/status/${status}`, {});
   }
 }

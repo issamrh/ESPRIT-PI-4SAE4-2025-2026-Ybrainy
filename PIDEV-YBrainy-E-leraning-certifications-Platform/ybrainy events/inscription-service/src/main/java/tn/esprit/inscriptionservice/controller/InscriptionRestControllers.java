@@ -209,9 +209,11 @@ public class InscriptionRestControllers {
     ) {}
 
     private String buildStudentName(tn.esprit.inscriptionservice.dto.UserDto student) {
-        String fullName = ((student.prenom() != null ? student.prenom() : "") + " " +
-                (student.nom() != null ? student.nom() : "")).trim();
-        return fullName.isBlank() ? "Student #" + student.idUser() : fullName;
+        String fullName = ((student.firstName() != null ? student.firstName() : "") + " " +
+                (student.lastName() != null ? student.lastName() : "")).trim();
+        return fullName.isBlank()
+                ? (student.username() != null ? student.username() : "Student #" + student.userId())
+                : fullName;
     }
 
     private String buildNotificationTitle(tn.esprit.inscriptionservice.entity.AdminNotification notification) {

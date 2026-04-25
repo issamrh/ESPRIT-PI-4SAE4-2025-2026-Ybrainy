@@ -12,4 +12,5 @@ export const environment = {
   keycloakUrl: 'http://localhost:9190',
   keycloakRealm: 'microservices',
   keycloakClientId: 'angular-client',
+  twelveDataApiKey: 'REPLACE_WITH_YOUR_TWELVE_DATA_API_KEY',
 };

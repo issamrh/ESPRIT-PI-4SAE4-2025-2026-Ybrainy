@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Event, EventStatut, EventType } from '../../../models/event.model';
-import { EventApiService } from '../../../frontoffice/services/event-api.service';
+import { EventApiService, EventAnalytics, PendingInscription } from '../../../frontoffice/services/event-api.service';
 
 @Component({
   selector: 'app-event-list',
@@ -23,6 +23,14 @@ export class EventListComponent implements OnInit {
   filterType = '';
   filterStatus = '';
 
+  analytics: EventAnalytics | null = null;
+  analyticsLoading = false;
+
+  pendingInscriptions: PendingInscription[] = [];
+  pendingLoading = false;
+  pendingError = '';
+  actionBusyId: number | null = null;
+
   readonly eventTypes = Object.values(EventType);
   readonly eventStatuses = Object.values(EventStatut);
 
@@ -30,6 +38,8 @@ export class EventListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadEvents();
+    this.loadAnalytics();
+    this.loadPendingInscriptions();
   }
 
   loadEvents(): void {
@@ -46,6 +56,49 @@ export class EventListComponent implements OnInit {
         console.error(err);
         this.loading = false;
       }
+    });
+  }
+
+  loadAnalytics(): void {
+    this.analyticsLoading = true;
+    this.eventApi.getAnalytics('week').subscribe({
+      next: (data) => { this.analytics = data; this.analyticsLoading = false; },
+      error: () => { this.analyticsLoading = false; }
+    });
+  }
+
+  loadPendingInscriptions(): void {
+    this.pendingLoading = true;
+    this.pendingError = '';
+    this.eventApi.getPendingInscriptions().subscribe({
+      next: (data) => { this.pendingInscriptions = data; this.pendingLoading = false; },
+      error: (err) => {
+        this.pendingError = 'Failed to load pending registrations.';
+        console.error(err);
+        this.pendingLoading = false;
+      }
+    });
+  }
+
+  confirmInscription(inscription: PendingInscription): void {
+    this.actionBusyId = inscription.idInscription;
+    this.eventApi.updateInscriptionStatus(inscription.idInscription, 'CONFIRMEE').subscribe({
+      next: () => {
+        this.pendingInscriptions = this.pendingInscriptions.filter(i => i.idInscription !== inscription.idInscription);
+        this.actionBusyId = null;
+      },
+      error: (err) => { console.error(err); this.actionBusyId = null; }
+    });
+  }
+
+  rejectInscription(inscription: PendingInscription): void {
+    this.actionBusyId = inscription.idInscription;
+    this.eventApi.updateInscriptionStatus(inscription.idInscription, 'ANNULEE').subscribe({
+      next: () => {
+        this.pendingInscriptions = this.pendingInscriptions.filter(i => i.idInscription !== inscription.idInscription);
+        this.actionBusyId = null;
+      },
+      error: (err) => { console.error(err); this.actionBusyId = null; }
     });
   }
 
@@ -110,10 +163,10 @@ export class EventListComponent implements OnInit {
 
   getTypeClass(type: string): string {
     switch (type) {
-      case EventType.WORKSHOP: return 'type-workshop';
-      case EventType.SEMINAR: return 'type-seminar';
-      case EventType.WEBINAR: return 'type-webinar';
-      case EventType.COURSE: return 'type-course';
+      case EventType.WEBINAIRE: return 'type-webinar';
+      case EventType.FORMATION: return 'type-course';
+      case EventType.ATELIER: return 'type-workshop';
+      case EventType.HACKATHON: return 'type-hackathon';
       default: return 'type-default';
     }
   }
@@ -123,5 +176,12 @@ export class EventListComponent implements OnInit {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  get trendDelta(): number {
+    if (!this.analytics?.trend) return 0;
+    const { currentTotal, previousTotal } = this.analytics.trend;
+    if (!previousTotal) return 0;
+    return Math.round(((currentTotal - previousTotal) / previousTotal) * 100);
   }
 }

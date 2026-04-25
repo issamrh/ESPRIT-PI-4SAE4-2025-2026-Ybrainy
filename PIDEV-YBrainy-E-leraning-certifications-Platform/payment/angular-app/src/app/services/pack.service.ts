@@ -11,11 +11,12 @@ import {
   GeneratePackContentRequest,
   GeneratePackContentResponse
 } from '../models/pack.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class PackService {
-  private readonly adminBase = 'http://localhost:8091/api/admin/packs';
-  private readonly publicBase = 'http://localhost:8091/api/packs';
+  private readonly adminBase = `${environment.apiUrl}/admin/packs`;
+  private readonly publicBase = `${environment.apiUrl}/packs`;
 
   constructor(private http: HttpClient) { }
 

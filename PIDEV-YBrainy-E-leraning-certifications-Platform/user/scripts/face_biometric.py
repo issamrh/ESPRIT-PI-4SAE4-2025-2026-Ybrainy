@@ -5,8 +5,9 @@ import sys
 import cv2
 
 
-FACE_DIFF_THRESHOLD = 3000.0
+FACE_DIFF_THRESHOLD = 12000.0
 FACE_SIZE = (100, 100)
+DETECTION_MAX_WIDTH = 640  # downscale before detection — dramatically faster on HD/4K captures
 
 
 def load_cascade(cascade_path):
@@ -26,8 +27,16 @@ def load_image(image_path):
 def extract_face_signature(image_path, cascade_path):
     cascade = load_cascade(cascade_path)
     image = load_image(image_path)
+
+    # Downscale to DETECTION_MAX_WIDTH for fast cascade detection
+    h, w = image.shape[:2]
+    if w > DETECTION_MAX_WIDTH:
+        scale = DETECTION_MAX_WIDTH / w
+        image = cv2.resize(image, (DETECTION_MAX_WIDTH, int(h * scale)), interpolation=cv2.INTER_AREA)
+
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    faces = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5)
+    gray = cv2.equalizeHist(gray)  # normalize lighting before detection
+    faces = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=4)
 
     if len(faces) == 0:
         raise RuntimeError("No face detected")
@@ -74,6 +83,7 @@ def command_match(faces_dir, live_image_path, cascade_path):
     if best_score is not None and best_score < FACE_DIFF_THRESHOLD:
         print(best_hash)
     else:
+        print("", file=sys.stderr) if best_score is None else print(f"[face] best diff={best_score:.1f} threshold={FACE_DIFF_THRESHOLD} — no match", file=sys.stderr)
         print("")
 
 

@@ -20,7 +20,7 @@ export interface ScraperRunStatus {
 export class FinanceService {
 
     private apiUrl = environment.financeApiUrl || 'http://localhost:8093/api/finance';
-    private twelveDataApiKey = '25bff65f25b84c3dbed730c207e431b8';
+    private twelveDataApiKey = environment.twelveDataApiKey;
     private twelveDataApiUrl = 'https://api.twelvedata.com';
 
     constructor(private http: HttpClient) { }

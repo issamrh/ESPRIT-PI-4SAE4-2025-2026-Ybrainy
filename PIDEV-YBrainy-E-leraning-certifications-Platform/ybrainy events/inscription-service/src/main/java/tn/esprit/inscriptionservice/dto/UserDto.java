@@ -1,10 +1,10 @@
 package tn.esprit.inscriptionservice.dto;
 
 public record UserDto(
-        long idUser,
-        String nom,
-        String prenom,
+        Long userId,
+        String username,
         String email,
-        String role
+        String firstName,
+        String lastName
 ) {
 }

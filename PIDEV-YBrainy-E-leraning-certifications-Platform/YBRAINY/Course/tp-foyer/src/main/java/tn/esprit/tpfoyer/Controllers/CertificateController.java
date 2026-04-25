@@ -17,6 +17,17 @@ public class CertificateController {
 
     private final EnrollmentClient enrollmentClient;
 
+    @GetMapping("/{certificateId}")
+    public ResponseEntity<?> getCertificateById(@PathVariable String certificateId) {
+        try {
+            Map<String, Object> cert = enrollmentClient.getByCertificate(certificateId);
+            return ResponseEntity.ok(cert);
+        } catch (Exception e) {
+            return ResponseEntity.status(404)
+                .body(Map.of("error", "Certificate not found: " + certificateId));
+        }
+    }
+
     @GetMapping("/student/{studentId}")
     public ResponseEntity<?> getStudentCertificates(@PathVariable Long studentId) {
         try {

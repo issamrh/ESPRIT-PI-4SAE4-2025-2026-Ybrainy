@@ -172,17 +172,17 @@ public class InscriptionServicesImp implements IInscriptionServices {
         notification.setCreatedAt(LocalDateTime.now());
         notification.setType("WAITLIST_PROMOTION");
         notification.setEventId(event.idEvent());
-        notification.setStudentId(student.idUser());
+        notification.setStudentId(student.userId());
         notification.setTitle("Waitlist promoted");
         notification.setMessage(buildPromotionMessage(student, event));
         adminNotificationRepository.save(notification);
     }
 
     private String buildPromotionMessage(UserDto student, EventDto event) {
-        String studentName = ((student.prenom() != null ? student.prenom() : "") + " " +
-                (student.nom() != null ? student.nom() : "")).trim();
+        String studentName = ((student.firstName() != null ? student.firstName() : "") + " " +
+                (student.lastName() != null ? student.lastName() : "")).trim();
         if (studentName.isBlank()) {
-            studentName = "Student #" + student.idUser();
+            studentName = "Student #" + student.userId();
         }
         String eventName = event.name() != null && !event.name().isBlank()
                 ? event.name()

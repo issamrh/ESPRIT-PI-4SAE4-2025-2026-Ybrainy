@@ -52,7 +52,7 @@ public class InscriptionNotificationEmailService {
     private void sendEmail(UserDto student, EventDto event, Inscription inscription, InscriptionStatut status, boolean fromWaitlist) {
         if (student == null || student.email() == null || student.email().isBlank()) {
             log.warn("Skipping inscription email because student email is missing. studentId={}",
-                    student != null ? student.idUser() : -1);
+                    student != null ? student.userId() : -1);
             return;
         }
 
@@ -320,8 +320,8 @@ public class InscriptionNotificationEmailService {
 
     private String buildStudentName(UserDto student) {
         if (student == null) return "Student";
-        String fullName = (safe(student.prenom(), "") + " " + safe(student.nom(), "")).trim();
-        return fullName.isBlank() ? "Student #" + student.idUser() : fullName;
+        String fullName = (safe(student.firstName(), "") + " " + safe(student.lastName(), "")).trim();
+        return fullName.isBlank() ? "Student #" + student.userId() : fullName;
     }
 
     private String formatDateTime(LocalDateTime value) {
@@ -419,7 +419,7 @@ public class InscriptionNotificationEmailService {
 //    public void sendDecisionEmail(UserDto student, EventDto event, Inscription inscription, InscriptionStatut status) {
 //        if (student == null || student.email() == null || student.email().isBlank()) {
 //            log.warn("Skipping inscription email because student email is missing. studentId={}",
-//                    student != null ? student.idUser() : -1);
+//                    student != null ? student.userId() : -1);
 //            return;
 //        }
 //

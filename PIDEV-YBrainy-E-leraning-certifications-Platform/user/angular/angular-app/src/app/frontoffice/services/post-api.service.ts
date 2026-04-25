@@ -30,11 +30,23 @@ export class PostApiService {
   }
 
   create(input: PostRequest, image?: File | null, file?: File | null): Observable<PostResponse> {
-    return this.http.post<PostResponse>(this.base, input);
+    const fd = new FormData();
+    fd.append('body', input.body ?? '');
+    fd.append('authorId', String(input.authorId ?? ''));
+    fd.append('threadId', String(input.threadId ?? ''));
+    if (image && image.size > 0) fd.append('image', image);
+    if (file  && file.size  > 0) fd.append('file',  file);
+    return this.http.post<PostResponse>(this.base, fd);
   }
 
   update(id: number, input: PostRequest, image?: File | null, file?: File | null): Observable<PostResponse> {
-    return this.http.put<PostResponse>(`${this.base}/${id}`, input);
+    const fd = new FormData();
+    fd.append('body', input.body ?? '');
+    fd.append('authorId', String(input.authorId ?? ''));
+    fd.append('threadId', String(input.threadId ?? ''));
+    if (image && image.size > 0) fd.append('image', image);
+    if (file  && file.size  > 0) fd.append('file',  file);
+    return this.http.put<PostResponse>(`${this.base}/${id}`, fd);
   }
 
   delete(id: number, userId: number): Observable<void> {

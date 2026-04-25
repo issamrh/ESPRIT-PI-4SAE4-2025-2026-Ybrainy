@@ -2,11 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PackCategory, CreatePackCategory, UpdatePackCategory } from '../models/pack-category.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
-  private readonly adminBase = 'http://localhost:8091/api/admin/categories';
-  private readonly publicBase = 'http://localhost:8091/api/categories';
+  private readonly adminBase = `${environment.apiUrl}/admin/categories`;
+  private readonly publicBase = `${environment.apiUrl}/categories`;
 
   constructor(private http: HttpClient) {}
 

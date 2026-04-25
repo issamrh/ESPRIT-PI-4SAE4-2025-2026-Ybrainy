@@ -48,7 +48,7 @@ class ELearningIntelligenceScraper:
         self.js_errors_detected = []
         self.page_load_times = []
 
-        self.output_base_dir = r"D:\4eme\ml\scrap\result"
+        self.output_base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "result")
 
         self.skill_categories = {
             'python': {'weight': 0.95, 'avg_salary_boost': 25000, 'demand': 'very_high'},
@@ -728,7 +728,7 @@ class ELearningIntelligenceScraper:
             logging.info(f"Analyzing Coursera courses for: {query}")
 
             try:
-                with SB(uc=True, test=True, headless=True,
+                with SB(uc=True, test=True, headless=False,
                         ad_block=True, do_not_track=True, incognito=True,
                         agent=random.choice(self.user_agents)) as sb:
 
@@ -857,7 +857,7 @@ class ELearningIntelligenceScraper:
 
             url = f"https://www.reddit.com/r/{subreddit}/top/?t=month"
 
-            with SB(uc=True, headless=True, agent=random.choice(self.user_agents)) as sb:
+            with SB(uc=True, headless=False, agent=random.choice(self.user_agents)) as sb:
                 try:
                     sb.open(url)
                     sb.wait_for_element("h3, [data-testid='post-content']", timeout=20)
@@ -945,7 +945,7 @@ class ELearningIntelligenceScraper:
         logging.info("Analyzing freeCodeCamp for trending tech skills...")
 
         try:
-            with SB(uc=True, headless=True, agent=random.choice(self.user_agents)) as sb:
+            with SB(uc=True, headless=False, agent=random.choice(self.user_agents)) as sb:
                 url = "https://www.freecodecamp.org/news/"
                 sb.open(url)
                 sb.sleep(3)
@@ -1001,7 +1001,7 @@ class ELearningIntelligenceScraper:
             logging.info(f"Analyzing YouTube learning trends for: {topic}")
 
             try:
-                with SB(uc=True, headless=True, agent=random.choice(self.user_agents)) as sb:
+                with SB(uc=True, headless=False, agent=random.choice(self.user_agents)) as sb:
                     search_url = f"https://www.youtube.com/results?search_query={quote_plus(topic + ' tutorial')}"
 
                     sb.open(search_url)

@@ -24,62 +24,40 @@ public class ThreadStatsService {
 
     public ThreadUserStatsDto getStatsForUser(Long userId) {
         List<ForumThread> userThreads = threadRepository.findByAuthorIdOrderByCreatedAtDesc(userId);
-        long threadCount = userThreads.size();
 
-        // Aggregate votes/reactions on all the user's threads
-        long upvotes   = 0, downvotes = 0, likes = 0, dislikes = 0, saves = 0;
-        Long bestId    = null;
+        // Aggregate via targeted DB queries — no full-table scans
+        long upvotes   = voteRepository.countByAuthorIdAndVoteType(userId, VoteType.UPVOTE);
+        long downvotes = voteRepository.countByAuthorIdAndVoteType(userId, VoteType.DOWNVOTE);
+        long likes     = reactionRepository.countByAuthorIdAndReactionType(userId, ReactionType.LIKE);
+        long dislikes  = reactionRepository.countByAuthorIdAndReactionType(userId, ReactionType.DISLIKE);
+        // savesReceived = how many other users saved this user's threads
+        long saves     = wishlistRepository.countSavesReceivedByAuthor(userId);
+
+        // Best thread: highest upvotes among this user's threads
+        Long bestId = null;
         String bestTitle = null;
-        long bestUpvotes = 0;
-        long bestTotalReactions = 0;
-
+        long bestUpvotes = 0, bestTotalReactions = 0;
         for (ForumThread t : userThreads) {
             long u  = voteRepository.countByThreadIdAndVoteType(t.getId(), VoteType.UPVOTE);
             long d  = voteRepository.countByThreadIdAndVoteType(t.getId(), VoteType.DOWNVOTE);
             long l  = reactionRepository.countByThreadIdAndReactionType(t.getId(), ReactionType.LIKE);
             long di = reactionRepository.countByThreadIdAndReactionType(t.getId(), ReactionType.DISLIKE);
-            long wl = wishlistRepository.findByUserId(userId).stream()
-                    .filter(w -> w.getThread().getId().equals(t.getId())).count();
-
-            upvotes   += u;
-            downvotes += d;
-            likes     += l;
-            dislikes  += di;
-            saves     += wl;
-
-            if (u > bestUpvotes) {
-                bestUpvotes         = u;
-                bestTotalReactions  = u + d + l + di;
-                bestId              = t.getId();
-                bestTitle           = t.getTitle();
+            if (bestId == null || u > bestUpvotes) {
+                bestUpvotes        = u;
+                bestTotalReactions = u + d + l + di;
+                bestId             = t.getId();
+                bestTitle          = t.getTitle();
             }
         }
 
-        // Community totals
-        long commUpvotes   = voteRepository.count();   // approximate — just total votes
-        long commDownvotes = 0;
-        long commLikes     = 0;
-        long commDislikes  = 0;
-
-        // More accurate per-type community counts
-        for (VoteType vt : VoteType.values()) {
-            long c = voteRepository.findAll().stream()
-                    .filter(v -> v.getVoteType() == vt).count();
-            if (vt == VoteType.UPVOTE)   commUpvotes   = c;
-            if (vt == VoteType.DOWNVOTE) commDownvotes = c;
-        }
-        for (ReactionType rt : ReactionType.values()) {
-            long c = reactionRepository.findAll().stream()
-                    .filter(r -> r.getReactionType() == rt).count();
-            if (rt == ReactionType.LIKE)    commLikes    = c;
-            if (rt == ReactionType.DISLIKE) commDislikes = c;
-        }
-
-        // Weekly activity
-        List<ThreadUserStatsDto.WeekBucket> weekly = buildWeeklyActivity(userThreads);
+        // Community totals — single COUNT query per type, no full-table load
+        long commUpvotes   = voteRepository.countByVoteType(VoteType.UPVOTE);
+        long commDownvotes = voteRepository.countByVoteType(VoteType.DOWNVOTE);
+        long commLikes     = reactionRepository.countByReactionType(ReactionType.LIKE);
+        long commDislikes  = reactionRepository.countByReactionType(ReactionType.DISLIKE);
 
         return ThreadUserStatsDto.builder()
-                .threadCount(threadCount)
+                .threadCount(userThreads.size())
                 .upvotesReceived(upvotes)
                 .downvotesReceived(downvotes)
                 .likesReceived(likes)
@@ -94,7 +72,7 @@ public class ThreadStatsService {
                 .bestThreadTitle(bestTitle)
                 .bestThreadUpvotes(bestUpvotes)
                 .bestThreadTotalReactions(bestTotalReactions)
-                .weeklyActivity(weekly)
+                .weeklyActivity(buildWeeklyActivity(userThreads))
                 .build();
     }
 

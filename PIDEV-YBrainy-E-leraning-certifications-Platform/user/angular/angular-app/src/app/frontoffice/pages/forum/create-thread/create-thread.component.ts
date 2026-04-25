@@ -74,6 +74,15 @@ export class CreateThreadComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Keep authorId in sync: patch as soon as the authenticated user is known
+    this.subs.add(
+      this.auth.currentUser$.subscribe(user => {
+        if (user?.id) {
+          this.form.patchValue({ authorId: user.id }, { emitEvent: false });
+        }
+      })
+    );
+
     this.subs.add(
       this.categoryApi.list().subscribe({
         next: (cats) => (this.categories = cats),

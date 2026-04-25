@@ -11,9 +11,10 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="YBrainy Notes Service", version="1.0.0")
 
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:4200,http://localhost:4201").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,

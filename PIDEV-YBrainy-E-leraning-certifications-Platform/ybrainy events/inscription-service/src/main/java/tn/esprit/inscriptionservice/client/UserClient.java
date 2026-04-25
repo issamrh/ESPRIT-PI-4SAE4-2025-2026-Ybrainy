@@ -12,13 +12,13 @@ import java.util.Optional;
 @FeignClient(name = "breadandbutteruser")
 public interface UserClient {
 
-    @GetMapping("/User/{id}")
+    @GetMapping("/api/users/internal/{id}")
     Optional<UserDto> findById(@PathVariable("id") long id);
 
-    @GetMapping("/User/ids-by-role")
+    @GetMapping("/api/users/internal/ids-by-role")
     List<Long> findIdsByRole(@RequestParam("role") String role);
 
-    @GetMapping("/User/ids")
+    @GetMapping("/api/users/internal/ids")
     List<Long> findAllIds();
 }
 
