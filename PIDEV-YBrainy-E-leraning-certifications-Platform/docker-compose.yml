@@ -188,6 +188,10 @@ services:
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://host.docker.internal:9190/realms/microservices
       APP_UPLOAD_IMAGES_DIR: /app/uploads/images
       APP_UPLOAD_IMAGES_PUBLIC_BASE_URL: http://localhost:8899/images
+      APP_FACE_BIOMETRIC_PYTHON_COMMAND: python3
+      APP_FACE_BIOMETRIC_SCRIPT_PATH: /app/scripts/face_biometric.py
+      APP_FACE_BIOMETRIC_CASCADE_PATH: /app/biometrics/haarcascade_frontalface_alt.xml
+      APP_FACE_BIOMETRIC_STORAGE_DIR: /app/tmp/face-biometric
     volumes:
       - user-uploads:/app/uploads/images
     depends_on:
