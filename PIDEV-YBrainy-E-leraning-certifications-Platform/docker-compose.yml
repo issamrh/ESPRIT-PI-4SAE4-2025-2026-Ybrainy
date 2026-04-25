@@ -918,6 +918,18 @@ services:
   # FRONTENDS
   # ══════════════════════════════════════════════════════════════════
 
+  angular-app:
+    build:
+      context: ./user/angular/angular-app
+      dockerfile: Dockerfile
+    container_name: ybrainy-angular-app
+    ports:
+      - "4200:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - ybrainy-net
+
   react-ai-application:
     build:
       context: "./new parteneriat/react-ai-application"
