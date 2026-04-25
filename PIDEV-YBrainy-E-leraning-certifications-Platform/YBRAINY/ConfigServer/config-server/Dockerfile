@@ -3,7 +3,7 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn -nsu dependency:go-offline -q
 COPY src ./src
-RUN mvn -nsu -DskipTests package -q
+RUN mvn -nsu -Dmaven.test.skip=true package -q
 
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
