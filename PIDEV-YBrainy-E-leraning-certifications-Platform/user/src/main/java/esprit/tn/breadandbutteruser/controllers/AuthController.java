@@ -98,7 +98,7 @@ public class AuthController {
         if (setCookieHeader == null || setCookieHeader.isBlank()) {
             return setCookieHeader;
         }
-        String targetDomain = System.getenv().getOrDefault("APP_FACE_BIOMETRIC_COOKIE_DOMAIN", "localhost");
+        String targetDomain = System.getenv().getOrDefault("APP_FACE_BIOMETRIC_COOKIE_DOMAIN", "host.docker.internal");
         String rewritten = setCookieHeader
                 .replaceAll("(?i);\\s*Domain=[^;]+", "")
                 .replaceAll("(?i);\\s*Secure", "")

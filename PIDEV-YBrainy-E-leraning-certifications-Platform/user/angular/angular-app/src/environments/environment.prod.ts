@@ -12,7 +12,7 @@ export const environment = {
   forumApiUrl: '',
   forumWsUrl: '',
   googleIdpHint: 'google',
-  keycloakUrl: 'http://localhost:9190',
+  keycloakUrl: 'http://host.docker.internal:9190',
   keycloakRealm: 'microservices',
   keycloakClientId: 'angular-client',
   twelveDataApiKey: 'REPLACE_WITH_YOUR_TWELVE_DATA_API_KEY',
