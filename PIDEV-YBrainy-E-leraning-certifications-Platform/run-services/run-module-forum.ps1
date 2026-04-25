@@ -1,7 +1,5 @@
 param(
     [int]$EurekaPort = 8761,
-    [int]$ConfigPort = 8888,
-    [int]$GatewayPort = 8090,
     [int]$UserPort = 8191,
     [int]$CategoryPort = 8082,
     [int]$ThreadPort = 8083,
@@ -17,15 +15,12 @@ param(
 )
 
 $env:ML_PREDICT_URL = "http://localhost:$PredictPort/predict"
-$env:SPRING_CLOUD_CONFIG_URI = "http://localhost:$ConfigPort"
-$env:SPRING_CONFIG_IMPORT = "optional:configserver:http://localhost:$ConfigPort"
 
 if ($SkipEureka) {
     $env:YBRAINY_EUREKA_URL = "http://localhost:$EurekaPort/eureka/"
 } else {
     & "$PSScriptRoot\run-eureka.ps1" -Port $EurekaPort -SkipWait:$SkipWait -DryRun:$DryRun
 }
-& "$PSScriptRoot\run-forum-config-server.ps1" -Port $ConfigPort -SkipWait:$SkipWait -DryRun:$DryRun
 
 if (-not $SkipPredict) {
     & "$PSScriptRoot\run-forum-predict.ps1" -Port $PredictPort -SkipWait:$SkipWait -DryRun:$DryRun
@@ -39,4 +34,3 @@ if ($StartForumUserService) {
 & "$PSScriptRoot\run-forum-post.ps1" -Port $PostPort -SkipWait:$SkipWait -DryRun:$DryRun
 & "$PSScriptRoot\run-forum-comment.ps1" -Port $CommentPort -SkipWait:$SkipWait -DryRun:$DryRun
 & "$PSScriptRoot\run-forum-messaging.ps1" -Port $MessagingPort -SkipWait:$SkipWait -DryRun:$DryRun
-& "$PSScriptRoot\run-forum-gateway.ps1" -Port $GatewayPort -SkipWait:$SkipWait -DryRun:$DryRun

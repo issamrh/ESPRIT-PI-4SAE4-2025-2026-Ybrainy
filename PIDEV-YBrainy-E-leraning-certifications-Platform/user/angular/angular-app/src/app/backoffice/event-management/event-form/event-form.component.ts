@@ -54,7 +54,7 @@ export class EventFormComponent implements OnInit {
       capacite: [50, [Validators.required, Validators.min(1)]],
       dateDebut: ['', Validators.required],
       dateFin: ['', Validators.required],
-      type: [EventType.SEMINAR, Validators.required],
+      type: [EventType.FORMATION, Validators.required],
       statut: [EventStatut.UPCOMING, Validators.required],
     });
   }

@@ -13,6 +13,8 @@ np.random.seed(42)  # set once at module startup — not inside request handlers
 _forecast_cache = {}
 _FORECAST_TTL = 3600  # 1 hour cache
 
+COURSE_SERVICE_URL = os.environ.get('COURSE_SERVICE_URL', 'http://localhost:8082')
+
 app = Flask(__name__)
 CORS(app)
 
@@ -131,7 +133,7 @@ def recommend():
 
     try:
         # Step 1: Fetch real courses from Course service
-        resp = requests.get('http://localhost:8082/api/courses',
+        resp = requests.get(f'{COURSE_SERVICE_URL}/api/courses',
                             params={'size': 200, 'page': 0}, timeout=5)
         resp.raise_for_status()
         real_courses = resp.json().get('content', [])
@@ -345,7 +347,7 @@ def forecast_demand():
         # Step 1: Fetch real enrollment data from Course Service
         real_monthly = {}
         try:
-            resp = requests.get('http://localhost:8082/api/enrollments/monthly-counts',
+            resp = requests.get(f'{COURSE_SERVICE_URL}/api/enrollments/monthly-counts',
                               timeout=3)
             if resp.ok:
                 data = resp.json()

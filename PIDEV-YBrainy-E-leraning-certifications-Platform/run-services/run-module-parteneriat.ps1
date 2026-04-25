@@ -3,7 +3,6 @@ param(
     [int]$PartnershipPort = 8181,
     [Alias("JobOfferPort")]
     [int]$JobOffersPort = 8182,
-    [int]$GatewayPort = 8096,
     [int]$ReactPort = 5173,
     [switch]$SkipFrontend,
     [switch]$SkipEureka,
@@ -18,7 +17,6 @@ if ($SkipEureka) {
 }
 & "$PSScriptRoot\run-parteneriat-partnership.ps1" -Port $PartnershipPort -SkipWait:$SkipWait -DryRun:$DryRun
 & "$PSScriptRoot\run-parteneriat-job-offers.ps1" -Port $JobOffersPort -SkipWait:$SkipWait -DryRun:$DryRun
-& "$PSScriptRoot\run-parteneriat-gateway.ps1" -Port $GatewayPort -SkipWait:$SkipWait -DryRun:$DryRun
 
 if (-not $SkipFrontend) {
     & "$PSScriptRoot\run-parteneriat-react.ps1" -Port $ReactPort -SkipWait:$SkipWait -DryRun:$DryRun

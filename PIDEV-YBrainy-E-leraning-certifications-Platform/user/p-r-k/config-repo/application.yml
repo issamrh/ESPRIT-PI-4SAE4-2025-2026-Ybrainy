@@ -178,8 +178,8 @@ spring:
           uri: lb://messaging-service
           predicates: [ Path=/api/messages/**, Path=/uploads/messages/**, Path=/ws/** ]
           order: 34
-        - id: forum-user-service
-          uri: lb://forum-user-service
+        - id: forum-engagement-service
+          uri: lb://forum-engagement-service
           predicates: [ Path=/api/forum-users/** ]
           order: 35
         # predict-service is Python/Flask – no Eureka; routed by direct URL
@@ -416,14 +416,14 @@ server:
 
 ---
 # ─────────────────────────────────────────────────────────────────────────────
-# DOCUMENT 15 – forum-user-service – new port 8185
+# DOCUMENT 15 – forum-engagement-service – new port 8185
 # ─────────────────────────────────────────────────────────────────────────────
 spring:
   config:
     activate:
-      on-profile: forum-user-service
+      on-profile: forum-engagement-service
   application:
-    name: forum-user-service
+    name: forum-engagement-service
 server:
   port: 8185
 

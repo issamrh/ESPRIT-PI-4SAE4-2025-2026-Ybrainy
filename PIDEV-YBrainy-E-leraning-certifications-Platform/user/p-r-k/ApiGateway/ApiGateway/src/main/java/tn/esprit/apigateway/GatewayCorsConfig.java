@@ -19,8 +19,9 @@ public class GatewayCorsConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // 1. Allow all origins
-        config.setAllowedOriginPatterns(Collections.singletonList("*"));
+        // 1. Allow origins from env var (ALLOWED_ORIGINS=comma-separated list)
+        String originsEnv = System.getenv().getOrDefault("ALLOWED_ORIGINS", "http://localhost:4200,http://localhost:4201");
+        config.setAllowedOrigins(Arrays.asList(originsEnv.split(",")));
 
         // 2. Allow common HTTP methods
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));

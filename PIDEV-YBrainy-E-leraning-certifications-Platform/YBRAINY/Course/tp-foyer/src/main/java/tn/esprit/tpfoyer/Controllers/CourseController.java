@@ -1,5 +1,7 @@
 package tn.esprit.tpfoyer.Controllers;
 
+import tn.esprit.tpfoyer.Clients.LessonClient;
+import tn.esprit.tpfoyer.Dto.AiReaderContextDTO;
 import tn.esprit.tpfoyer.Dto.AiSearchRequestDTO;
 import tn.esprit.tpfoyer.Dto.AiSearchResultDTO;
 import tn.esprit.tpfoyer.Dto.CourseDetailResponseDTO;
@@ -35,9 +37,13 @@ public class CourseController {
 
     private final ICourseService courseService;
     private final ICertificateService certificateService;
+    private final LessonClient lessonClient;
 
     @Value("${app.file.upload-dir}")
     private String uploadDir;
+
+    @Value("${ai.talking-head.base-url:http://localhost:8765}")
+    private String talkingHeadBaseUrl;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CourseResponseDTO> createCourse(
@@ -180,5 +186,53 @@ public class CourseController {
         } catch (Exception e) {
             return ResponseEntity.ok(new HashMap<>());
         }
+    }
+
+    @GetMapping("/{courseId}/reader-context")
+    public ResponseEntity<AiReaderContextDTO> getCourseReaderContext(@PathVariable Long courseId) {
+        CourseDetailResponseDTO course = courseService.getCourseById(courseId);
+        String text = course.getDescription() != null && !course.getDescription().isBlank()
+                ? course.getDescription()
+                : course.getTitle();
+        return ResponseEntity.ok(AiReaderContextDTO.builder()
+                .sourceType("COURSE")
+                .courseId(courseId)
+                .lessonId(null)
+                .title(course.getTitle())
+                .text(text)
+                .talkingHeadBaseUrl(talkingHeadBaseUrl)
+                .speakerWavPath(null)
+                .speakerSource("HARVARD_DEFAULT")
+                .build());
+    }
+
+    @GetMapping("/{courseId}/lessons/{lessonId}/reader-context")
+    public ResponseEntity<AiReaderContextDTO> getLessonReaderContext(
+            @PathVariable Long courseId, @PathVariable Long lessonId) {
+        String title;
+        String text;
+        try {
+            Map<String, Object> lesson = lessonClient.getLessonByCourse(courseId, lessonId);
+            title = String.valueOf(lesson.getOrDefault("title", "Lesson"));
+            Object content = lesson.get("content");
+            Object desc = lesson.get("description");
+            text = content != null && !String.valueOf(content).isBlank() ? String.valueOf(content)
+                 : desc    != null && !String.valueOf(desc).isBlank()     ? String.valueOf(desc)
+                 : title;
+        } catch (Exception e) {
+            CourseDetailResponseDTO course = courseService.getCourseById(courseId);
+            title = course.getTitle();
+            text = course.getDescription() != null ? course.getDescription() : title;
+        }
+        return ResponseEntity.ok(AiReaderContextDTO.builder()
+                .sourceType("LESSON")
+                .courseId(courseId)
+                .lessonId(lessonId)
+                .title(title)
+                .text(text)
+                .talkingHeadBaseUrl(talkingHeadBaseUrl)
+                .speakerWavPath(null)
+                .speakerSource("HARVARD_DEFAULT")
+                .build());
     }
 }

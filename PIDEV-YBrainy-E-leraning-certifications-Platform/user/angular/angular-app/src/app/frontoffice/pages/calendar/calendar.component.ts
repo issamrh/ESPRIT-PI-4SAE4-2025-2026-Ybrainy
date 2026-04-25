@@ -44,7 +44,7 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
   private readonly eventBaseUrl = '/Event';
   private readonly inscriptionBaseUrl = '/Inscription';
   private readonly feedbackBaseUrl = '/Feedback';
-  private readonly recommendationBaseUrl = '/event-api/recommendations';
+  private readonly recommendationBaseUrl = '/api/recommendations';
   private allEvents: FrontofficeEvent[] = [];
   private availableStudentIds: number[] = [];
   private selectedStudentId: number | null = null;
@@ -203,7 +203,7 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
       injectedCodeLabButton.setAttribute('href', 'javascript:void(0)');
       injectedCodeLabButton.setAttribute('role', 'button');
       injectedCodeLabButton.setAttribute('data-open-codelab-trigger', 'true');
-      injectedCodeLabButton.textContent = 'Open CodeLab Simulator';
+      injectedCodeLabButton.textContent = 'Open CodeStudio';
       heroUpcomingButton.parentElement.classList.add('hero-events-actions');
       heroUpcomingButton.parentElement.appendChild(injectedCodeLabButton);
     }

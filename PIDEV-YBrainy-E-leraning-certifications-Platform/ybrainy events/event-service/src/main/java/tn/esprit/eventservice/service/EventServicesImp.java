@@ -20,7 +20,6 @@ import tn.esprit.eventservice.repository.EventRepository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
 import java.util.ArrayList;
@@ -307,7 +306,7 @@ public class EventServicesImp implements IEventServices {
     private boolean isTerminated(Event event) {
         if (event == null) return false;
         if (EventStatut.TERMINE.equals(event.getStatut())) return true;
-        return event.getDateFin() != null && event.getDateFin().isBefore(LocalDateTime.of(LocalDate.now(), LocalTime.MIN));
+        return event.getDateFin() != null && event.getDateFin().isBefore(LocalDateTime.now());
     }
 
     private void validateEventDates(Event event) {

@@ -13,6 +13,6 @@ eureka:
     prefer-ip-address: true
 
 scraper:
-  python-command: python
-  script-path: elearning_scraper.py
-  working-directory: ${user.dir}
+  python-command: "C:\\Users\\azizs\\anaconda3\\python.exe"
+  script-path: "C:\\Users\\azizs\\Downloads\\ssss\\PIDEV-YBrainy-E-leraning-certifications-Platform\\payment\\scraper\\elearning_scraper.py"
+  working-directory: "C:\\Users\\azizs\\Downloads\\ssss\\PIDEV-YBrainy-E-leraning-certifications-Platform\\payment\\scraper"

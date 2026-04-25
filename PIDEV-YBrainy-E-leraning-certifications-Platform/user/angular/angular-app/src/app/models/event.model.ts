@@ -20,11 +20,10 @@ export interface Inscription {
 }
 
 export enum EventType {
-    WORKSHOP = 'WORKSHOP',
-    SEMINAR = 'SEMINAR',
-    WEBINAR = 'WEBINAR',
-    COURSE = 'COURSE'
-    // Note: Values should match the Java enum EventType
+    WEBINAIRE = 'WEBINAIRE',
+    FORMATION = 'FORMATION',
+    ATELIER = 'ATELIER',
+    HACKATHON = 'HACKATHON'
 }
 
 export enum EventStatut {

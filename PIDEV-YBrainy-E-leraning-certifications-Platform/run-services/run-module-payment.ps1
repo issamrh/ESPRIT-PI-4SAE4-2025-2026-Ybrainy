@@ -1,6 +1,5 @@
 param(
     [int]$EurekaPort = 8761,
-    [int]$GatewayPort = 8091,
     [int]$CartPort = 8954,
     [int]$PaymentPort = 8095,
     [int]$FinancePort = 8995,
@@ -21,7 +20,6 @@ if ($SkipEureka) {
 & "$PSScriptRoot\run-payment-service.ps1" -Port $PaymentPort -SkipWait:$SkipWait -DryRun:$DryRun
 & "$PSScriptRoot\run-payment-finance.ps1" -Port $FinancePort -SkipWait:$SkipWait -DryRun:$DryRun
 & "$PSScriptRoot\run-payment-scraper.ps1" -Port $ScraperPort -SkipWait:$SkipWait -DryRun:$DryRun
-& "$PSScriptRoot\run-payment-gateway.ps1" -Port $GatewayPort -SkipWait:$SkipWait -DryRun:$DryRun
 
 if (-not $SkipFrontend) {
     & "$PSScriptRoot\run-payment-angular.ps1" -Port $FrontendPort -SkipWait:$SkipWait -DryRun:$DryRun

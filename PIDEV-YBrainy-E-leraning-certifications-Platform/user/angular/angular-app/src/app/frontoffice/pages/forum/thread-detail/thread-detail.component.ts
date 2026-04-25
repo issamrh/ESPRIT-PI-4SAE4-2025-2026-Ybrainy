@@ -290,6 +290,15 @@ export class ThreadDetailComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Keep post form authorId in sync with the authenticated user
+    this.subs.add(
+      this.auth.currentUser$.subscribe(user => {
+        if (user?.id) {
+          this.postForm.patchValue({ authorId: user.id }, { emitEvent: false });
+        }
+      })
+    );
+
     this.subs.add(
       this.route.paramMap.subscribe((pm) => {
         const raw = pm.get('threadId');

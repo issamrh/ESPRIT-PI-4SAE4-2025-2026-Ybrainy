@@ -1,7 +1,6 @@
 package com.esprit.userservice.service;
 
 import com.esprit.userservice.dto.dashboard.*;
-import com.esprit.userservice.exception.ResourceNotFoundException;
 import com.esprit.userservice.feign.CommentStatsFeignClient;
 import com.esprit.userservice.feign.PostStatsFeignClient;
 import com.esprit.userservice.feign.ThreadMlFeignClient;
@@ -24,14 +23,15 @@ public class DashboardService {
 
     private final UserRepository userRepository;
     private final UserXpEventRepository xpEventRepository;
+    private final UserService userService;
     private final ThreadStatsFeignClient threadFeign;
     private final PostStatsFeignClient postFeign;
     private final CommentStatsFeignClient commentFeign;
     private final ThreadMlFeignClient threadMlFeign;
 
     public UserDashboardResponse getDashboard(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+        // Auto-create a placeholder record if this user hasn't engaged with the forum yet
+        User user = userService.findOrCreatePlaceholderUser(userId);
 
         // Fetch stats from each service (graceful fallback on failure)
         ThreadUserStatsDto threadStats = safeCall(() -> threadFeign.getUserStats(userId), new ThreadUserStatsDto());

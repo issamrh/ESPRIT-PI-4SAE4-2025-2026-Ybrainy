@@ -1,7 +1,5 @@
 param(
     [int]$EurekaPort = 8761,
-    [int]$ForumConfigPort = 8888,
-    [int]$ForumGatewayPort = 8090,
     [int]$ForumCategoryPort = 8082,
     [int]$ForumThreadPort = 8083,
     [int]$ForumPostPort = 8084,
@@ -11,7 +9,6 @@ param(
     [int]$ForumUserPort = 8191,
     [int]$PartnershipPort = 8181,
     [int]$JobOffersPort = 8182,
-    [int]$ParteneriatGatewayPort = 8096,
     [int]$ParteneriatReactPort = 5173,
     [switch]$StartForumUserService,
     [switch]$SkipPredict,
@@ -24,8 +21,6 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
 $env:YBRAINY_EUREKA_URL = "http://localhost:$EurekaPort/eureka/"
-$env:SPRING_CLOUD_CONFIG_URI = "http://localhost:$ForumConfigPort"
-$env:SPRING_CONFIG_IMPORT = "optional:configserver:http://localhost:$ForumConfigPort"
 $env:ML_PREDICT_URL = "http://localhost:$ForumPredictPort/predict"
 
 function Test-TcpPort {
@@ -70,16 +65,13 @@ function Write-PortSummary {
 
 $servicePorts = @(
     [pscustomobject]@{ Name = "Unified Eureka"; Port = $EurekaPort },
-    [pscustomobject]@{ Name = "Forum Config Server"; Port = $ForumConfigPort },
-    [pscustomobject]@{ Name = "Forum Gateway"; Port = $ForumGatewayPort },
     [pscustomobject]@{ Name = "Forum Category"; Port = $ForumCategoryPort },
     [pscustomobject]@{ Name = "Forum Thread"; Port = $ForumThreadPort },
     [pscustomobject]@{ Name = "Forum Post"; Port = $ForumPostPort },
     [pscustomobject]@{ Name = "Forum Comment"; Port = $ForumCommentPort },
     [pscustomobject]@{ Name = "Forum Messaging"; Port = $ForumMessagingPort },
     [pscustomobject]@{ Name = "Partnership Service"; Port = $PartnershipPort },
-    [pscustomobject]@{ Name = "Job Offer Service"; Port = $JobOffersPort },
-    [pscustomobject]@{ Name = "Parteneriat Gateway"; Port = $ParteneriatGatewayPort }
+    [pscustomobject]@{ Name = "Job Offer Service"; Port = $JobOffersPort }
 )
 
 if (-not $SkipPredict) {
@@ -99,7 +91,6 @@ Write-DependencyWarning -Name "MySQL" -Port 3306
 Write-DependencyWarning -Name "RabbitMQ" -Port 5672
 
 & "$PSScriptRoot\run-eureka.ps1" -Port $EurekaPort -SkipWait:$DryRun -DryRun:$DryRun
-& "$PSScriptRoot\run-forum-config-server.ps1" -Port $ForumConfigPort -SkipWait:$DryRun -DryRun:$DryRun
 
 $serviceSkipWait = -not $WaitServices
 
@@ -116,11 +107,9 @@ if ($StartForumUserService) {
 & "$PSScriptRoot\run-forum-post.ps1" -Port $ForumPostPort -SkipWait:$serviceSkipWait -DryRun:$DryRun
 & "$PSScriptRoot\run-forum-comment.ps1" -Port $ForumCommentPort -SkipWait:$serviceSkipWait -DryRun:$DryRun
 & "$PSScriptRoot\run-forum-messaging.ps1" -Port $ForumMessagingPort -SkipWait:$serviceSkipWait -DryRun:$DryRun
-& "$PSScriptRoot\run-forum-gateway.ps1" -Port $ForumGatewayPort -SkipWait:$serviceSkipWait -DryRun:$DryRun
 
 & "$PSScriptRoot\run-parteneriat-partnership.ps1" -Port $PartnershipPort -SkipWait:$serviceSkipWait -DryRun:$DryRun
 & "$PSScriptRoot\run-parteneriat-job-offers.ps1" -Port $JobOffersPort -SkipWait:$serviceSkipWait -DryRun:$DryRun
-& "$PSScriptRoot\run-parteneriat-gateway.ps1" -Port $ParteneriatGatewayPort -SkipWait:$serviceSkipWait -DryRun:$DryRun
 
 if ($WithParteneriatFrontend) {
     & "$PSScriptRoot\run-parteneriat-react.ps1" -Port $ParteneriatReactPort -SkipWait:$serviceSkipWait -DryRun:$DryRun

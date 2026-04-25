@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 @Service
@@ -131,18 +132,27 @@ public class FaceBiometricEngineService {
 
         try {
             Process process = processBuilder.start();
-            int exitCode = process.waitFor();
+            boolean finished = process.waitFor(15, TimeUnit.SECONDS);
+            if (!finished) {
+                process.destroyForcibly();
+                throw new RuntimeException("Face recognition timed out. Please try again with better lighting.");
+            }
+            int exitCode = process.exitValue();
             String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
             String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8).trim();
 
             if (exitCode != 0) {
                 String message = StringUtils.hasText(stderr) ? stderr : "Face recognition helper failed.";
+                log.warn("Face biometric Python error (exit {}): {}", exitCode, message);
                 if (message.contains("No face detected")) {
                     throw new RuntimeException("No face was detected. Center your face in the camera and try again.");
                 }
                 throw new RuntimeException(message);
             }
 
+            if (StringUtils.hasText(stderr)) {
+                log.warn("Face biometric match info: {}", stderr);
+            }
             return stdout;
         } catch (IOException e) {
             throw new RuntimeException(
