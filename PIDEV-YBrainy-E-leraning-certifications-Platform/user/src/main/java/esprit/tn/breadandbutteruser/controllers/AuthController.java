@@ -75,8 +75,27 @@ public class AuthController {
         UserService.FaceSignInSession session = userService.startFaceSignIn(image);
 
         HttpHeaders headers = new HttpHeaders();
-        session.setCookieHeaders().forEach(cookie -> headers.add(HttpHeaders.SET_COOKIE, cookie));
+        session.setCookieHeaders().forEach(cookie -> headers.add(HttpHeaders.SET_COOKIE, rewriteCookieDomain(cookie)));
         return ResponseEntity.noContent().headers(headers).build();
+    }
+
+    /**
+     * Rewrite Set-Cookie Domain attribute so the cookie is shared between
+     * Angular's port (4200) and Keycloak's port (9190). Backend talks to Keycloak
+     * via host.docker.internal:9190 from inside the docker network, so cookies
+     * come back tagged with that host. Browser visits Keycloak at localhost:9190,
+     * so we rewrite Domain=localhost to make the session apply on both ports.
+     * Override with APP_FACE_BIOMETRIC_COOKIE_DOMAIN if you ever deploy on a real
+     * FQDN.
+     */
+    private String rewriteCookieDomain(String setCookieHeader) {
+        if (setCookieHeader == null || setCookieHeader.isBlank()) {
+            return setCookieHeader;
+        }
+        String targetDomain = System.getenv().getOrDefault("APP_FACE_BIOMETRIC_COOKIE_DOMAIN", "localhost");
+        // strip any existing Domain=...; (case-insensitive)
+        String stripped = setCookieHeader.replaceAll("(?i);\\s*Domain=[^;]+", "");
+        return stripped + "; Domain=" + targetDomain;
     }
 
     public record RefreshTokenRequest(

@@ -38,7 +38,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/public/**", "/actuator/**").permitAll()
+                        .requestMatchers("/public/**", "/actuator/**", "/images/**").permitAll()
                         .requestMatchers(
                                 "/api/auth/signup/challenge",
                                 "/api/auth/signup",
