@@ -21,6 +21,7 @@ volumes:
   course-uploads:
   lesson-uploads:
   user-uploads:
+  user-face-biometric:
   thread-uploads:
   post-uploads:
   messaging-uploads:
@@ -194,6 +195,7 @@ services:
       APP_FACE_BIOMETRIC_STORAGE_DIR: /app/tmp/face-biometric
     volumes:
       - user-uploads:/app/uploads/images
+      - user-face-biometric:/app/tmp/face-biometric
     depends_on:
       mysql:
         condition: service_healthy
