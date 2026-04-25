@@ -914,6 +914,22 @@ services:
   # API GATEWAY
   # ══════════════════════════════════════════════════════════════════
 
+  # ══════════════════════════════════════════════════════════════════
+  # FRONTENDS
+  # ══════════════════════════════════════════════════════════════════
+
+  react-ai-application:
+    build:
+      context: "./new parteneriat/react-ai-application"
+      dockerfile: Dockerfile
+    container_name: ybrainy-react-ai-application
+    ports:
+      - "4201:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - ybrainy-net
+
   api-gateway:
     build:
       context: ./user/p-r-k/ApiGateway/ApiGateway
