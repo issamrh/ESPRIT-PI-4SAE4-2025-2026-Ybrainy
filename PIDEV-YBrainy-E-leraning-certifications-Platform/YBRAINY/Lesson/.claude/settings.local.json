@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(mvn clean:*)",
-      "Bash(rm \"C:/Users/azizs/OneDrive/Desktop/YBRAINY/Course/tp-foyer/src/main/java/tn/esprit/tpfoyer/Controllers/LessonController.java\")",
-      "Bash(rm \"C:/Users/azizs/OneDrive/Desktop/YBRAINY/Course/tp-foyer/src/main/java/tn/esprit/tpfoyer/Controllers/LessonsQueryController.java\")"
-    ]
-  }
-}
