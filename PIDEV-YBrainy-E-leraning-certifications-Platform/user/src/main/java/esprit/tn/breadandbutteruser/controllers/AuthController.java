@@ -75,8 +75,35 @@ public class AuthController {
         UserService.FaceSignInSession session = userService.startFaceSignIn(image);
 
         HttpHeaders headers = new HttpHeaders();
-        session.setCookieHeaders().forEach(cookie -> headers.add(HttpHeaders.SET_COOKIE, cookie));
+        session.setCookieHeaders().forEach(cookie -> headers.add(HttpHeaders.SET_COOKIE, rewriteCookieDomain(cookie)));
         return ResponseEntity.noContent().headers(headers).build();
+    }
+
+    /**
+     * Rewrite Set-Cookie attributes so Keycloak's session cookies actually reach
+     * the browser on plain http://localhost dev/docker setups:
+     *   1) Domain: backend talks to Keycloak via host.docker.internal:9190, so
+     *      cookies come back tagged with that host. Browser hits Keycloak at
+     *      localhost:9190, so we rewrite Domain=localhost to share the session
+     *      across Angular (4200) and Keycloak (9190).
+     *   2) Secure: Keycloak marks identity/session cookies Secure. The browser
+     *      drops Secure cookies over HTTP, so Keycloak never sees the session.
+     *      We strip the flag for development.
+     *   3) SameSite=None: only honored together with Secure. Once we drop Secure
+     *      we must downgrade SameSite=None to SameSite=Lax or browsers reject
+     *      the whole Set-Cookie.
+     * Override with APP_FACE_BIOMETRIC_COOKIE_DOMAIN for a real FQDN deployment.
+     */
+    private String rewriteCookieDomain(String setCookieHeader) {
+        if (setCookieHeader == null || setCookieHeader.isBlank()) {
+            return setCookieHeader;
+        }
+        String targetDomain = System.getenv().getOrDefault("APP_FACE_BIOMETRIC_COOKIE_DOMAIN", "localhost");
+        String rewritten = setCookieHeader
+                .replaceAll("(?i);\\s*Domain=[^;]+", "")
+                .replaceAll("(?i);\\s*Secure", "")
+                .replaceAll("(?i);\\s*SameSite=None", "; SameSite=Lax");
+        return rewritten + "; Domain=" + targetDomain;
     }
 
     public record RefreshTokenRequest(

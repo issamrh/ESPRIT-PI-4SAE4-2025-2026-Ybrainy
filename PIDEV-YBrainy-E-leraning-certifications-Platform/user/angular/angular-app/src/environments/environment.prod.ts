@@ -1,13 +1,16 @@
+// Production build for the dockerized stack: nginx proxies /api,/uploads,/ws
+// to the API gateway, so all URLs are same-origin (relative).
+// If ever deploying behind a real domain, replace these strings with the FQDN.
 export const environment = {
   production: true,
-  apiBaseUrl: 'https://api.ybrainy.com',
-  courseApiBaseUrl: 'https://api.ybrainy.com',
-  partnerApiBaseUrl: 'https://api.ybrainy.com',
-  apiUrl: 'https://api.ybrainy.com/api',
-  cartApiUrl: 'https://api.ybrainy.com/api',
-  financeApiUrl: 'https://api.ybrainy.com/api/finance',
-  forumApiUrl: 'https://api.ybrainy.com',
-  forumWsUrl: 'https://api.ybrainy.com',
+  apiBaseUrl: '',
+  courseApiBaseUrl: '',
+  partnerApiBaseUrl: '',
+  apiUrl: '/api',
+  cartApiUrl: '/api',
+  financeApiUrl: '/api/finance',
+  forumApiUrl: '',
+  forumWsUrl: '',
   googleIdpHint: 'google',
   keycloakUrl: 'http://localhost:9190',
   keycloakRealm: 'microservices',

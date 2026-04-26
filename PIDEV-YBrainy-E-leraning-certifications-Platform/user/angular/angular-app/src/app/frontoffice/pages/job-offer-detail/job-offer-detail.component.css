@@ -1174,3 +1174,23 @@
     grid-template-columns: 1fr;
   }
 }
+
+.react-variant-link {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 12px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.react-variant-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}

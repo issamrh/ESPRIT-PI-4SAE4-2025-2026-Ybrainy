@@ -25,7 +25,7 @@ async def startup():
     eureka_server = os.getenv("EUREKA_SERVER", "http://localhost:8761/eureka/")
     service_port = int(os.getenv("SERVICE_PORT", "8086"))
     service_host = os.getenv("SERVICE_HOST", "localhost")
-    eureka_client.init(
+    await eureka_client.init_async(
         eureka_server=eureka_server,
         app_name="notes-service",
         instance_port=service_port,

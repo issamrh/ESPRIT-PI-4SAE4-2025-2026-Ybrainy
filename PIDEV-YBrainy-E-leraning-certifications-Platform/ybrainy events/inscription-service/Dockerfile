@@ -7,7 +7,7 @@ COPY user-service/pom.xml user-service/pom.xml
 COPY feedback-service/pom.xml feedback-service/pom.xml
 RUN mvn -pl inscription-service -am dependency:go-offline -B
 COPY inscription-service/src inscription-service/src
-RUN mvn -pl inscription-service -am package -DskipTests -B
+RUN mvn -pl inscription-service -am package -Dmaven.test.skip=true -B
 
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
