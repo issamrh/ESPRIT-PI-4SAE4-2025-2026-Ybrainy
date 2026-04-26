@@ -57,17 +57,15 @@ logging:
 # DOCUMENT 2 – "gateway" profile
 # Applied to: user/p-r-k/ApiGateway (spring.profiles.active=gateway)
 # ─────────────────────────────────────────────────────────────────────────────
+server:
+  port: 8088
+
 spring:
   config:
     activate:
       on-profile: gateway
   application:
     name: api-gateway
-
-server:
-  port: 8088
-
-spring:
   cloud:
     gateway:
       discovery:
@@ -178,10 +176,18 @@ spring:
           uri: lb://messaging-service
           predicates: [ Path=/api/messages/**, Path=/uploads/messages/**, Path=/ws/** ]
           order: 34
-        - id: forum-engagement-service
-          uri: lb://forum-engagement-service
+        - id: forum-users
+          uri: lb://breadandbutteruser
           predicates: [ Path=/api/forum-users/** ]
           order: 35
+        - id: forum-dashboard-service
+          uri: lb://breadandbutteruser
+          predicates: [ Path=/api/dashboard/** ]
+          order: 36
+        - id: forum-notification-service
+          uri: lb://breadandbutteruser
+          predicates: [ Path=/api/notifications/** ]
+          order: 37
         # predict-service is Python/Flask – no Eureka; routed by direct URL
         - id: forum-predict-service
           uri: http://localhost:${PREDICT_SERVICE_PORT:5001}
@@ -256,17 +262,16 @@ spring:
       on-profile: cart-service
   application:
     name: cart-service
+  rabbitmq:
+    exchange: ${APP_RABBITMQ_EXCHANGE:ybrainy.events}
+    payment-completed-routing-key: payment.completed
+    finance-payment-queue: finance.payment.completed.queue
 server:
   port: 8954
 eureka:
   client:
     service-url:
       defaultZone: ${YBRAINY_EUREKA_URL:http://localhost:8761/eureka/}
-spring:
-  rabbitmq:
-    exchange: ${APP_RABBITMQ_EXCHANGE:ybrainy.events}
-    payment-completed-routing-key: payment.completed
-    finance-payment-queue: finance.payment.completed.queue
 
 ---
 # ─────────────────────────────────────────────────────────────────────────────

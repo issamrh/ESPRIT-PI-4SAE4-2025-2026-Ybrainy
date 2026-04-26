@@ -45,8 +45,8 @@
             <span class="msg-conv-time">{{ formatTime(c.lastMessageAt) }}</span>
           </div>
           <div class="msg-conv-row2">
-            <span class="msg-role-badge" [class]="'msg-role-' + c.role.toLowerCase()">
-              {{ getRoleEmoji(c.role) }} {{ c.role }}
+            <span class="msg-role-badge" [class]="'msg-role-' + (c.role || 'student').toLowerCase()">
+              {{ getRoleEmoji(c.role) }} {{ c.role || 'STUDENT' }}
             </span>
             <span class="msg-level-pill">Lv.{{ c.level }}</span>
           </div>
@@ -90,8 +90,8 @@
         <div class="msg-chat-info">
           <div class="msg-chat-name">{{ activePartner.username }}</div>
           <div class="msg-chat-meta">
-            <span class="msg-role-badge" [class]="'msg-role-' + activePartner.role.toLowerCase()">
-              {{ getRoleEmoji(activePartner.role) }} {{ activePartner.role }}
+            <span class="msg-role-badge" [class]="'msg-role-' + (activePartner.role || 'student').toLowerCase()">
+              {{ getRoleEmoji(activePartner.role) }} {{ activePartner.role || 'STUDENT' }}
             </span>
             <span class="msg-level-pill">⭐ Lv.{{ activePartner.level }}</span>
             <span class="msg-level-title">{{ activePartner.levelTitle }}</span>
@@ -223,8 +223,8 @@
         <div class="msg-modal-info">
           <div class="msg-modal-username">{{ u.username }}</div>
           <div class="msg-modal-badges">
-            <span class="msg-role-badge" [class]="'msg-role-' + u.role.toLowerCase()">
-              {{ getRoleEmoji(u.role) }} {{ u.role }}
+            <span class="msg-role-badge" [class]="'msg-role-' + (u.role || 'student').toLowerCase()">
+              {{ getRoleEmoji(u.role) }} {{ u.role || 'STUDENT' }}
             </span>
             <span class="msg-level-pill">⭐ Lv.{{ u.level }}</span>
             <span class="msg-level-title">{{ u.levelTitle }}</span>

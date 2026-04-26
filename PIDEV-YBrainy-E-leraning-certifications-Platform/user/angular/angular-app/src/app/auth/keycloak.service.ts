@@ -244,10 +244,17 @@ export function getKeycloak() {
 
 export async function initKeycloak() {
   try {
+    const silentSsoUri =
+      typeof window !== 'undefined'
+        ? `${window.location.origin}/assets/silent-check-sso.html`
+        : undefined;
+
     const authenticated = await keycloak.init({
       onLoad: 'check-sso',
       pkceMethod: 'S256',
       checkLoginIframe: false,
+      silentCheckSsoRedirectUri: silentSsoUri,
+      silentCheckSsoFallback: false,
     });
     if (authenticated) {
       manualSessionActive = false;

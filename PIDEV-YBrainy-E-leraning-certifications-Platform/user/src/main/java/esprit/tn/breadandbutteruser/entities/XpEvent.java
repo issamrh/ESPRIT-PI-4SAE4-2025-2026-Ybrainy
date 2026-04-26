@@ -45,6 +45,14 @@ public class XpEvent {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public enum XpSourceType {
+        // Forum-specific sources (matched by forum event consumers)
+        THREAD_CREATED,
+        POST_CREATED,
+        POST_DETAILED,
+        COMMENT_CREATED,
+        UPVOTE_RECEIVED,
+        BEST_ANSWER,
+        // Legacy / platform-wide sources
         FORUM_POST,
         FORUM_COMMENT,
         COURSE_COMPLETED,

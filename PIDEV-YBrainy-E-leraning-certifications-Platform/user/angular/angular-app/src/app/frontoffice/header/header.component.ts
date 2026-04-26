@@ -14,6 +14,9 @@ import { FocusModeService, FocusModeState } from '../services/focus-mode.service
 import { GazePreferenceService } from '../services/gaze-preference.service';
 import { UserService } from '../services/user.service';
 import { UserSessionService } from '../../tracking/user-session.service';
+import { NotificationApiService } from '../services/notification-api.service';
+import { AuthService } from '../services/auth.service';
+import { NotificationResponse } from '../models/forum.models';
 
 declare var $: any;
 
@@ -42,6 +45,14 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   checkoutToastMessage = '';
   gazeTrackingEnabled = true;
   focusModeState: FocusModeState | null = null;
+
+  // Notification state
+  notifOpen = false;
+  notifications: NotificationResponse[] = [];
+  unreadCount = 0;
+  notifLoading = false;
+  private notifTimer: ReturnType<typeof setInterval> | null = null;
+
   private mobileNav: any;
   private readonly subscriptions = new Subscription();
   private checkoutToastTimer: ReturnType<typeof setTimeout> | null = null;
@@ -55,7 +66,9 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     private gazePreference: GazePreferenceService,
     private frontofficeUserService: UserService,
     private userSession: UserSessionService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private notifService: NotificationApiService,
+    private authService: AuthService
   ) {
     this.syncIsHomeFromUrl(this.getCurrentUrl());
     this.gazeTrackingEnabled = this.gazePreference.current;
@@ -245,12 +258,105 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     });
   }
 
+  // ── Notification methods ───────────────────────────────────────────────────
+
+  toggleNotif(event?: MouseEvent): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.notifOpen = !this.notifOpen;
+    if (this.notifOpen) {
+      this.loadNotifications();
+    }
+  }
+
+  loadNotifications(): void {
+    const uid = this.authService.currentUserId;
+    if (!uid) return;
+    this.notifLoading = true;
+    this.notifService.getAll(uid).subscribe({
+      next: (list) => {
+        this.notifications = list.sort((a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+        this.unreadCount = list.filter(n => !n.read).length;
+        this.notifLoading = false;
+        this.cdr.detectChanges();
+      },
+      error: () => { this.notifLoading = false; }
+    });
+  }
+
+  private refreshUnreadCount(): void {
+    const uid = this.authService.currentUserId;
+    if (!uid) return;
+    this.notifService.getUnreadCount(uid).subscribe({
+      next: (count) => { this.unreadCount = count; this.cdr.detectChanges(); },
+      error: () => {}
+    });
+  }
+
+  markNotifRead(n: NotificationResponse): void {
+    if (!n.read) {
+      this.notifService.markAsRead(n.id).subscribe({
+        next: () => {
+          n.read = true;
+          this.unreadCount = Math.max(0, this.unreadCount - 1);
+          this.cdr.detectChanges();
+        },
+        error: () => {}
+      });
+    }
+    if (n.threadId) {
+      this.router.navigate(['/forum', n.threadId]);
+    }
+    this.notifOpen = false;
+  }
+
+  markAllRead(): void {
+    const uid = this.authService.currentUserId;
+    if (!uid) return;
+    this.notifService.markAllAsRead(uid).subscribe({
+      next: () => {
+        this.notifications.forEach(n => n.read = true);
+        this.unreadCount = 0;
+        this.cdr.detectChanges();
+      },
+      error: () => {}
+    });
+  }
+
+  notifIcon(type: string): string {
+    const map: Record<string, string> = {
+      POST_CREATED: 'bi-chat-dots',
+      BEST_ANSWER: 'bi-award',
+      UPVOTE_RECEIVED: 'bi-hand-thumbs-up',
+      COMMENT_CREATED: 'bi-chat',
+      THREAD_CREATED: 'bi-pencil-square',
+    };
+    return map[type] ?? 'bi-bell';
+  }
+
+  notifIconColor(type: string): string {
+    const map: Record<string, string> = {
+      POST_CREATED: '#3b82f6',
+      BEST_ANSWER: '#22c55e',
+      UPVOTE_RECEIVED: '#f59e0b',
+      COMMENT_CREATED: '#a78bfa',
+      THREAD_CREATED: '#6366f1',
+    };
+    return map[type] ?? '#94a3b8';
+  }
+
+  // ── Lifecycle ──────────────────────────────────────────────────────────────
+
   ngAfterViewInit(): void {
     const currentUrl = this.getCurrentUrl();
     this.handleStripeCheckoutReturn(currentUrl);
     this.loadHeaderUserData();
     if (this.authenticated) {
       this.cartService.refreshCart();
+      this.refreshUnreadCount();
+      this.notifTimer = setInterval(() => this.refreshUnreadCount(), 60000);
     }
     this.subscriptions.add(
       this.router.events
@@ -298,6 +404,10 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
       clearTimeout(this.checkoutToastTimer);
       this.checkoutToastTimer = null;
     }
+    if (this.notifTimer) {
+      clearInterval(this.notifTimer);
+      this.notifTimer = null;
+    }
     this.subscriptions.unsubscribe();
   }
 
@@ -312,6 +422,9 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
     }
     if (!target?.closest('.cart-wrapper')) {
       this.cartDropdownOpen = false;
+    }
+    if (!target?.closest('.notif-wrapper')) {
+      this.notifOpen = false;
     }
   }
 

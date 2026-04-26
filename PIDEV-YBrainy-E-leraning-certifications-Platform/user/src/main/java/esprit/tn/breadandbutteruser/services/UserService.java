@@ -1157,6 +1157,24 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<esprit.tn.breadandbutteruser.dto.ForumProfileResponse> getAllForumProfiles() {
+        return userRepository.findAll()
+                .stream()
+                .map(esprit.tn.breadandbutteruser.dto.ForumProfileResponse::fromUser)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public esprit.tn.breadandbutteruser.dto.ForumProfileResponse updateForumProfile(Long userId, String username, String bio) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found: " + userId));
+        if (username != null && !username.isBlank()) user.setUsername(username);
+        if (bio != null) user.setBio(bio);
+        user.setLastProfileUpdate(LocalDateTime.now());
+        return esprit.tn.breadandbutteruser.dto.ForumProfileResponse.fromUser(userRepository.save(user));
+    }
+
     @Transactional
     public esprit.tn.breadandbutteruser.dto.ForumProfileResponse updateForumProfile(Long userId,
             esprit.tn.breadandbutteruser.controllers.XpController.UpdateForumProfileRequest request) {

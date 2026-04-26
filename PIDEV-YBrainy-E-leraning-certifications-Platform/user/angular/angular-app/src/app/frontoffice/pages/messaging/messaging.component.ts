@@ -66,14 +66,14 @@ export class MessagingComponent implements OnInit, OnDestroy {
   get filteredConversations(): ConversationPreview[] {
     if (!this.convSearch.trim()) return this.conversations;
     const q = this.convSearch.toLowerCase();
-    return this.conversations.filter(c => c.username.toLowerCase().includes(q));
+    return this.conversations.filter(c => (c.username ?? '').toLowerCase().includes(q));
   }
 
   get filteredUsers(): UserSummary[] {
     const q = this.userSearch.toLowerCase();
     return this.allUsers
       .filter(u => u.id !== this.currentUserId)
-      .filter(u => !q || u.username.toLowerCase().includes(q));
+      .filter(u => !q || (u.username ?? '').toLowerCase().includes(q));
   }
 
   get canSend(): boolean {
@@ -162,7 +162,8 @@ export class MessagingComponent implements OnInit, OnDestroy {
     });
   }
 
-  openChat(partnerId: number): void {
+  openChat(partnerId: number | null | undefined): void {
+    if (!partnerId) return;
     this.router.navigate(['/messages', partnerId]);
   }
 
@@ -317,17 +318,19 @@ export class MessagingComponent implements OnInit, OnDestroy {
 
   // ── Helpers: display ──────────────────────────────────────────────────────
 
-  getInitials(username: string): string {
-    return (username ?? '').slice(0, 2).toUpperCase() || '?';
+  getInitials(username: string | null | undefined): string {
+    return ((username ?? '').slice(0, 2).toUpperCase()) || '?';
   }
 
-  getAvatarBg(username: string): string {
+  getAvatarBg(username: string | null | undefined): string {
+    const s = username ?? '';
+    if (!s) return AVATAR_COLORS[0];
     let hash = 0;
-    for (let i = 0; i < username.length; i++) hash += username.charCodeAt(i);
+    for (let i = 0; i < s.length; i++) hash += s.charCodeAt(i);
     return AVATAR_COLORS[hash % AVATAR_COLORS.length];
   }
 
-  getRoleEmoji(role: string): string {
+  getRoleEmoji(role: string | null | undefined): string {
     switch (role) {
       case 'INSTRUCTOR': return '👨‍🏫';
       case 'ADMIN': return '⭐';

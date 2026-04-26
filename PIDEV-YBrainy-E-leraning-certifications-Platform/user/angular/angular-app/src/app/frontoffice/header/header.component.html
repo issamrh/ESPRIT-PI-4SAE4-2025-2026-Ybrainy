@@ -455,6 +455,52 @@
               </div>
             </div>
 
+            <!-- Notification Bell -->
+            <div *ngIf="authenticated" class="notif-wrapper">
+              <button class="notif-toggle" (click)="toggleNotif($event)" aria-label="Notifications">
+                <i class="bi bi-bell"></i>
+                <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+              </button>
+
+              <div class="notif-dropdown" *ngIf="notifOpen" (click)="$event.stopPropagation()">
+                <div class="notif-header">
+                  <span class="notif-title">Notifications</span>
+                  <button *ngIf="unreadCount > 0" class="notif-mark-all" (click)="markAllRead()">
+                    Mark all read
+                  </button>
+                </div>
+
+                <div class="notif-loading" *ngIf="notifLoading">
+                  <div class="notif-spinner"></div>
+                </div>
+
+                <div class="notif-empty" *ngIf="!notifLoading && notifications.length === 0">
+                  <i class="bi bi-bell-slash"></i>
+                  <p>No notifications yet</p>
+                </div>
+
+                <div class="notif-list" *ngIf="!notifLoading && notifications.length > 0">
+                  <div *ngFor="let n of notifications"
+                       class="notif-item"
+                       [class.notif-item--unread]="!n.read"
+                       (click)="markNotifRead(n)">
+                    <div class="notif-icon-wrap" [style.background]="notifIconColor(n.type) + '1a'" [style.color]="notifIconColor(n.type)">
+                      <i class="bi" [ngClass]="notifIcon(n.type)"></i>
+                    </div>
+                    <div class="notif-content">
+                      <div class="notif-message">{{ n.message }}</div>
+                      <div class="notif-time">{{ n.createdAt | date:'MMM d, h:mm a' }}</div>
+                    </div>
+                    <span class="notif-dot" *ngIf="!n.read"></span>
+                  </div>
+                </div>
+
+                <div class="notif-footer" *ngIf="!notifLoading && notifications.length > 0">
+                  <a routerLink="/my-dashboard" (click)="notifOpen = false">View Dashboard</a>
+                </div>
+              </div>
+            </div>
+
             <div *ngIf="authenticated" class="mode-switcher-container">
               <div class="avatar-wrapper"
                    [class.mode-student]="currentMode === 'STUDENT'"

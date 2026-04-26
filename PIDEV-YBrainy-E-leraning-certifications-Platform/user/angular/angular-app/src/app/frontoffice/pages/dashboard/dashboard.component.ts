@@ -4,6 +4,7 @@ import {
 } from '@angular/core';
 import { Chart, registerables } from 'chart.js';
 import { Subscription } from 'rxjs';
+import { filter, take } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 import { DashboardService } from '../../services/dashboard.service';
 import {
@@ -50,8 +51,35 @@ export class DashboardComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     const uid = this.auth.currentUserId;
-    if (!uid) { this.error = true; this.loading = false; return; }
+    if (uid) {
+      this.fetchDashboard(uid);
+    } else {
+      // Auth refresh is async — wait for it to resolve
+      this.subs.add(
+        this.auth.currentUser$.pipe(
+          filter(user => user !== null),
+          take(1)
+        ).subscribe(user => {
+          if (user?.id) {
+            this.fetchDashboard(user.id);
+          } else {
+            this.error = true;
+            this.loading = false;
+          }
+        })
+      );
+      // Timeout fallback if auth never resolves
+      setTimeout(() => {
+        if (this.loading && !this.data) {
+          this.error = true;
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
+      }, 8000);
+    }
+  }
 
+  private fetchDashboard(uid: number): void {
     this.subs.add(
       this.dashService.getDashboard(uid).subscribe({
         next: (d) => {

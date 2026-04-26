@@ -11,6 +11,8 @@ public interface XpEventRepository extends JpaRepository<XpEvent, Long> {
 
     List<XpEvent> findTop10ByUserUserIdOrderByCreatedAtDesc(Long userId);
 
+    List<XpEvent> findTop30ByUserUserIdOrderByCreatedAtAsc(Long userId);
+
     List<XpEvent> findByUserUserIdOrderByCreatedAtDesc(Long userId);
 
     long countByUserUserId(Long userId);

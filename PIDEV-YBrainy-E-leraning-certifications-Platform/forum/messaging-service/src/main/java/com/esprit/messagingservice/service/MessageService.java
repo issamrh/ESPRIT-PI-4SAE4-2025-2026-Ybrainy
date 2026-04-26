@@ -103,12 +103,13 @@ public class MessageService {
     public List<UserSummaryResponse> getAllUsers() {
         try {
             return userFeignClient.getAllUsers().stream()
+                    .filter(u -> u.getEffectiveId() != null)
                     .map(u -> UserSummaryResponse.builder()
-                            .id(u.getId())
+                            .id(u.getEffectiveId())
                             .username(u.getUsername())
-                            .role(u.getRole())
+                            .role(u.getRole() != null ? u.getRole() : "STUDENT")
                             .level(u.getLevel())
-                            .levelTitle(u.getLevelTitle())
+                            .levelTitle(u.getLevelTitle() != null ? u.getLevelTitle() : "")
                             .build())
                     .collect(Collectors.toList());
         } catch (Exception e) {

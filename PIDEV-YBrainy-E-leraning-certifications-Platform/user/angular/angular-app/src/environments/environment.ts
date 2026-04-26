@@ -8,7 +8,7 @@ export const environment = {
   cartApiUrl: '/api',
   financeApiUrl: '/api/finance',
   forumApiUrl: '',
-  forumWsUrl: '',
+  forumWsUrl: 'http://localhost:8088',
   googleIdpHint: 'google',
   keycloakUrl: 'http://localhost:9190',
   keycloakRealm: 'microservices',
