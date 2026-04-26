@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { FrontofficeStaticPageService } from '../../services/frontoffice-static-page.service';
 import { FrontofficeUiInitService } from '../../services/frontoffice-ui-init.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-calendar',
@@ -46,7 +47,6 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
   private readonly feedbackBaseUrl = '/Feedback';
   private readonly recommendationBaseUrl = '/api/recommendations';
   private allEvents: FrontofficeEvent[] = [];
-  private availableStudentIds: number[] = [];
   private selectedStudentId: number | null = null;
   private studentEventStatuses = new Map<number, string>();
   private studentFeedbacks = new Map<number, StudentFeedback>();
@@ -80,7 +80,8 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     private staticPage: FrontofficeStaticPageService,
     private uiInit: FrontofficeUiInitService,
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    private auth: AuthService
   ) {}
 
   async ngAfterViewInit(): Promise<void> {
@@ -126,7 +127,11 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
 
     this.prepareCalendarShell(pageRoot);
 
-    await this.loadStudentIds(pageRoot);
+    // Use the currently logged-in user's ID — no dropdown needed
+    this.selectedStudentId = this.auth.currentUserId;
+    if (!this.selectedStudentId) {
+      console.warn('Calendar: no authenticated user — events will be shown without registration status');
+    }
 
     let events: FrontofficeEvent[] = [];
     try {
@@ -294,7 +299,6 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     this.cleanupFns = [];
 
     this.normalizeFilterChips(pageRoot);
-    this.ensureStudentSelect(pageRoot);
 
     const filterButtons = Array.from(pageRoot.querySelectorAll('.cal-filter-chip')) as HTMLButtonElement[];
     filterButtons.forEach((button) => {
@@ -1033,92 +1037,8 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  private ensureStudentSelect(pageRoot: HTMLElement): void {
-    const filtersRoot = pageRoot.querySelector('.cal-filters') as HTMLElement | null;
-    if (!filtersRoot) return;
-
-    let wrapper = pageRoot.querySelector('#studentIdSelectWrap') as HTMLElement | null;
-    if (!wrapper) {
-      wrapper = document.createElement('div');
-      wrapper.id = 'studentIdSelectWrap';
-      wrapper.style.display = 'inline-flex';
-      wrapper.style.alignItems = 'center';
-      wrapper.style.gap = '8px';
-      wrapper.style.marginLeft = '8px';
-
-      const label = document.createElement('span');
-      label.textContent = 'Student';
-      label.style.fontSize = '13px';
-      label.style.color = '#777';
-
-      const select = document.createElement('select');
-      select.id = 'studentIdSelect';
-      select.className = 'cal-filter-chip';
-      select.style.paddingRight = '28px';
-      select.style.cursor = 'pointer';
-      select.style.border = '1px solid #d8dbe8';
-      select.style.background = '#fff';
-      select.style.color = '#2f3253';
-
-      wrapper.appendChild(label);
-      wrapper.appendChild(select);
-      filtersRoot.appendChild(wrapper);
-    }
-
-    const select = wrapper.querySelector('#studentIdSelect') as HTMLSelectElement | null;
-    if (!select) return;
-
-    select.innerHTML = this.availableStudentIds
-      .map((id) => `<option value="${id}">ID ${id}</option>`)
-      .join('');
-
-    if (!this.availableStudentIds.length) {
-      select.innerHTML = '<option value="">No students</option>';
-      select.disabled = true;
-      this.selectedStudentId = null;
-      this.studentEventStatuses = new Map<number, string>();
-      this.studentFeedbacks = new Map<number, StudentFeedback>();
-      this.recommendedEvents = [];
-      this.writePersistedStatusSnapshot();
-      return;
-    }
-
-    select.disabled = false;
-    if (!this.selectedStudentId || !this.availableStudentIds.includes(this.selectedStudentId)) {
-      this.selectedStudentId = this.availableStudentIds[0];
-    }
-    select.value = String(this.selectedStudentId);
-
-    const onStudentChange = async () => {
-      const nextId = Number(select.value);
-      this.selectedStudentId = Number.isFinite(nextId) ? nextId : null;
-      this.currentPage = 1;
-      this.statusHydrated = false;
-      this.eventStatusEffects.clear();
-      this.pendingFocusEventId = null;
-      await this.loadRegisteredEventIdsForSelectedStudent();
-      await this.loadRecommendedEventForSelectedStudent();
-      this.renderCalendarData(pageRoot);
-      this.replayPendingEntryAnimation(pageRoot);
-    };
-
-    select.addEventListener('change', onStudentChange);
-    this.cleanupFns.push(() => select.removeEventListener('change', onStudentChange));
-  }
-
-  private async loadStudentIds(pageRoot: HTMLElement): Promise<void> {
-    try {
-      const response = await firstValueFrom(this.http.get<number[]>(`${this.inscriptionBaseUrl}/students-ids`));
-      this.availableStudentIds = Array.isArray(response)
-        ? response.map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0)
-        : [];
-    } catch (error) {
-      console.error('Failed to load student IDs for registration', error);
-      this.availableStudentIds = [];
-    }
-
-    this.ensureStudentSelect(pageRoot);
-  }
+  // ensureStudentSelect and loadStudentIds removed — selectedStudentId is now
+  // set directly from the logged-in user (AuthService.currentUserId) at init time.
 
   private async loadRegisteredEventIdsForSelectedStudent(): Promise<void> {
     if (!this.selectedStudentId) {
