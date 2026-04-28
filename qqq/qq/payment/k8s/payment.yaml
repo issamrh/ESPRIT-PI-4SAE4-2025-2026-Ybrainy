@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: ybrainy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: payment-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8095
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysqldb:3306/elearning_platform?createDatabaseIfNotExist=true&useSSL=false
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: YBRAINY_EUREKA_URL
+              value: http://eureka:8761/eureka/
+            - name: ZIPKIN_URL
+              value: http://jaeger-zipkin:9411
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: ybrainy
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - name: http
+      port: 8095
+      targetPort: 8095
+

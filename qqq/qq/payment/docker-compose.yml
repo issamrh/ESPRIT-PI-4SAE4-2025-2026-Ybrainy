@@ -1,0 +1,177 @@
+version: '3.8'
+
+services:
+  # -----------------------------
+  # Infrastructure
+  # -----------------------------
+  mysqldb:
+    image: mysql:8.0
+    container_name: mysqldb
+    ports: ["3306:3306"]
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=elearning_platform
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports: ["5672:5672", "15672:15672"]
+    restart: always
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  # Optional cache (Cart service can be extended to use Redis)
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    profiles: ["cache"]
+    ports: ["6379:6379"]
+    restart: always
+
+  # Optional event streaming (Finance service can be extended to use Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: zookeeper
+    profiles: ["kafka"]
+    environment:
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+    ports: ["2181:2181"]
+    restart: always
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
+    profiles: ["kafka"]
+    depends_on: [zookeeper]
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+    restart: always
+
+  eureka:
+    build:
+      context: ${EUREKA_CONTEXT:-D:/taw/qqq/qq/user/p-r-k/Eureka/Eureka}
+    container_name: eureka
+    ports: ["8761:8761"]
+    environment:
+      - EUREKA_PORT=8761
+    restart: always
+
+  api-gateway:
+    build:
+      context: ${APIGATEWAY_CONTEXT:-D:/taw/qqq/qq/user/p-r-k/ApiGateway/ApiGateway}
+    container_name: api-gateway
+    ports:
+      - "${API_GATEWAY_PORT:-8092}:8088"
+    depends_on: [eureka]
+    environment:
+      - YBRAINY_EUREKA_URL=http://eureka:8761/eureka/
+    restart: always
+
+  # -----------------------------
+  # Observability (Prometheus + Grafana + Jaeger)
+  # -----------------------------
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    container_name: jaeger
+    ports:
+      - "16686:16686" # UI
+      - "9411:9411"   # Zipkin compatible collector
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+    restart: always
+
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: prometheus
+    ports: ["9090:9090"]
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    restart: always
+
+  grafana:
+    image: grafana/grafana:11.5.1
+    container_name: grafana
+    ports: ["3000:3000"]
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    restart: always
+
+  # -----------------------------
+  # Microservices
+  # -----------------------------
+  cart-service:
+    build: ./cart
+    image: issamriahi99/cart-service:1.0.0
+    container_name: cart-service
+    ports: ["8954:8954"]
+    depends_on: [mysqldb, rabbitmq, eureka]
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/elearning_platform?createDatabaseIfNotExist=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - RABBITMQ_HOST=rabbitmq
+      - YBRAINY_EUREKA_URL=http://eureka:8761/eureka/
+      - ZIPKIN_URL=http://jaeger:9411
+      - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
+      - AUTH_JWT_SECRET=${AUTH_JWT_SECRET}
+    restart: always
+
+  finance-service:
+    build: ./finance
+    image: issamriahi99/finance-service:1.0.0
+    container_name: finance-service
+    ports: ["8995:8995"]
+    depends_on: [mysqldb, rabbitmq, eureka]
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/elearning_platform?createDatabaseIfNotExist=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - RABBITMQ_HOST=rabbitmq
+      - YBRAINY_EUREKA_URL=http://eureka:8761/eureka/
+      - ZIPKIN_URL=http://jaeger:9411
+    restart: always
+
+  payment-service:
+    build: ./Payment
+    image: issamriahi99/payment-service:1.0.0
+    container_name: payment-service
+    ports: ["8095:8095"]
+    depends_on: [mysqldb, rabbitmq, eureka]
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysqldb:3306/elearning_platform?createDatabaseIfNotExist=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - RABBITMQ_HOST=rabbitmq
+      - YBRAINY_EUREKA_URL=http://eureka:8761/eureka/
+      - ZIPKIN_URL=http://jaeger:9411
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      - TTS_API_KEY=${TTS_API_KEY}
+      - CONTENT_WRITER_API_KEY=${CONTENT_WRITER_API_KEY}
+      - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
+      - AUTH_JWT_SECRET=${AUTH_JWT_SECRET}
+    restart: always

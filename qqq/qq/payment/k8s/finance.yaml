@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finance-service
+  namespace: ybrainy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: finance-service
+  template:
+    metadata:
+      labels:
+        app: finance-service
+    spec:
+      containers:
+        - name: finance-service
+          image: finance-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8995
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:mysql://mysqldb:3306/elearning_platform?createDatabaseIfNotExist=true&useSSL=false
+            - name: SPRING_DATASOURCE_USERNAME
+              value: root
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: RABBITMQ_HOST
+              value: rabbitmq
+            - name: YBRAINY_EUREKA_URL
+              value: http://eureka:8761/eureka/
+            - name: ZIPKIN_URL
+              value: http://jaeger-zipkin:9411
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: finance-service
+  namespace: ybrainy
+spec:
+  selector:
+    app: finance-service
+  ports:
+    - name: http
+      port: 8995
+      targetPort: 8995
+

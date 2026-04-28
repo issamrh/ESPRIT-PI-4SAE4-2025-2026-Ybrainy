@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deploy Guide — K8s + Jenkins</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0d0f11;
+    --bg2:       #141618;
+    --bg3:       #1a1d20;
+    --bg4:       #21252a;
+    --line:      #2a2e33;
+    --muted:     #4a5260;
+    --text:      #c8cdd6;
+    --text-dim:  #7a8394;
+    --text-hi:   #edf0f5;
+    --green:     #3dd68c;
+    --green-dim: #1a4a35;
+    --green-bg:  #0e2820;
+    --blue:      #4da6ff;
+    --blue-dim:  #1a3a5c;
+    --blue-bg:   #0a1f33;
+    --amber:     #f5a623;
+    --amber-dim: #4a3010;
+    --amber-bg:  #281a08;
+    --red:       #ff5f6d;
+    --red-bg:    #2a1015;
+    --radius:    6px;
+    --radius-lg: 10px;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--bg2);
+    border-right: 1px solid var(--line);
+    padding: 28px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+
+  .sidebar-brand {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 20px;
+  }
+  .sidebar-brand .logo-tag {
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .sidebar-brand h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-hi);
+    line-height: 1.3;
+  }
+
+  .nav-section {
+    padding: 0 20px 20px;
+  }
+  .nav-section-label {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    padding-left: 2px;
+  }
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 11.5px;
+    transition: all .15s;
+    cursor: pointer;
+  }
+  .nav-link:hover { background: var(--bg3); color: var(--text); }
+  .nav-link.active { background: var(--bg3); color: var(--text-hi); }
+  .nav-link .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0;
+    transition: background .15s;
+  }
+  .nav-link.active .dot { background: var(--green); }
+  .nav-link:hover .dot { background: var(--text-dim); }
+
+  .nav-divider { height: 1px; background: var(--line); margin: 8px 0 16px; }
+
+  /* ── Main Content ── */
+  .main {
+    padding: 40px 48px 80px;
+    max-width: 860px;
+  }
+
+  /* ── Page Header ── */
+  .page-header {
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--line);
+  }
+  .page-header .eyebrow {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .page-header .eyebrow::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--green-dim);
+    max-width: 60px;
+  }
+  .page-header h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-hi);
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .page-header p {
+    color: var(--text-dim);
+    font-size: 12.5px;
+    max-width: 560px;
+  }
+  .meta-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .meta-pill {
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    letter-spacing: .04em;
+  }
+  .meta-pill.green { border-color: var(--green-dim); color: var(--green); background: var(--green-bg); }
+  .meta-pill.blue  { border-color: var(--blue-dim);  color: var(--blue);  background: var(--blue-bg); }
+  .meta-pill.amber { border-color: var(--amber-dim); color: var(--amber); background: var(--amber-bg); }
+
+  /* ── Section ── */
+  .section {
+    margin-bottom: 60px;
+    scroll-margin-top: 32px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .section-icon {
+    width: 34px; height: 34px;
+    border-radius: var(--radius);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .section-icon.k8s  { background: var(--green-bg); border: 1px solid var(--green-dim); color: var(--green); }
+  .section-icon.ci   { background: var(--amber-bg); border: 1px solid var(--amber-dim); color: var(--amber); }
+  .section-icon.info { background: var(--blue-bg);  border: 1px solid var(--blue-dim);  color: var(--blue); }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-hi);
+  }
+  .section-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  /* ── Callout ── */
+  .callout {
+    border-radius: var(--radius-lg);
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 12px;
+    line-height: 1.65;
+  }
+  .callout-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { color: var(--text); }
+  .callout-body b { color: var(--text-hi); font-weight: 500; }
+  .callout-body code { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+  .callout.green { background: var(--green-bg); border: 1px solid var(--green-dim); }
+  .callout.blue  { background: var(--blue-bg);  border: 1px solid var(--blue-dim); }
+  .callout.amber { background: var(--amber-bg); border: 1px solid var(--amber-dim); }
+  .callout.red   { background: var(--red-bg);   border: 1px solid #4a1520; }
+
+  /* ── Progress Bar ── */
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .progress-track {
+    flex: 1;
+    height: 3px;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 3px;
+    transition: width .35s ease;
+    width: 0%;
+  }
+  .progress-text {
+    font-size: 10px;
+    color: var(--text-dim);
+    min-width: 60px;
+    text-align: right;
+  }
+  .reset-btn {
+    font-size: 10px;
+    color: var(--muted);
+    background: none;
+    border: 1px solid var(--line);
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: var(--radius);
+    font-family: 'JetBrains Mono', monospace;
+    transition: all .15s;
+  }
+  .reset-btn:hover { color: var(--text-dim); border-color: var(--muted); }
+
+  /* ── Step Card ── */
+  .step-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all .18s;
+    position: relative;
+    overflow: hidden;
+  }
+  .step-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--line);
+    border-radius: 3px 0 0 3px;
+    transition: background .18s;
+  }
+  .step-card:hover { border-color: var(--muted); background: var(--bg3); }
+  .step-card:hover::before { background: var(--muted); }
+  .step-card.done { background: var(--green-bg); border-color: var(--green-dim); }
+  .step-card.done::before { background: var(--green); }
+
+  .step-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    background: var(--bg3);
+    flex-shrink: 0;
+    transition: all .18s;
+    margin-top: 1px;
+  }
+  .step-card.done .step-num {
+    background: var(--green);
+    border-color: var(--green);
+    color: #0a1e14;
+    font-size: 13px;
+  }
+
+  .step-body { flex: 1; min-width: 0; }
+  .step-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-hi);
+    margin-bottom: 3px;
+  }
+  .step-desc {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    line-height: 1.6;
+  }
+
+  /* ── Code Block ── */
+  .code-block {
+    position: relative;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 10px 38px 10px 12px;
+    font-size: 11.5px;
+    color: var(--green);
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+    cursor: text;
+  }
+  .copy-btn {
+    position: absolute;
+    right: 8px; top: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    color: var(--text-dim);
+    font-size: 9px;
+    padding: 3px 6px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all .15s;
+    letter-spacing: .04em;
+  }
+  .copy-btn:hover { background: var(--bg4); color: var(--text); }
+  .copy-btn.copied { color: var(--green); border-color: var(--green-dim); }
+
+  .code-wrap { position: relative; margin-top: 6px; }
+
+  /* ── Jenkins Sub-sections ── */
+  .phase {
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: background .15s;
+    user-select: none;
+  }
+  .phase-header:hover { background: var(--bg3); }
+  .phase-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-dim);
+    color: var(--amber);
+    font-size: 10px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .phase-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-hi);
+    flex: 1;
+  }
+  .phase-chevron {
+    color: var(--muted);
+    font-size: 11px;
+    transition: transform .2s;
+  }
+  .phase.open .phase-chevron { transform: rotate(90deg); }
+  .phase-body {
+    display: none;
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--line);
+  }
+  .phase.open .phase-body { display: block; padding-top: 14px; }
+
+  /* ── Param Table ── */
+  .param-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .param-table th {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .param-table td {
+    padding: 9px 10px;
+    font-size: 11px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+  }
+  .param-table tr:last-child td { border-bottom: none; }
+  .param-table td:first-child { color: var(--blue); font-weight: 500; width: 38%; }
+  .param-table td:last-child { color: var(--text-dim); line-height: 1.6; }
+  .param-table td code { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text); }
+
+  /* ── Pills ── */
+  .pill-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .pill {
+    font-size: 10.5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--bg3);
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+  }
+
+  /* ── Option Cards ── */
+  .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+  .option-card {
+    background: var(--bg3);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    padding: 12px 14px;
+  }
+  .option-card.recommended { border-color: var(--blue-dim); background: var(--blue-bg); }
+  .option-card-badge { font-size: 9px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px; }
+  .option-card.recommended .option-card-badge { color: var(--blue); }
+  .option-card:not(.recommended) .option-card-badge { color: var(--muted); }
+  .option-card-title { font-weight: 500; color: var(--text-hi); font-size: 12px; margin-bottom: 4px; }
+  .option-card-desc { font-size: 11px; color: var(--text-dim); line-height: 1.6; }
+  .option-card code { font-size: 10px; color: var(--text); }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .section { animation: fadeUp .4s ease both; }
+  .section:nth-child(2) { animation-delay: .07s; }
+  .section:nth-child(3) { animation-delay: .14s; }
+  .section:nth-child(4) { animation-delay: .21s; }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-tag">Deploy Guide</div>
+      <h1>K8s &amp;<br>Jenkins</h1>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <a class="nav-link" href="#overview">
+        <span class="dot"></span>Introduction
+      </a>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Kubernetes</div>
+      <a class="nav-link" href="#k8s-prereq">
+        <span class="dot"></span>Before you start
+      </a>
+      <a class="nav-link" href="#k8s-steps">
+        <span class="dot"></span>Apply manifests
+      </a>
+    </div>
+
+    <div class="nav-divider"></div>
+
+    <div class="nav-section">
+      <div class="nav-section-label">Jenkins</div>
+      <a class="nav-link" href="#j-prereq">
+        <span class="dot"></span>1. Prerequisites
+      </a>
+      <a class="nav-link" href="#j-run">
+        <span class="dot"></span>2. Run Jenkins
+      </a>
+      <a class="nav-link" href="#j-job">
+        <span class="dot"></span>3. Create job
+      </a>
+      <a class="nav-link" href="#j-build">
+        <span class="dot"></span>4. Run the job
+      </a>
+      <a class="nav-link" href="#j-notes">
+        <span class="dot"></span>5. Gotchas
+      </a>
+    </div>
+  </nav>
+
+  <!-- ── Main ── -->
+  <main class="main">
+
+    <!-- Page Header -->
+    <div class="page-header" id="overview">
+      <div class="eyebrow">local / dev cluster</div>
+      <h2>Deployment<br>Step Guide</h2>
+      <p>Deploy Cart, Payment, and Finance services alongside MySQL, RabbitMQ, Eureka, and the API Gateway — both manually via kubectl and automated through a Jenkins pipeline.</p>
+      <div class="meta-pills">
+        <span class="meta-pill green">minikube / kind</span>
+        <span class="meta-pill blue">imagePullPolicy: IfNotPresent</span>
+        <span class="meta-pill amber">WSL · Jenkins LTS</span>
+      </div>
+    </div>
+
+    <!-- ════════════════════════════════
+         KUBERNETES
+    ════════════════════════════════ -->
+
+    <div class="section" id="k8s-prereq">
+      <div class="section-header">
+        <div class="section-icon k8s">⎈</div>
+        <div>
+          <div class="section-title">Kubernetes — before you start</div>
+          <div class="section-sub">Local cluster prep (minikube / kind)</div>
+        </div>
+      </div>
+
+      <div class="callout green">
+        <span class="callout-icon">🔔</span>
+        <div class="callout-body">
+          All images use <b>:latest</b> tag and <b>imagePullPolicy: IfNotPresent</b>. Build and load your images into the cluster <em>before</em> applying, or update the <code>image:</code> fields to point to your own registry.
+        </div>
+      </div>
+
+      <div class="callout blue">
+        <span class="callout-icon">📦</span>
+        <div class="callout-body">
+          <b>Load images into kind:</b>
+          <div class="code-wrap">
+            <pre class="code-block">kind load docker-image cart-service:latest
+kind load docker-image payment-service:latest
+kind load docker-image finance-service:latest
+kind load docker-image ybrainy-eureka:latest
+kind load docker-image ybrainy-api-gateway:latest</pre>
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+          </div>
+          Or for <b>minikube:</b>
+          <div class="code-wrap">
+            <pre class="code-block">minikube image load cart-service:latest
+minikube image load payment-service:latest
+minikube image load finance-service:latest
+minikube image load ybrainy-eureka:latest
+minikube image load ybrainy-api-gateway:latest</pre>
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- K8s Steps -->
+    <div class="section" id="k8s-steps">
+      <div class="section-header">
+        <div class="section-icon k8s">▶</div>
+        <div>
+          <div class="section-title">Apply manifests in order</div>
+          <div class="section-sub">Click each step to mark it as applied</div>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-track">
+          <div class="progress-fill" id="k8s-bar"></div>
+        </div>
+        <span class="progress-text" id="k8s-label">0 / 9</span>
+        <button class="reset-btn" onclick="resetK8s()">reset</button>
+      </div>
+
+      <div id="k8s-list"></div>
+    </div>
+
+    <!-- ════════════════════════════════
+         JENKINS
+    ════════════════════════════════ -->
+
+    <!-- Phase 1: Prerequisites -->
+    <div class="section" id="j-prereq">
+      <div class="section-header">
+        <div class="section-icon ci">⚙</div>
+        <div>
+          <div class="section-title">Jenkins Pipeline</div>
+          <div class="section-sub">WSL · Docker · kubectl · kind/minikube</div>
+        </div>
+      </div>
+
+      <div class="phase open" id="phase1">
+        <div class="phase-header" onclick="togglePhase('phase1')">
+          <div class="phase-num">1</div>
+          <div class="phase-title">Prerequisites inside WSL</div>
+          <span class="phase-chevron">▶</span>
+        </div>
+        <div class="phase-body">
+          <div class="callout blue" style="margin-bottom:12px">
+            <span class="callout-icon">ℹ</span>
+            <div class="callout-body">Install on <b>WSL (Ubuntu recommended)</b> before running the pipeline. Docker Desktop with WSL integration also works.</div>
+          </div>
+          <div class="pill-row">
+            <span class="pill">Docker Engine</span>
+            <span class="pill">kubectl</span>
+            <span class="pill">kind</span>
+            <span class="pill">minikube</span>
+          </div>
+
+          <div class="callout green" style="margin-top:14px">
+            <span class="callout-icon">✅</span>
+            <div class="callout-body">
+              <b>Minikube (WSL) recommended:</b> use the <code>docker</code> driver so Jenkins can run <code>minikube image load</code> against the same Docker daemon.
+              <div class="code-wrap" style="margin-top:10px">
+                <pre class="code-block">minikube start --driver=docker
+
+# Verify kubectl uses minikube
+kubectl config current-context
+kubectl get nodes</pre>
+                <button class="copy-btn" onclick="copyCode(this)">copy</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 2: Run Jenkins -->
+      <div class="phase open" id="phase2">
+        <div class="phase-header" onclick="togglePhase('phase2')">
+          <div class="phase-num">2</div>
+          <div class="phase-title">Run Jenkins in Docker (recommended)</div>
+          <span class="phase-chevron">▶</span>
+        </div>
+        <div class="phase-body">
+          <div class="callout amber" style="margin-bottom:12px">
+            <span class="callout-icon">⚠</span>
+            <div class="callout-body">
+              The stock <code>jenkins/jenkins:lts-jdk17</code> image does <b>not</b> include <code>docker</code>, <code>kubectl</code>, <code>minikube</code>, or <code>kind</code>.
+              Use the included tools image at <code>k8s/jenkins/Dockerfile</code>.
+            </div>
+          </div>
+
+          <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px">From WSL — builds the Jenkins tools image, then runs Jenkins with Docker socket + kubeconfig mounted:</p>
+
+          <div class="code-wrap">
+            <pre class="code-block"># Build a Jenkins image that contains docker + kubectl + minikube + kind
+docker build -t payment-jenkins:lts-tools -f k8s/jenkins/Dockerfile .
+
+docker volume create jenkins_home
+
+# Run Jenkins (local/dev). Running as root avoids docker.sock permission issues.
+docker run -d --name jenkins \
+  -u root \
+  -p 8080:8080 -p 50000:50000 \
+  -v jenkins_home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $HOME/.kube:/var/jenkins_home/.kube:ro \
+  payment-jenkins:lts-tools</pre>
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+          </div>
+
+          <p style="font-size:12px;color:var(--text-dim);margin:14px 0 6px">Open the Jenkins UI and retrieve the initial admin password:</p>
+          <div class="code-wrap">
+            <pre class="code-block">http://localhost:8080
+
+docker exec jenkins cat \
+  /var/jenkins_home/secrets/initialAdminPassword</pre>
+            <button class="copy-btn" onclick="copyCode(this)">copy</button>
+          </div>
+
+          <p style="font-size:12px;color:var(--text-dim);margin:14px 0 6px">Install these plugins when prompted:</p>
+          <div class="pill-row">
+            <span class="pill">Pipeline</span>
+            <span class="pill">AnsiColor</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 3: Create Job -->
+      <div class="phase" id="phase3">
+        <div class="phase-header" onclick="togglePhase('phase3')">
+          <div class="phase-num">3</div>
+          <div class="phase-title">Create the pipeline job</div>
+          <span class="phase-chevron">▶</span>
+        </div>
+        <div class="phase-body">
+          <p style="font-size:12px;color:var(--text-dim);margin-bottom:12px">In the Jenkins UI:</p>
+
+          <div class="step-card" style="cursor:default;margin-bottom:8px">
+            <div class="step-num" style="background:var(--bg3);color:var(--amber);border-color:var(--amber-dim)">①</div>
+            <div class="step-body">
+              <div class="step-name">Dashboard → New Item</div>
+              <div class="step-desc">Name it anything — e.g. <code style="font-size:11px">payment-k8s</code> — then choose type <b>Pipeline</b>.</div>
+            </div>
+          </div>
+
+          <div class="step-card" style="cursor:default;margin-bottom:8px">
+            <div class="step-num" style="background:var(--bg3);color:var(--amber);border-color:var(--amber-dim)">②</div>
+            <div class="step-body">
+              <div class="step-name">Configure the Pipeline section</div>
+              <div class="step-desc">Choose one of the following options:</div>
+              <div class="option-grid" style="margin-top:8px">
+                <div class="option-card recommended">
+                  <div class="option-card-badge">Recommended</div>
+                  <div class="option-card-title">Pipeline script from SCM</div>
+                  <div class="option-card-desc">SCM: <code>Git</code> · set your repo URL · Script Path: <code>k8s/Jenkinsfile</code></div>
+                </div>
+                <div class="option-card">
+                  <div class="option-card-badge">Alternative</div>
+                  <div class="option-card-title">Pipeline script</div>
+                  <div class="option-card-desc">Paste the full contents of <code>k8s/Jenkinsfile</code> directly.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-card" style="cursor:default">
+            <div class="step-num" style="background:var(--bg3);color:var(--amber);border-color:var(--amber-dim)">③</div>
+            <div class="step-body">
+              <div class="step-name">Save</div>
+              <div class="step-desc">Click <b>Save</b> to create the job. You'll be redirected to the job dashboard.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 4: Build Parameters -->
+      <div class="phase" id="phase4">
+        <div class="phase-header" onclick="togglePhase('phase4')">
+          <div class="phase-num">4</div>
+          <div class="phase-title">Run the job — Build with Parameters</div>
+          <span class="phase-chevron">▶</span>
+        </div>
+        <div class="phase-body">
+          <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px">Click <b style="color:var(--text)">Build with Parameters</b> and configure:</p>
+          <table class="param-table">
+            <thead>
+              <tr>
+                <th>Parameter</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>CLUSTER_TYPE</td>
+                <td><code>minikube</code> — images on same machine as Jenkins (loads via <code>minikube image load</code>)<br><code>kind</code> — same, for kind<br><code>none</code> — images already in a registry or pullable</td>
+              </tr>
+              <tr>
+                <td>IMAGE_TAG</td>
+                <td>Default: <code>latest</code></td>
+              </tr>
+              <tr>
+                <td>DOCKER_REGISTRY</td>
+                <td>Leave empty for local clusters. Set to e.g. <code>ghcr.io/&lt;org&gt;</code> for a real registry (requires <code>docker login</code> on the agent).</td>
+              </tr>
+              <tr>
+                <td>DOCKER_REGISTRY_CREDENTIALS_ID</td>
+                <td>Optional. Create a <b>Username with password</b> credential in <b>Manage Jenkins → Credentials</b> and paste its <code>credentialsId</code> here to enable automatic <code>docker login</code>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Phase 5: Gotchas -->
+      <div class="phase" id="phase5">
+        <div class="phase-header" onclick="togglePhase('phase5')">
+          <div class="phase-num">5</div>
+          <div class="phase-title">Notes &amp; common gotchas</div>
+          <span class="phase-chevron">▶</span>
+        </div>
+        <div class="phase-body" id="j-notes">
+          <div class="callout amber" style="margin-bottom:10px">
+            <span class="callout-icon">⚠</span>
+            <div class="callout-body">
+              <b>External images not built by this pipeline:</b> <code>ybrainy-eureka:latest</code> and <code>ybrainy-api-gateway:latest</code> are referenced in <code>k8s/eureka.yaml</code> and <code>k8s/api-gateway.yaml</code> but are <em>not</em> built by this repo's pipeline. Make sure those images exist in your cluster (loaded) or in your registry before applying.
+            </div>
+          </div>
+          <div class="callout blue" style="margin-bottom:10px">
+            <span class="callout-icon">🧩</span>
+            <div class="callout-body">
+              <b>Minikube tip:</b> If you choose <code>CLUSTER_TYPE=minikube</code>, use <code>minikube start --driver=docker</code>. This makes <code>minikube image load</code> work reliably from the Jenkins container (same Docker daemon via <code>/var/run/docker.sock</code>).
+            </div>
+          </div>
+          <div class="callout red">
+            <span class="callout-icon">🔒</span>
+            <div class="callout-body">
+              <b>Kubeconfig unreachable from inside Docker:</b> If Jenkins runs in Docker and cannot reach your cluster, verify the mounted <code>$HOME/.kube</code> has the correct context and valid certificates for your local cluster.
+            </div>
+          </div>
+
+          <p style="font-size:11.5px;color:var(--text-dim);margin-top:14px;margin-bottom:6px">Files included in this repo:</p>
+          <div class="pill-row">
+            <span class="pill">k8s/Jenkinsfile</span>
+            <span class="pill">k8s/ci/build-images.sh</span>
+            <span class="pill">k8s/ci/deploy.sh</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  const k8sSteps = [
+    {
+      name: "Create namespace",
+      desc: "Isolates all project resources. Must be applied first — everything else references this namespace.",
+      cmd: "kubectl apply -f k8s/namespace.yaml"
+    },
+    {
+      name: "Deploy MySQL",
+      desc: "Starts the database. All three services (Cart, Payment, Finance) depend on MySQL being ready.",
+      cmd: "kubectl apply -f k8s/mysql.yaml"
+    },
+    {
+      name: "Deploy RabbitMQ",
+      desc: "Message broker for asynchronous communication between services.",
+      cmd: "kubectl apply -f k8s/rabbitmq.yaml"
+    },
+    {
+      name: "Deploy Jaeger / Zipkin",
+      desc: "Distributed tracing backend. Optional but useful to have running early for observability.",
+      cmd: "kubectl apply -f k8s/jaeger-zipkin.yaml"
+    },
+    {
+      name: "Deploy Eureka",
+      desc: "Service registry. The API Gateway and all services register here for discovery.",
+      cmd: "kubectl apply -f k8s/eureka.yaml"
+    },
+    {
+      name: "Deploy API Gateway",
+      desc: "Single ingress point. Must come after Eureka — it discovers services via the registry.",
+      cmd: "kubectl apply -f k8s/api-gateway.yaml"
+    },
+    {
+      name: "Deploy Cart service",
+      desc: "Depends on MySQL, RabbitMQ, and Eureka. Waits for rollout to complete.",
+      cmd: "kubectl apply -f k8s/cart.yaml"
+    },
+    {
+      name: "Deploy Payment service",
+      desc: "Depends on MySQL, RabbitMQ, and Eureka. Waits for rollout to complete.",
+      cmd: "kubectl apply -f k8s/payment.yaml"
+    },
+    {
+      name: "Deploy Finance service",
+      desc: "Depends on MySQL, RabbitMQ, and Eureka. Final service to apply.",
+      cmd: "kubectl apply -f k8s/finance.yaml"
+    }
+  ];
+
+  let done = new Array(k8sSteps.length).fill(false);
+
+  function renderK8s() {
+    const list = document.getElementById('k8s-list');
+    list.innerHTML = '';
+    k8sSteps.forEach((s, i) => {
+      const card = document.createElement('div');
+      card.className = 'step-card' + (done[i] ? ' done' : '');
+      card.onclick = () => { done[i] = !done[i]; renderK8s(); updateProgress(); };
+      card.innerHTML = `
+        <div class="step-num">${done[i] ? '✓' : (i + 1)}</div>
+        <div class="step-body">
+          <div class="step-name">${s.name}</div>
+          <div class="step-desc">${s.desc}</div>
+          <div class="code-wrap">
+            <pre class="code-block">${s.cmd}</pre>
+            <button class="copy-btn" onclick="event.stopPropagation();copyCode(this)">copy</button>
+          </div>
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+
+  function updateProgress() {
+    const count = done.filter(Boolean).length;
+    const pct = Math.round(count / k8sSteps.length * 100);
+    document.getElementById('k8s-bar').style.width = pct + '%';
+    document.getElementById('k8s-label').textContent = count + ' / ' + k8sSteps.length;
+  }
+
+  function resetK8s() {
+    done = new Array(k8sSteps.length).fill(false);
+    renderK8s(); updateProgress();
+  }
+
+  function togglePhase(id) {
+    document.getElementById(id).classList.toggle('open');
+  }
+
+  function copyCode(btn) {
+    const pre = btn.previousElementSibling;
+    navigator.clipboard.writeText(pre.textContent.trim()).then(() => {
+      btn.textContent = 'copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+
+  renderK8s();
+  updateProgress();
+</script>
+</body>
+</html>
