@@ -186,13 +186,13 @@ export class CourseStoreService {
   }
 
   /** Create lesson: FormData for multipart (lesson JSON + files) */
-  addLesson(courseId: string, input: Omit<Lesson, 'id'>): void {
+  addLesson(courseId: string, input: Omit<Lesson, 'id'>): Observable<void> {
     const cid = Number(courseId);
     if (!cid) {
       console.error('Invalid courseId for addLesson');
-      return;
+      return new Observable<void>(obs => { obs.error(new Error('Invalid courseId')); });
     }
-    
+
     const formData = new FormData();
     const lessonMeta = {
       title: input.title,
@@ -201,8 +201,7 @@ export class CourseStoreService {
       orderIndex: input.orderIndex
     };
     formData.append('lesson', new Blob([JSON.stringify(lessonMeta)], { type: 'application/json' }));
-    
-    // If there's a video URL, add it as youtubeUrls parameter
+
     if (input.videoUrl || input.contentUrl) {
       const url = input.videoUrl || input.contentUrl;
       if (url && (url.includes('youtube.com') || url.includes('youtu.be'))) {
@@ -210,23 +209,19 @@ export class CourseStoreService {
       }
     }
 
-    this.apiService.createLesson(cid, formData).subscribe({
-      next: () => {
-        this.refreshFromBackend();
-        // Also refresh lessons list for this course
-        this.getLessonsByCourseId(cid).subscribe();
-      },
-      error: (err) => console.error('Error adding lesson:', err),
-    });
+    return this.apiService.createLesson(cid, formData).pipe(
+      tap(() => this.refreshFromBackend()),
+      map(() => void 0)
+    );
   }
 
   /** Update lesson: FormData for multipart */
-  updateLesson(courseId: string, lessonId: string, patch: Partial<Omit<Lesson, 'id'>>): void {
+  updateLesson(courseId: string, lessonId: string, patch: Partial<Omit<Lesson, 'id'>>): Observable<void> {
     const cid = Number(courseId);
     const lid = Number(lessonId);
     if (!cid || !lid) {
       console.error('Invalid courseId or lessonId for updateLesson');
-      return;
+      return new Observable<void>(obs => { obs.error(new Error('Invalid courseId or lessonId')); });
     }
 
     const formData = new FormData();
@@ -237,7 +232,7 @@ export class CourseStoreService {
       orderIndex: patch.orderIndex
     };
     formData.append('lesson', new Blob([JSON.stringify(lessonMeta)], { type: 'application/json' }));
-    
+
     if (patch.videoUrl || patch.contentUrl) {
       const url = patch.videoUrl || patch.contentUrl;
       if (url && (url.includes('youtube.com') || url.includes('youtu.be'))) {
@@ -245,31 +240,25 @@ export class CourseStoreService {
       }
     }
 
-    this.apiService.updateLesson(cid, lid, formData).subscribe({
-      next: () => {
-        this.refreshFromBackend();
-        this.getLessonsByCourseId(cid).subscribe();
-      },
-      error: (err) => console.error('Error updating lesson:', err),
-    });
+    return this.apiService.updateLesson(cid, lid, formData).pipe(
+      tap(() => this.refreshFromBackend()),
+      map(() => void 0)
+    );
   }
 
   /** Delete lesson */
-  deleteLesson(courseId: string, lessonId: string): void {
+  deleteLesson(courseId: string, lessonId: string): Observable<void> {
     const cid = Number(courseId);
     const lid = Number(lessonId);
     if (!cid || !lid) {
       console.error('Invalid courseId or lessonId for deleteLesson');
-      return;
+      return new Observable<void>(obs => { obs.error(new Error('Invalid courseId or lessonId')); });
     }
 
-    this.apiService.deleteLesson(cid, lid).subscribe({
-      next: () => {
-        this.refreshFromBackend();
-        this.getLessonsByCourseId(cid).subscribe();
-      },
-      error: (err) => console.error('Error deleting lesson:', err),
-    });
+    return this.apiService.deleteLesson(cid, lid).pipe(
+      tap(() => this.refreshFromBackend()),
+      map(() => void 0)
+    );
   }
 
   // Helper for internal state updates if needed locally

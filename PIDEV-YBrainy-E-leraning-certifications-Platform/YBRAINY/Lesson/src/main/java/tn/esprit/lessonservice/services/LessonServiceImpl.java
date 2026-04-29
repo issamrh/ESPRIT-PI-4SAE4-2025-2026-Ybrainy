@@ -39,6 +39,7 @@ public class LessonServiceImpl implements ILessonService {
     }
 
     @Override
+    @Transactional
     public Lesson createLesson(Long courseId, Lesson lesson) {
         // Verify course exists via Feign
         if (!courseClient.courseExists(courseId)) {
@@ -49,6 +50,9 @@ public class LessonServiceImpl implements ILessonService {
             int maxIndex = lessonRepository
                 .findMaxOrderIndexByCourseId(courseId).orElse(0);
             lesson.setOrderIndex(maxIndex + 1);
+        }
+        if (lesson.getContents() != null) {
+            lesson.getContents().forEach(c -> c.setLesson(lesson));
         }
         return lessonRepository.save(lesson);
     }

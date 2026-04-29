@@ -159,8 +159,13 @@ public class LessonFileController {
                     contents.add(buildContent(LessonType.YOUTUBE_EMBED, url, idx++));
         }
 
-        if (contents.isEmpty())
-            throw new IllegalArgumentException("At least one content is required");
+        if (contents.isEmpty()) {
+            if (existing != null && existing.getContents() != null && !existing.getContents().isEmpty()) {
+                contents.addAll(existing.getContents());
+            } else {
+                throw new IllegalArgumentException("At least one content is required");
+            }
+        }
 
         LessonContent primary = contents.get(0);
         Lesson lesson = existing != null ? existing : new Lesson();

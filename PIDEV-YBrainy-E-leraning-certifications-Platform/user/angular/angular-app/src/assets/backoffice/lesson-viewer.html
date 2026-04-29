@@ -158,7 +158,7 @@
 	<script src="js/styleSwitcher.js"></script>
 
 	<script>
-		const API_BASE_URL = 'http://localhost:8089/api/courses';
+		const API_BASE_URL = '/api/courses';
 
 		const urlParams = new URLSearchParams(window.location.search);
 		const courseId = urlParams.get('courseId');
@@ -195,10 +195,14 @@
 		function resolveCourseFileUrl(u) {
 			if (!u) return '';
 			const s = String(u);
-			if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('blob:') || s.startsWith('data:')) return s;
+			if (s.startsWith('blob:') || s.startsWith('data:')) return s;
+			if (s.startsWith('http://') || s.startsWith('https://')) {
+				// Convert absolute URL to relative so it goes through the Angular proxy
+				try { return new URL(s).pathname; } catch (_) { return s; }
+			}
 			if (s.startsWith('/api/')) return s;
 			if (s.startsWith('/')) return s;
-			return 'http://localhost:8089/api/courses/files/' + s;
+			return '/api/courses/files/' + s;
 		}
 		function hideAll() {
 			const v = document.getElementById('viewerVideo');

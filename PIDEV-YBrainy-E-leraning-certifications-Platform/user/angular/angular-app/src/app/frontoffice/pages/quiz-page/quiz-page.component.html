@@ -286,7 +286,7 @@
           </div>
           <div class="tk-header-center">
             <div class="tk-round-complete">— ROUND COMPLETE —</div>
-            <div class="tk-hall-title">HALL OF CHAMPIONS</div>
+            <div class="tk-hall-title">{{ selectedQuiz?.title || 'HALL OF CHAMPIONS' }}</div>
             <div class="tk-header-subtitle">
               {{ leaderboard.length }} FIGHTER{{ leaderboard.length !== 1 ? 'S' : '' }} RANKED
             </div>

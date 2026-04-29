@@ -1653,8 +1653,12 @@
 	}
 	function resolveCourseFileUrl(url) {
 		if (!url) return '';
-		if (url.startsWith('http://') || url.startsWith('https://')) return url;
-		return 'http://localhost:8088/api/courses/files/' + url;
+		if (url.startsWith('blob:') || url.startsWith('data:')) return url;
+		if (url.startsWith('http://') || url.startsWith('https://')) {
+			try { return new URL(url).pathname; } catch (_) { return url; }
+		}
+		if (url.startsWith('/api/') || url.startsWith('/')) return url;
+		return '/api/courses/files/' + url;
 	}
 	function roadmapTypeIcon(t) {
 		if (t === 'VIDEO_UPLOAD') return 'smart_display';
@@ -2150,10 +2154,12 @@
 		function resolveCourseFileUrl(u) {
 			if (!u) return '';
 			const s = String(u);
-			if (s.startsWith('http://') || s.startsWith('https://') || s.startsWith('blob:') || s.startsWith('data:')) return s;
-			if (s.startsWith('/api/')) return s;
-			if (s.startsWith('/')) return s;
-			return 'http://localhost:8088/api/courses/files/' + s;
+			if (s.startsWith('blob:') || s.startsWith('data:')) return s;
+			if (s.startsWith('http://') || s.startsWith('https://')) {
+				try { return new URL(s).pathname; } catch (_) { return s; }
+			}
+			if (s.startsWith('/api/') || s.startsWith('/')) return s;
+			return '/api/courses/files/' + s;
 		}
 		function showMediaItem(index) {
 			const item = activeLessonMediaItems[index];
@@ -2694,7 +2700,7 @@
 			if (!apiKey) { errEl.textContent = 'No OpenRouter API key. Add it in settings.'; btn.disabled = false; btnText.textContent = 'Generate with AI'; return; }
 			const res = await authFetch(
 				'https://openrouter.ai/api/v1/chat/completions',
-				{ method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`, 'HTTP-Referer': 'http://localhost:4301', 'X-Title': 'YBrainy' }, body: JSON.stringify({ model: 'stepfun/step-3.5-flash:free', messages: [{ role: 'user', content: prompt }] }) }
+				{ method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}`, 'HTTP-Referer': 'http://localhost:4301', 'X-Title': 'YBrainy' }, body: JSON.stringify({ model: 'google/gemma-3-4b-it:free', messages: [{ role: 'user', content: prompt }] }) }
 			);
 			if (!res.ok) throw new Error('API error ' + res.status);
 			const data = await res.json();

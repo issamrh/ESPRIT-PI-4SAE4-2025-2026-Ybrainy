@@ -347,18 +347,26 @@ export class LessonsComponent implements OnInit, OnDestroy {
     }
     const v = this.form.getRawValue();
     if (this.editingLessonId) {
+      const courseIdNum = +this.courseId;
       this.store.updateLesson(this.courseId, this.editingLessonId, {
         title: v.title!,
         description: v.description!,
         videoUrl: v.videoUrl!,
         durationMinutes: v.durationMinutes ?? undefined,
+      }).subscribe({
+        next: () => this.loadLessons(courseIdNum),
+        error: (err) => console.error('Error updating lesson:', err),
       });
     } else {
+      const courseIdNum = +this.courseId;
       this.store.addLesson(this.courseId, {
         title: v.title!,
         description: v.description!,
         videoUrl: v.videoUrl!,
         durationMinutes: v.durationMinutes ?? undefined,
+      }).subscribe({
+        next: () => this.loadLessons(courseIdNum),
+        error: (err) => console.error('Error adding lesson:', err),
       });
     }
     this.cancel();
@@ -368,7 +376,11 @@ export class LessonsComponent implements OnInit, OnDestroy {
     if (!this.courseId) return;
     const ok = confirm(`Delete lesson "${lesson.title}"?`);
     if (!ok) return;
-    this.store.deleteLesson(this.courseId, String(lesson.id));
+    const courseIdNum = +this.courseId;
+    this.store.deleteLesson(this.courseId, String(lesson.id)).subscribe({
+      next: () => this.loadLessons(courseIdNum),
+      error: (err) => console.error('Error deleting lesson:', err),
+    });
   }
 
   // ── Private ───────────────────────────────────────────────────────

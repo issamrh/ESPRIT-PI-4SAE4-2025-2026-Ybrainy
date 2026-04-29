@@ -26,10 +26,10 @@ print("Loading models...")
 try:
     dso1_model   = joblib.load(os.path.join(MODELS_DIR, 'dso1_conversion_model.pkl'))
     dso1_scaler  = joblib.load(os.path.join(MODELS_DIR, 'dso1_scaler.pkl'))
-    print("DSO1 loaded ✅")
 except Exception as e:
     print(f"DSO1 load failed: {e}")
     dso1_model = dso1_scaler = None
+print("DSO1 loaded" if dso1_model else "DSO1 not loaded")
 
 try:
     dso2_knn     = joblib.load(os.path.join(MODELS_DIR, 'dso2_knn_model.pkl'))
@@ -38,26 +38,26 @@ try:
     dso2_scaler  = joblib.load(os.path.join(MODELS_DIR, 'dso2_scaler.pkl'))
     dso2_le_subj = joblib.load(os.path.join(MODELS_DIR, 'dso2_le_subject.pkl'))
     dso2_le_lvl  = joblib.load(os.path.join(MODELS_DIR, 'dso2_le_level.pkl'))
-    print("DSO2 loaded ✅")
 except Exception as e:
     print(f"DSO2 load failed: {e}")
     dso2_knn = dso2_matrix = dso2_df = dso2_scaler = None
     dso2_le_subj = dso2_le_lvl = None
+print("DSO2 loaded" if dso2_knn else "DSO2 not loaded")
 
 try:
     dso3_model  = joblib.load(os.path.join(MODELS_DIR, 'dso3_quality_model.pkl'))
     dso3_scaler = joblib.load(os.path.join(MODELS_DIR, 'dso3_scaler.pkl'))
-    print("DSO3 loaded ✅")
 except Exception as e:
     print(f"DSO3 load failed: {e}")
     dso3_model = dso3_scaler = None
+print("DSO3 loaded" if dso3_model else "DSO3 not loaded")
 
 try:
     dso4_model = joblib.load(os.path.join(MODELS_DIR, 'dso4_arima_model.pkl'))
-    print("DSO4 loaded ✅")
 except Exception as e:
     print(f"DSO4 load failed: {e}")
     dso4_model = None
+print("DSO4 loaded" if dso4_model else "DSO4 not loaded")
 
 print("All models loaded.")
 
@@ -421,7 +421,7 @@ def forecast_demand():
         # Step 5: Category breakdown from real DB
         category_forecast = {}
         try:
-            resp2 = requests.get('http://localhost:8082/api/courses/stats/by-category',
+            resp2 = requests.get(f'{COURSE_SERVICE_URL}/api/courses/stats/by-category',
                                timeout=3)
             if resp2.ok:
                 cat_data = resp2.json()
