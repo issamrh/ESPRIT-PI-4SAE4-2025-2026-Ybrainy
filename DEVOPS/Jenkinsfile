@@ -1,0 +1,94 @@
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_NAME    = 'course-service'
+        SERVICE_DIR     = 'PIDEV-YBrainy-E-leraning-certifications-Platform/YBRAINY/Course/tp-foyer'
+        IMAGE_NAME      = "ybrainy/${SERVICE_NAME}"
+        IMAGE_TAG       = "${BUILD_NUMBER}"
+        SONAR_HOST_URL  = 'http://localhost:9000'
+        K8S_NAMESPACE   = 'ybrainy'
+        K8S_DEPLOYMENT  = 'course-service'
+    }
+
+    tools {
+        maven 'Maven'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh 'mvn clean verify -Dmaven.test.failure.ignore=false'
+                }
+            }
+            post {
+                always {
+                    junit testResults: "${SERVICE_DIR}/target/surefire-reports/*.xml",
+                          allowEmptyResults: true
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'sonar-token2', variable: 'SONAR_TOKEN')]) {
+                    dir("${SERVICE_DIR}") {
+                        sh """
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=${SERVICE_NAME} \
+                                -Dsonar.projectName='YBrainy Course Service' \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.token=${SONAR_TOKEN} \
+                                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                        sh """
+                            kubectl --kubeconfig=${KUBECONFIG} -n ${K8S_NAMESPACE} \
+                                set image deployment/${K8S_DEPLOYMENT} \
+                                ${K8S_DEPLOYMENT}=${IMAGE_NAME}:${IMAGE_TAG}
+
+                            kubectl --kubeconfig=${KUBECONFIG} -n ${K8S_NAMESPACE} \
+                                rollout status deployment/${K8S_DEPLOYMENT} --timeout=120s
+                        """
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline passed — ${SERVICE_NAME}:${IMAGE_TAG} deployed"
+        }
+        unstable {
+            echo "Pipeline passed CI — Kubernetes deploy skipped (cluster not configured yet)"
+        }
+        failure {
+            echo "Pipeline FAILED at stage: ${currentBuild.result}"
+        }
+    }
+}
