@@ -11,6 +11,10 @@ pipeline {
         K8S_DEPLOYMENT  = 'course-service'
     }
 
+    options {
+        skipDefaultCheckout(true)
+    }
+
     tools {
         maven 'Maven'
     }
