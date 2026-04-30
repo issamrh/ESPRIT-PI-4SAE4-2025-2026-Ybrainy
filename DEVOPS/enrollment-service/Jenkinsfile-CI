@@ -2,13 +2,9 @@ pipeline {
     agent any
 
     environment {
-        SERVICE_NAME   = 'lesson-service'
-        SERVICE_DIR    = '/mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/PIDEV-YBrainy-E-leraning-certifications-Platform/YBRAINY/Lesson'
-        IMAGE_NAME     = "ybrainy/${SERVICE_NAME}"
-        IMAGE_TAG      = "${BUILD_NUMBER}"
+        SERVICE_NAME   = 'enrollment-service'
+        SERVICE_DIR    = '/mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/PIDEV-YBrainy-E-leraning-certifications-Platform/YBRAINY/Enrollment/enrollment-service'
         SONAR_HOST_URL = 'http://localhost:9000'
-        K8S_NAMESPACE  = 'ybrainy'
-        K8S_DEPLOYMENT = 'lesson-service'
         BUILD_DIR      = "/tmp/ybrainy-builds/${SERVICE_NAME}-${BUILD_NUMBER}"
     }
 
@@ -40,7 +36,7 @@ pipeline {
                         sh """
                             mvn sonar:sonar \
                                 -Dsonar.projectKey=${SERVICE_NAME} \
-                                -Dsonar.projectName='YBrainy Lesson Service' \
+                                -Dsonar.projectName='YBrainy Enrollment Service' \
                                 -Dsonar.host.url=${SONAR_HOST_URL} \
                                 -Dsonar.token=${SONAR_TOKEN} \
                                 -Dsonar.coverage.jacoco.xmlReportPaths=${BUILD_DIR}/target/site/jacoco/jacoco.xml \
@@ -51,36 +47,18 @@ pipeline {
             }
         }
 
-        stage('Docker Build') {
+        stage('Trigger CD') {
             steps {
-                dir("${SERVICE_DIR}") {
-                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ."
-                }
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                        sh """
-                            kubectl --kubeconfig=${KUBECONFIG} -n ${K8S_NAMESPACE} \
-                                set image deployment/${K8S_DEPLOYMENT} \
-                                ${K8S_DEPLOYMENT}=${IMAGE_NAME}:${IMAGE_TAG}
-
-                            kubectl --kubeconfig=${KUBECONFIG} -n ${K8S_NAMESPACE} \
-                                rollout status deployment/${K8S_DEPLOYMENT} --timeout=120s
-                        """
-                    }
-                }
+                build job: 'enrollment-service-CD',
+                      parameters: [string(name: 'BUILD_TAG', value: "${BUILD_NUMBER}")],
+                      wait: false
             }
         }
     }
 
     post {
-        success  { echo "Pipeline passed — ${SERVICE_NAME}:${IMAGE_TAG} deployed" }
-        unstable { echo "Pipeline passed CI — Kubernetes deploy skipped (cluster not configured yet)" }
-        failure  { echo "Pipeline FAILED" }
+        success  { echo "CI passed — triggered enrollment-service-CD" }
+        failure  { echo "CI FAILED — CD pipeline will NOT be triggered" }
         always   { sh "rm -rf ${BUILD_DIR} || true" }
     }
 }
