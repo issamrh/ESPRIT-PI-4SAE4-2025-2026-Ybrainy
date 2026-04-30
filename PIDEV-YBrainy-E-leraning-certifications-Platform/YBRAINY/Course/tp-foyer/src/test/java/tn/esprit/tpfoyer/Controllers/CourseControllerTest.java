@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -67,7 +68,7 @@ class CourseControllerTest {
     void getAllCourses_returnsPaginatedList() throws Exception {
         CourseResponseDTO dto = CourseResponseDTO.builder().id(1L).title("Test Course").build();
         when(courseService.getAllCourses(any(), any(), any(), any(), any(), any(), any(), any(Pageable.class)))
-                .thenReturn(new PageImpl<>(List.of(dto)));
+                .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1));
 
         mockMvc.perform(get("/api/courses"))
                 .andExpect(status().isOk())
