@@ -22,6 +22,14 @@ spec:
           env:
             - name: SERVER_PORT
               value: "8083"
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://mysql:3306/ybrainy_quiz?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: ""
+            - name: SPRING_RABBITMQ_HOST
+              value: "rabbitmq"
 ---
 apiVersion: v1
 kind: Service
