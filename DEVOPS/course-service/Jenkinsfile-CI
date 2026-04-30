@@ -1,0 +1,69 @@
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_NAME   = 'course-service'
+        SERVICE_DIR    = '/mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/PIDEV-YBrainy-E-leraning-certifications-Platform/YBRAINY/Course/tp-foyer'
+        SONAR_HOST_URL = 'http://localhost:9000'
+        BUILD_DIR      = "/tmp/ybrainy-builds/${BUILD_NUMBER}"
+    }
+
+    options { skipDefaultCheckout(true) }
+
+    tools { maven 'Maven' }
+
+    stages {
+
+        stage('Build & Test') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh "mvn clean verify -Dmaven.test.failure.ignore=false -Dbuild.dir=${BUILD_DIR}/target"
+                }
+            }
+            post {
+                always {
+                    junit testResults: "${BUILD_DIR}/target/surefire-reports/*.xml",
+                          allowEmptyResults: true
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'sonar-token2', variable: 'SONAR_TOKEN')]) {
+                    dir("${SERVICE_DIR}") {
+                        sh """
+                            mvn sonar:sonar \
+                                -Dsonar.projectKey=${SERVICE_NAME} \
+                                -Dsonar.projectName='YBrainy Course Service' \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.token=${SONAR_TOKEN} \
+                                -Dsonar.coverage.jacoco.xmlReportPaths=${BUILD_DIR}/target/site/jacoco/jacoco.xml \
+                                -Dbuild.dir=${BUILD_DIR}/target
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Trigger CD') {
+            steps {
+                build job: 'course-service-CD',
+                      parameters: [string(name: 'BUILD_TAG', value: "${BUILD_NUMBER}")],
+                      wait: false
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "CI passed — triggered course-service-CD"
+        }
+        failure {
+            echo "CI FAILED — CD pipeline will NOT be triggered"
+        }
+        always {
+            sh "rm -rf ${BUILD_DIR} || true"
+        }
+    }
+}
