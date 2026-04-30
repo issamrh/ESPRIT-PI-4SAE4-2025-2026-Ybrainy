@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import tn.esprit.lessonservice.entities.Lesson;
 import tn.esprit.lessonservice.entities.LessonProgress;
+import tn.esprit.lessonservice.entities.ProgressStatus;
 import tn.esprit.lessonservice.services.ILessonService;
 
 import java.time.LocalDateTime;
@@ -50,7 +51,7 @@ class LessonControllerTest {
         sampleProgress.setId(1L);
         sampleProgress.setEnrollmentId(10L);
         sampleProgress.setLessonId(1L);
-        sampleProgress.setStatus("COMPLETED");
+        sampleProgress.setStatus(ProgressStatus.COMPLETED);
     }
 
     @Test
