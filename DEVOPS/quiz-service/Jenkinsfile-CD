@@ -26,6 +26,12 @@ pipeline {
             }
         }
 
+        stage('Import Image to Containerd') {
+            steps {
+                sh "docker save ${IMAGE_NAME}:${IMAGE_TAG} | sudo ctr -n k8s.io images import -"
+            }
+        }
+
         stage('Deploy to Kubernetes') {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
