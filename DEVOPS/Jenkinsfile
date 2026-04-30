@@ -26,7 +26,7 @@ pipeline {
         stage('Build & Test') {
             steps {
                 dir("${SERVICE_DIR}") {
-                    sh "mvn clean verify -Dmaven.test.failure.ignore=false -Dproject.build.directory=${BUILD_DIR}/target"
+                    sh "mvn clean verify -Dmaven.test.failure.ignore=false -Dbuild.dir=${BUILD_DIR}/target"
                 }
             }
             post {
@@ -48,7 +48,7 @@ pipeline {
                                 -Dsonar.host.url=${SONAR_HOST_URL} \
                                 -Dsonar.token=${SONAR_TOKEN} \
                                 -Dsonar.coverage.jacoco.xmlReportPaths=${BUILD_DIR}/target/site/jacoco/jacoco.xml \
-                                -Dproject.build.directory=${BUILD_DIR}/target
+                                -Dbuild.dir=${BUILD_DIR}/target
                         """
                     }
                 }
