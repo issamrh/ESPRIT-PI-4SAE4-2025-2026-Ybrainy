@@ -9,6 +9,8 @@ pipeline {
         SONAR_HOST_URL  = 'http://localhost:9000'
         K8S_NAMESPACE   = 'ybrainy'
         K8S_DEPLOYMENT  = 'course-service'
+        // Native Linux FS — avoids WSL/NTFS "Operation not permitted" on writes
+        BUILD_DIR       = "/tmp/ybrainy-builds/${BUILD_NUMBER}"
     }
 
     options {
@@ -24,12 +26,12 @@ pipeline {
         stage('Build & Test') {
             steps {
                 dir("${SERVICE_DIR}") {
-                    sh 'mvn clean verify -Dmaven.test.failure.ignore=false'
+                    sh "mvn clean verify -Dmaven.test.failure.ignore=false -Dproject.build.directory=${BUILD_DIR}/target"
                 }
             }
             post {
                 always {
-                    junit testResults: "${SERVICE_DIR}/target/surefire-reports/*.xml",
+                    junit testResults: "${BUILD_DIR}/target/surefire-reports/*.xml",
                           allowEmptyResults: true
                 }
             }
@@ -45,7 +47,8 @@ pipeline {
                                 -Dsonar.projectName='YBrainy Course Service' \
                                 -Dsonar.host.url=${SONAR_HOST_URL} \
                                 -Dsonar.token=${SONAR_TOKEN} \
-                                -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                                -Dsonar.coverage.jacoco.xmlReportPaths=${BUILD_DIR}/target/site/jacoco/jacoco.xml \
+                                -Dproject.build.directory=${BUILD_DIR}/target
                         """
                     }
                 }
@@ -87,6 +90,9 @@ pipeline {
         }
         failure {
             echo "Pipeline FAILED at stage: ${currentBuild.result}"
+        }
+        always {
+            sh "rm -rf ${BUILD_DIR} || true"
         }
     }
 }
