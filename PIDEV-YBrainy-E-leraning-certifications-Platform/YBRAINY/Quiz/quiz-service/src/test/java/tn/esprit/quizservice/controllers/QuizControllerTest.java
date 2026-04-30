@@ -116,7 +116,7 @@ class QuizControllerTest {
 
         mockMvc.perform(post("/api/quizzes/1/questions")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"text\":\"What is DI?\",\"points\":10}"))
+                        .content("{\"questionText\":\"What is DI?\",\"options\":[{\"optionText\":\"Dependency Injection\",\"isCorrect\":true}]}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1));
     }
