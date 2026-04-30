@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         SERVICE_NAME    = 'course-service'
-        SERVICE_DIR     = 'PIDEV-YBrainy-E-leraning-certifications-Platform/YBRAINY/Course/tp-foyer'
+        SERVICE_DIR     = '/mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/PIDEV-YBrainy-E-leraning-certifications-Platform/YBRAINY/Course/tp-foyer'
         IMAGE_NAME      = "ybrainy/${SERVICE_NAME}"
         IMAGE_TAG       = "${BUILD_NUMBER}"
         SONAR_HOST_URL  = 'http://localhost:9000'
@@ -16,12 +16,6 @@ pipeline {
     }
 
     stages {
-
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
 
         stage('Build & Test') {
             steps {
