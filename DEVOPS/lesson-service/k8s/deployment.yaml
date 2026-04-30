@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lesson-service
+  namespace: ybrainy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lesson-service
+  template:
+    metadata:
+      labels:
+        app: lesson-service
+    spec:
+      containers:
+        - name: lesson-service
+          image: ybrainy/lesson-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8084
+          env:
+            - name: SERVER_PORT
+              value: "8084"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lesson-service
+  namespace: ybrainy
+spec:
+  selector:
+    app: lesson-service
+  ports:
+    - port: 8084
+      targetPort: 8084
+  type: ClusterIP

@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enrollment-service
+  namespace: ybrainy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: enrollment-service
+  template:
+    metadata:
+      labels:
+        app: enrollment-service
+    spec:
+      containers:
+        - name: enrollment-service
+          image: ybrainy/enrollment-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8085
+          env:
+            - name: SERVER_PORT
+              value: "8085"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: enrollment-service
+  namespace: ybrainy
+spec:
+  selector:
+    app: enrollment-service
+  ports:
+    - port: 8085
+      targetPort: 8085
+  type: ClusterIP

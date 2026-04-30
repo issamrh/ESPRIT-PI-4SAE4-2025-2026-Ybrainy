@@ -28,25 +28,22 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
-                    withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                        sh """
-                            kubectl --kubeconfig=${KUBECONFIG} -n ${K8S_NAMESPACE} \
-                                set image deployment/${K8S_DEPLOYMENT} \
-                                ${K8S_DEPLOYMENT}=${IMAGE_NAME}:${IMAGE_TAG}
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh """
+                        sed 's|image: ybrainy/${SERVICE_NAME}:latest|image: ${IMAGE_NAME}:${IMAGE_TAG}|' \
+                            /mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/DEVOPS/${SERVICE_NAME}/k8s/deployment.yaml \
+                            | kubectl --kubeconfig=\$KUBECONFIG apply -f -
 
-                            kubectl --kubeconfig=${KUBECONFIG} -n ${K8S_NAMESPACE} \
-                                rollout status deployment/${K8S_DEPLOYMENT} --timeout=120s
-                        """
-                    }
+                        kubectl --kubeconfig=\$KUBECONFIG -n ${K8S_NAMESPACE} \
+                            rollout status deployment/${K8S_DEPLOYMENT} --timeout=120s
+                    """
                 }
             }
         }
     }
 
     post {
-        success  { echo "CD passed — ${SERVICE_NAME}:${IMAGE_TAG} deployed to Kubernetes" }
-        unstable { echo "CD passed Docker build — Kubernetes deploy skipped (cluster not configured yet)" }
-        failure  { echo "CD FAILED" }
+        success { echo "CD passed — ${SERVICE_NAME}:${IMAGE_TAG} deployed to Kubernetes" }
+        failure { echo "CD FAILED" }
     }
 }
