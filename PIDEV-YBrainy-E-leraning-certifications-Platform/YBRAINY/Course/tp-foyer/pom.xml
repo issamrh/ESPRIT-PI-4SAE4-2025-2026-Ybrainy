@@ -148,6 +148,11 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <dependencyManagement>
@@ -179,6 +184,15 @@
                             <version>1.18.32</version>
                         </path>
                     </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- @{argLine} picks up JaCoCo agent; flag needed by Mockito ByteBuddy on Java 21 -->
+                    <argLine>@{argLine} -Djdk.attach.allowAttachSelf=true</argLine>
                 </configuration>
             </plugin>
 
