@@ -21,6 +21,7 @@ pipeline {
         stage('Build & Test') {
             steps {
                 dir("${SERVICE_DIR}") {
+                    sh "rm -rf ${SERVICE_DIR}/target 2>/dev/null || true"
                     sh "mvn clean verify -Dmaven.test.failure.ignore=false -Dbuild.dir=${BUILD_DIR}/target"
                 }
             }

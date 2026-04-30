@@ -100,18 +100,18 @@ class QuizControllerTest {
     @Test
     @DisplayName("GET /api/quizzes/{quizId}/questions returns questions list")
     void getQuestions_returns200() throws Exception {
-        QuestionDTO q = QuestionDTO.builder().id(1L).quizId(1L).text("What is DI?").build();
+        QuestionDTO q = QuestionDTO.builder().id(1L).quizId(1L).questionText("What is DI?").build();
         when(quizService.getQuestionsByQuiz(1L)).thenReturn(List.of(q));
 
         mockMvc.perform(get("/api/quizzes/1/questions"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].text").value("What is DI?"));
+                .andExpect(jsonPath("$[0].questionText").value("What is DI?"));
     }
 
     @Test
     @DisplayName("POST /api/quizzes/{quizId}/questions returns 201 with new question")
     void addQuestion_returns201() throws Exception {
-        QuestionDTO q = QuestionDTO.builder().id(1L).quizId(1L).text("What is DI?").build();
+        QuestionDTO q = QuestionDTO.builder().id(1L).quizId(1L).questionText("What is DI?").build();
         when(quizService.addQuestion(eq(1L), any(QuestionRequestDTO.class))).thenReturn(q);
 
         mockMvc.perform(post("/api/quizzes/1/questions")
@@ -158,7 +158,7 @@ class QuizControllerTest {
     @DisplayName("POST /api/quizzes/{quizId}/submit returns 200 with quiz result")
     void submitQuiz_success_returns200() throws Exception {
         QuizResultDTO result = QuizResultDTO.builder()
-                .quizId(1L).studentId(10L).score(85.0).passed(true).build();
+                .score(85.0).passed(true).build();
         when(quizService.submitQuiz(eq(1L), eq(10L), any(QuizSubmissionDTO.class))).thenReturn(result);
 
         mockMvc.perform(post("/api/quizzes/1/submit")
@@ -200,13 +200,13 @@ class QuizControllerTest {
     @DisplayName("GET /api/quizzes/{quizId}/leaderboard returns leaderboard entries")
     void getLeaderboard_returns200() throws Exception {
         LeaderboardEntryDTO entry = LeaderboardEntryDTO.builder()
-                .studentId(10L).username("alice").score(95.0).rank(1).build();
+                .studentId(10L).studentName("alice").score(95.0).rank(1).build();
         when(quizService.getLeaderboard(1L)).thenReturn(List.of(entry));
 
         mockMvc.perform(get("/api/quizzes/1/leaderboard"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].rank").value(1))
-                .andExpect(jsonPath("$[0].username").value("alice"));
+                .andExpect(jsonPath("$[0].studentName").value("alice"));
     }
 
     @Test
