@@ -30,6 +30,10 @@ spec:
               value: ""
             - name: SPRING_RABBITMQ_HOST
               value: "rabbitmq"
+            - name: EUREKA_CLIENT_ENABLED
+              value: "false"
+            - name: SPRING_CONFIG_IMPORT
+              value: "optional:"
 ---
 apiVersion: v1
 kind: Service
