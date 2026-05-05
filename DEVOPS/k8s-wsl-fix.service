@@ -1,0 +1,13 @@
+[Unit]
+Description=K8s WSL2 stability pre-flight (run once at boot)
+After=network.target
+Before=kubelet.service
+DefaultDependencies=no
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash /etc/k8s-wsl-fix.sh
+
+[Install]
+WantedBy=multi-user.target
