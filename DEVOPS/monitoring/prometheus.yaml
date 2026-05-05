@@ -1,0 +1,118 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+
+    scrape_configs:
+
+      # Spring Boot microservices (running in ybrainy namespace)
+      - job_name: 'course-service'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['course-service.ybrainy.svc.cluster.local:8082']
+            labels:
+              service: 'course-service'
+
+      - job_name: 'lesson-service'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['lesson-service.ybrainy.svc.cluster.local:8084']
+            labels:
+              service: 'lesson-service'
+
+      - job_name: 'quiz-service'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['quiz-service.ybrainy.svc.cluster.local:8083']
+            labels:
+              service: 'quiz-service'
+
+      - job_name: 'enrollment-service'
+        metrics_path: '/actuator/prometheus'
+        static_configs:
+          - targets: ['enrollment-service.ybrainy.svc.cluster.local:8085']
+            labels:
+              service: 'enrollment-service'
+
+      # Jenkins (running on WSL host — use node IP 172.22.108.68)
+      - job_name: 'jenkins'
+        metrics_path: '/prometheus'
+        static_configs:
+          - targets: ['172.22.108.68:8086']
+            labels:
+              service: 'jenkins'
+
+      # SonarQube (portforward on localhost:9000)
+      - job_name: 'sonarqube'
+        metrics_path: '/api/prometheus/metrics'
+        static_configs:
+          - targets: ['172.22.108.68:9000']
+            labels:
+              service: 'sonarqube'
+
+      # Prometheus self-monitoring
+      - job_name: 'prometheus'
+        static_configs:
+          - targets: ['localhost:9090']
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:v2.51.0
+          args:
+            - '--config.file=/etc/prometheus/prometheus.yml'
+            - '--storage.tsdb.path=/prometheus'
+            - '--storage.tsdb.retention.time=7d'
+            - '--web.enable-lifecycle'
+          ports:
+            - containerPort: 9090
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: storage
+              mountPath: /prometheus
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+        - name: storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+      nodePort: 30090
+  type: NodePort
