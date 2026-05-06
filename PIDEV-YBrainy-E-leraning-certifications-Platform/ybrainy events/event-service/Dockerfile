@@ -3,7 +3,6 @@ WORKDIR /workspace
 COPY pom.xml .
 COPY event-service/pom.xml event-service/pom.xml
 COPY inscription-service/pom.xml inscription-service/pom.xml
-COPY user-service/pom.xml user-service/pom.xml
 COPY feedback-service/pom.xml feedback-service/pom.xml
 RUN mvn -pl event-service -am dependency:go-offline -B
 COPY event-service/src event-service/src

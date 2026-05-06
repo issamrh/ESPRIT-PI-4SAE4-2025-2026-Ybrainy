@@ -1,0 +1,74 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_CREDENTIALS = 'github-token'
+        DOCKER_USER     = 'jjacem'
+        APP_NAME        = 'event-service'
+        IMAGE_NAME      = "${DOCKER_USER}/${APP_NAME}"
+        SONAR_HOST_URL  = 'http://127.0.0.1:42419'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo "Clonage du projet Ybrainy..."
+                git branch: '3la-5atr-houssem',
+                    url: 'https://github.com/issamrh/ESPRIT-PI-4SAE4-2025-2026-Ybrainy.git',
+                    credentialsId: "${GIT_CREDENTIALS}"
+            }
+        }
+
+        stage('Build & Test') {
+            steps {
+                bat 'wsl mvn clean verify'
+            }
+        }
+
+        stage('JaCoCo') {
+            steps {
+                bat 'wsl mvn jacoco:report'
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                    bat """
+                    wsl mvn sonar:sonar ^
+                    -Dsonar.host.url=${SONAR_HOST_URL} ^
+                    -Dsonar.login=${SONAR_TOKEN}
+                    """
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                bat 'wsl mvn package -DskipTests'
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                bat "wsl docker build -t ${IMAGE_NAME}:latest ."
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER_LOGIN',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
+                    bat """
+                    echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
+                    wsl docker push ${IMAGE_NAME}:latest
+                    """
+                }
+            }
+        }
+    }
+}

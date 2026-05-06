@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_USER = 'jjacem'
+        APP_NAME    = 'event-service'
+        IMAGE_NAME  = "${DOCKER_USER}/${APP_NAME}"
+    }
+
+    stages {
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                echo "Déploiement de event-service..."
+
+                // appliquer yaml
+                bat "wsl kubectl apply -f k8s/event -n devops"
+
+                // update image
+                bat """
+                wsl kubectl set image deployment/event-service \
+                event-service=${IMAGE_NAME}:latest -n devops
+                """
+
+                // vérifier
+                bat "wsl kubectl get pods -n devops"
+            }
+        }
+    }
+}
