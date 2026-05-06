@@ -177,8 +177,7 @@ class CourseServiceTest {
 
         Map<String, Long> result = service.getCourseStatsByCategory();
 
-        assertThat(result).containsEntry("PROGRAMMING", 2L).containsEntry("DESIGN", 1L);
-        assertThat(result).doesNotContainKey(null);
+        assertThat(result).containsEntry("PROGRAMMING", 2L).containsEntry("DESIGN", 1L).doesNotContainKey(null);
     }
 
     @Test
