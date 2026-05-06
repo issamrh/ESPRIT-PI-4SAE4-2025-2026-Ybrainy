@@ -58,8 +58,6 @@ spec:
               value: ""
             - name: EUREKA_CLIENT_ENABLED
               value: "false"
-            - name: SPRING_CONFIG_IMPORT
-              value: "optional:"
             - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
               value: "health,info,prometheus,metrics"
             - name: MANAGEMENT_ENDPOINT_PROMETHEUS_ENABLED
