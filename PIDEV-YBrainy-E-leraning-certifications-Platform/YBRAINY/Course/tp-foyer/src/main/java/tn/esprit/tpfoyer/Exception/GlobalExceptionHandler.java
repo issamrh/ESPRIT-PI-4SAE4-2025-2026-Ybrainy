@@ -66,13 +66,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntime(RuntimeException e) {
         String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+        String raw = e.getMessage() != null ? e.getMessage() : "Internal server error";
         if (msg.contains("not found") || msg.contains("does not exist")) {
-            return ResponseEntity.status(404).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(404).body(Map.of("error", raw));
         }
         if (msg.contains("already exists") || msg.contains("duplicate") || msg.contains("already enrolled")) {
-            return ResponseEntity.status(409).body(Map.of("error", e.getMessage()));
+            return ResponseEntity.status(409).body(Map.of("error", raw));
         }
-        return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        return ResponseEntity.status(500).body(Map.of("error", raw));
     }
 
     @ExceptionHandler(feign.FeignException.class)
