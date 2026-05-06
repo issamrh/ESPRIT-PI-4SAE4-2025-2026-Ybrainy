@@ -39,7 +39,8 @@ pipeline {
                                 -Dsonar.projectName='YBrainy Enrollment Service' \
                                 -Dsonar.host.url=${SONAR_HOST_URL} \
                                 -Dsonar.token=${SONAR_TOKEN} \
-                                -Dsonar.coverage.jacoco.xmlReportPaths=${BUILD_DIR}/target/site/jacoco/jacoco.xml \
+                                -Dsonar.coverage.jacoco.xmlReportPaths=${SERVICE_DIR}/target/site/jacoco/jacoco.xml \
+                                -Dsonar.scm.disabled=true \
                                 -Dbuild.dir=${BUILD_DIR}/target
                         """
                     }
