@@ -2,28 +2,47 @@ pipeline {
     agent any
 
     environment {
+        GIT_CREDENTIALS = 'github-token'
         DOCKER_USER = 'jjacem'
-        APP_NAME    = 'event-service'
-        IMAGE_NAME  = "${DOCKER_USER}/${APP_NAME}"
+        APP_NAME = 'event-service'
+        IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '3la-5atr-houssem']],
+                    extensions: [
+                        [$class: 'CloneOption',
+                            depth: 1,
+                            shallow: true,
+                            timeout: 300,
+                            noTags: true
+                        ],
+                        [$class: 'SparseCheckoutPaths',
+                            sparseCheckoutPaths: [
+                                [$class: 'SparseCheckoutPath', path: 'ybrainy events/event-service/']
+                            ]
+                        ]
+                    ],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/issamrh/ESPRIT-PI-4SAE4-2025-2026-Ybrainy.git',
+                        credentialsId: "${GIT_CREDENTIALS}"
+                    ]]
+                ])
+            }
+        }
 
         stage('Deploy to Kubernetes') {
             steps {
-                echo "Déploiement de event-service..."
-
-                // appliquer yaml
-                bat "wsl kubectl apply -f k8s/event -n devops"
-
-                // update image
-                bat """
-                wsl kubectl set image deployment/event-service \
-                event-service=${IMAGE_NAME}:latest -n devops
-                """
-
-                // vérifier
-                bat "wsl kubectl get pods -n devops"
+                echo 'Deploiement de event-service...'
+                dir('ybrainy events/event-service') {
+                    bat 'wsl kubectl apply -f k8s/event -n devops'
+                    bat 'wsl kubectl set image deployment/event-service event-service=${IMAGE_NAME}:latest -n devops'
+                    bat 'wsl kubectl get pods -n devops'
+                }
             }
         }
     }

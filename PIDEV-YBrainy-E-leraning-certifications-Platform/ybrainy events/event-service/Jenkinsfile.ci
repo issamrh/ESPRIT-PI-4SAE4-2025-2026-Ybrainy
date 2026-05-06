@@ -11,10 +11,6 @@ pipeline {
     }
 
     stages {
-
-        // ─────────────────────────────
-        // 1. CHECKOUT (OPTIMISÉ)
-        // ─────────────────────────────
         stage('Checkout') {
             steps {
                 checkout([
@@ -29,7 +25,7 @@ pipeline {
                         ],
                         [$class: 'SparseCheckoutPaths',
                             sparseCheckoutPaths: [
-                                [$class: 'SparseCheckoutPath', path: 'event-service/']
+                                [$class: 'SparseCheckoutPath', path: 'ybrainy events/']
                             ]
                         ]
                     ],
@@ -41,42 +37,33 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────
-        // 2. BUILD
-        // ─────────────────────────────
         stage('Build') {
             steps {
-                dir('event-service') {
-                    bat 'wsl mvn clean package -DskipTests'
+                dir('ybrainy events') {
+                    bat 'wsl mvn -pl event-service -am clean package -DskipTests'
                 }
             }
         }
 
-        // ─────────────────────────────
-        // 3. TESTS
-        // ─────────────────────────────
         stage('Tests') {
             steps {
-                dir('event-service') {
-                    bat 'wsl mvn test'
+                dir('ybrainy events') {
+                    bat 'wsl mvn -pl event-service test'
                 }
             }
             post {
                 always {
-                    junit 'event-service/target/surefire-reports/*.xml'
+                    junit 'ybrainy events/event-service/target/surefire-reports/*.xml'
                 }
             }
         }
 
-        // ─────────────────────────────
-        // 4. SONARQUBE
-        // ─────────────────────────────
         stage('SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    dir('event-service') {
+                    dir('ybrainy events') {
                         bat """
-                        wsl mvn sonar:sonar ^
+                        wsl mvn -pl event-service -am sonar:sonar ^
                         -Dsonar.host.url=${SONAR_HOST_URL} ^
                         -Dsonar.login=%SONAR_TOKEN% ^
                         -Dsonar.projectKey=event-service
@@ -86,20 +73,16 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────
-        // 5. DOCKER BUILD & PUSH
-        // ─────────────────────────────
         stage('Docker Build & Push') {
             steps {
-                dir('event-service') {
+                dir('ybrainy events') {
                     withCredentials([usernamePassword(
                         credentialsId: 'dockerhub-creds',
                         usernameVariable: 'DOCKER_USER_LOGIN',
                         passwordVariable: 'DOCKER_PASSWORD'
                     )]) {
-
                         bat """
-                        wsl docker build -t ${IMAGE_NAME}:${DOCKER_TAG} .
+                        wsl docker build -f event-service/Dockerfile -t ${IMAGE_NAME}:${DOCKER_TAG} .
                         wsl docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest
                         echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
                         wsl docker push ${IMAGE_NAME}:${DOCKER_TAG}
@@ -110,9 +93,6 @@ pipeline {
             }
         }
 
-        // ─────────────────────────────
-        // 6. SAVE TAG
-        // ─────────────────────────────
         stage('Save build info for CD') {
             steps {
                 bat 'echo %DOCKER_TAG% > event-service-tag.txt'
@@ -123,11 +103,11 @@ pipeline {
 
     post {
         success {
-            echo 'CI event-service réussi ✅'
+            echo 'CI event-service reussi'
             build job: 'event-service-CD', wait: false
         }
         failure {
-            echo 'CI event-service échoué ❌'
+            echo 'CI event-service echoue'
         }
     }
 }
