@@ -23,14 +23,150 @@ data:
   dashboards.yaml: |
     apiVersion: 1
     providers:
-      - name: 'default'
+      - name: 'ybrainy'
         orgId: 1
-        folder: 'YBrainy'
+        folder: 'YBrainy Platform'
         type: file
         disableDeletion: false
         updateIntervalSeconds: 30
+        allowUiUpdates: true
         options:
           path: /var/lib/grafana/dashboards
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  namespace: monitoring
+data:
+  ybrainy-services.json: |
+    {
+      "id": null,
+      "uid": "ybrainy-main",
+      "title": "YBrainy Platform — Services Overview",
+      "tags": ["ybrainy", "spring-boot", "microservices"],
+      "timezone": "browser",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "15s",
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Services Up",
+          "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+          "targets": [{
+            "expr": "count(up{job=~'course-service|lesson-service|quiz-service|enrollment-service'} == 1)",
+            "legendFormat": "Up"
+          }],
+          "options": {"colorMode": "background", "graphMode": "none"},
+          "fieldConfig": {"defaults": {"thresholds": {"steps": [{"color": "red","value": 0},{"color": "yellow","value": 3},{"color": "green","value": 4}]}}}
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Total HTTP Requests / min",
+          "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+          "targets": [{
+            "expr": "sum(rate(http_server_requests_seconds_count{job=~'course-service|lesson-service|quiz-service|enrollment-service'}[1m])) * 60",
+            "legendFormat": "req/min"
+          }],
+          "options": {"colorMode": "value", "graphMode": "area"},
+          "fieldConfig": {"defaults": {"unit": "reqps", "thresholds": {"steps": [{"color": "green","value": 0}]}}}
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "Error Rate (5xx)",
+          "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+          "targets": [{
+            "expr": "sum(rate(http_server_requests_seconds_count{status=~'5..',job=~'course-service|lesson-service|quiz-service|enrollment-service'}[5m]))",
+            "legendFormat": "errors/s"
+          }],
+          "options": {"colorMode": "background"},
+          "fieldConfig": {"defaults": {"unit": "reqps", "thresholds": {"steps": [{"color": "green","value": 0},{"color": "orange","value": 0.01},{"color": "red","value": 0.1}]}}}
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "Active HTTP Connections",
+          "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+          "targets": [{
+            "expr": "sum(tomcat_connections_current_connections{job=~'course-service|lesson-service|quiz-service|enrollment-service'})",
+            "legendFormat": "connections"
+          }],
+          "options": {"colorMode": "value"},
+          "fieldConfig": {"defaults": {"thresholds": {"steps": [{"color": "green","value": 0}]}}}
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "HTTP Request Rate per Service",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+          "targets": [
+            {"expr": "rate(http_server_requests_seconds_count{job='course-service'}[1m])","legendFormat": "course-service"},
+            {"expr": "rate(http_server_requests_seconds_count{job='lesson-service'}[1m])","legendFormat": "lesson-service"},
+            {"expr": "rate(http_server_requests_seconds_count{job='quiz-service'}[1m])","legendFormat": "quiz-service"},
+            {"expr": "rate(http_server_requests_seconds_count{job='enrollment-service'}[1m])","legendFormat": "enrollment-service"}
+          ],
+          "fieldConfig": {"defaults": {"unit": "reqps", "custom": {"lineWidth": 2}}}
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "JVM Heap Memory Used",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+          "targets": [
+            {"expr": "jvm_memory_used_bytes{area='heap',job='course-service'}","legendFormat": "course-service"},
+            {"expr": "jvm_memory_used_bytes{area='heap',job='lesson-service'}","legendFormat": "lesson-service"},
+            {"expr": "jvm_memory_used_bytes{area='heap',job='quiz-service'}","legendFormat": "quiz-service"},
+            {"expr": "jvm_memory_used_bytes{area='heap',job='enrollment-service'}","legendFormat": "enrollment-service"}
+          ],
+          "fieldConfig": {"defaults": {"unit": "bytes", "custom": {"lineWidth": 2}}}
+        },
+        {
+          "id": 7,
+          "type": "timeseries",
+          "title": "p95 Response Latency per Service",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12},
+          "targets": [
+            {"expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{job='course-service'}[5m]))","legendFormat": "course p95"},
+            {"expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{job='lesson-service'}[5m]))","legendFormat": "lesson p95"},
+            {"expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{job='quiz-service'}[5m]))","legendFormat": "quiz p95"},
+            {"expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{job='enrollment-service'}[5m]))","legendFormat": "enrollment p95"}
+          ],
+          "fieldConfig": {"defaults": {"unit": "s", "custom": {"lineWidth": 2}}}
+        },
+        {
+          "id": 8,
+          "type": "timeseries",
+          "title": "JVM Threads",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12},
+          "targets": [
+            {"expr": "jvm_threads_live_threads{job='course-service'}","legendFormat": "course"},
+            {"expr": "jvm_threads_live_threads{job='lesson-service'}","legendFormat": "lesson"},
+            {"expr": "jvm_threads_live_threads{job='quiz-service'}","legendFormat": "quiz"},
+            {"expr": "jvm_threads_live_threads{job='enrollment-service'}","legendFormat": "enrollment"}
+          ],
+          "fieldConfig": {"defaults": {"unit": "short", "custom": {"lineWidth": 2}}}
+        },
+        {
+          "id": 9,
+          "type": "table",
+          "title": "Service Health Status",
+          "gridPos": {"h": 6, "w": 24, "x": 0, "y": 20},
+          "targets": [{
+            "expr": "up{job=~'course-service|lesson-service|quiz-service|enrollment-service'}",
+            "legendFormat": "{{job}}",
+            "instant": true
+          }],
+          "transformations": [
+            {"id": "organize", "options": {"renameByName": {"job": "Service", "Value": "Status"}}}
+          ],
+          "fieldConfig": {"defaults": {"thresholds": {"steps": [{"color": "red","value": 0},{"color": "green","value": 1}]}, "mappings": [{"type": "value","options": {"0": {"text": "DOWN", "color": "red"},"1": {"text": "UP", "color": "green"}}}]}}
+        }
+      ]
+    }
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -59,11 +195,15 @@ spec:
               value: "admin"
             - name: GF_USERS_ALLOW_SIGN_UP
               value: "false"
+            - name: GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH
+              value: "/var/lib/grafana/dashboards/ybrainy-services.json"
           volumeMounts:
             - name: datasources
               mountPath: /etc/grafana/provisioning/datasources
             - name: dashboards-provider
               mountPath: /etc/grafana/provisioning/dashboards
+            - name: dashboards-json
+              mountPath: /var/lib/grafana/dashboards
             - name: storage
               mountPath: /var/lib/grafana
       volumes:
@@ -73,6 +213,9 @@ spec:
         - name: dashboards-provider
           configMap:
             name: grafana-dashboards-provider
+        - name: dashboards-json
+          configMap:
+            name: grafana-dashboards
         - name: storage
           emptyDir: {}
 ---

@@ -3,6 +3,9 @@ kind: Deployment
 metadata:
   name: quiz-service
   namespace: ybrainy
+  labels:
+    app: quiz-service
+    version: "1.0"
 spec:
   replicas: 1
   selector:
@@ -12,6 +15,10 @@ spec:
     metadata:
       labels:
         app: quiz-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8083"
     spec:
       containers:
         - name: quiz-service
@@ -19,6 +26,27 @@ spec:
           imagePullPolicy: Never
           ports:
             - containerPort: 8083
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8083
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8083
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 5
           env:
             - name: SERVER_PORT
               value: "8083"
@@ -30,6 +58,14 @@ spec:
               value: ""
             - name: SPRING_RABBITMQ_HOST
               value: "rabbitmq"
+            - name: MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE
+              value: "health,info,prometheus,metrics"
+            - name: MANAGEMENT_ENDPOINT_PROMETHEUS_ENABLED
+              value: "true"
+            - name: MANAGEMENT_HEALTH_LIVENESSSTATE_ENABLED
+              value: "true"
+            - name: MANAGEMENT_HEALTH_READINESSSTATE_ENABLED
+              value: "true"
 ---
 apiVersion: v1
 kind: Service
