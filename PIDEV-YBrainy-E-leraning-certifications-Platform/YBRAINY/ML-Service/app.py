@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from prometheus_flask_exporter import PrometheusMetrics
 import joblib
 import numpy as np
 import pandas as pd
@@ -17,6 +18,8 @@ COURSE_SERVICE_URL = os.environ.get('COURSE_SERVICE_URL', 'http://localhost:8082
 
 app = Flask(__name__)
 CORS(app)
+metrics = PrometheusMetrics(app)
+metrics.info('ml_service_info', 'YBrainy ML Service', version='1.0.0')
 
 # ── Load all models on startup ──────────────────────────────
 MODELS_DIR = os.path.join(os.path.dirname(__file__), 'models')

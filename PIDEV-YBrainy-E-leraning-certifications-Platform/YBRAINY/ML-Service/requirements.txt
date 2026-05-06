@@ -6,6 +6,7 @@ numpy==1.26.4
 pandas==2.2.2
 statsmodels==0.14.2
 requests
+prometheus-flask-exporter==0.23.1
 
 # test dependencies
 pytest>=8.0

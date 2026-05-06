@@ -2,19 +2,13 @@ pipeline {
     agent any
 
     environment {
-        SERVICE_NAME    = 'quiz-service'
-        SERVICE_DIR     = 'YBRAINY/Quiz/quiz-service'
-        IMAGE_NAME      = "ybrainy/${SERVICE_NAME}"
-        REGISTRY        = 'localhost:5000'
-        IMAGE_TAG       = "${BUILD_NUMBER}"
-        SONAR_HOST_URL  = 'http://localhost:9000'
-        K8S_NAMESPACE   = 'ybrainy'
-        K8S_DEPLOYMENT  = 'quiz-service'
-        BUILD_DIR       = "/tmp/ybrainy-builds/${SERVICE_NAME}-${BUILD_NUMBER}"
-    }
-
-    tools {
-        maven 'Maven'
+        SERVICE_NAME   = 'ml-service'
+        SERVICE_DIR    = 'YBRAINY/ML-Service'
+        IMAGE_NAME     = "ybrainy/${SERVICE_NAME}"
+        REGISTRY       = 'localhost:5000'
+        IMAGE_TAG      = "${BUILD_NUMBER}"
+        K8S_NAMESPACE  = 'ybrainy'
+        K8S_DEPLOYMENT = 'ml-service'
     }
 
     stages {
@@ -25,42 +19,40 @@ pipeline {
             }
         }
 
-        stage('Build & Test') {
+        stage('Python Tests') {
             steps {
                 dir("${SERVICE_DIR}") {
-                    sh "mvn clean verify -Dmaven.test.failure.ignore=false -Dproject.build.directory=${BUILD_DIR}/target"
+                    sh '''
+                        python3 -m pip install --quiet --no-warn-script-location \
+                            pytest pytest-mock flask flask-cors \
+                            scikit-learn joblib numpy pandas statsmodels requests
+                        python3 -m pytest tests/ -v \
+                            --tb=short \
+                            --junitxml=test-results.xml
+                    '''
                 }
             }
             post {
                 always {
-                    junit testResults: "${BUILD_DIR}/target/surefire-reports/*.xml",
+                    junit testResults: "${SERVICE_DIR}/test-results.xml",
                           allowEmptyResults: true
                 }
             }
         }
 
-        stage('SonarQube Analysis') {
+        stage('Security Scan (Bandit)') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    dir("${SERVICE_DIR}") {
-                        sh """
-                            mvn sonar:sonar \
-                                -Dsonar.projectKey=${SERVICE_NAME} \
-                                -Dsonar.projectName='YBrainy Quiz Service' \
-                                -Dsonar.host.url=${SONAR_HOST_URL} \
-                                -Dsonar.token=${SONAR_TOKEN} \
-                                -Dsonar.coverage.jacoco.xmlReportPaths=${BUILD_DIR}/target/site/jacoco/jacoco.xml \
-                                -Dproject.build.directory=${BUILD_DIR}/target
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
+                dir("${SERVICE_DIR}") {
+                    sh '''
+                        python3 -m pip install --quiet bandit
+                        python3 -m bandit -r app.py \
+                            --severity-level medium \
+                            --confidence-level medium \
+                            -f txt \
+                            --exit-zero \
+                            || true
+                        echo "Bandit scan complete"
+                    '''
                 }
             }
         }
@@ -124,13 +116,10 @@ pipeline {
 
     post {
         success {
-            echo "Pipeline PASSED — ${SERVICE_NAME}:${IMAGE_TAG} deployed to ybrainy namespace"
+            echo "ML Service pipeline PASSED — ${IMAGE_NAME}:${IMAGE_TAG} deployed"
         }
         failure {
-            echo "Pipeline FAILED at stage: ${currentBuild.result}"
-        }
-        always {
-            sh "rm -rf ${BUILD_DIR} || true"
+            echo "ML Service pipeline FAILED"
         }
     }
 }

@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-service
+  namespace: ybrainy
+  labels:
+    app: ml-service
+    version: "1.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-service
+  template:
+    metadata:
+      labels:
+        app: ml-service
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "5000"
+    spec:
+      containers:
+        - name: ml-service
+          image: ybrainy/ml-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "200m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 5
+          env:
+            - name: COURSE_SERVICE_URL
+              value: "http://course-service.ybrainy.svc.cluster.local:8082"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-service
+  namespace: ybrainy
+spec:
+  selector:
+    app: ml-service
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30086
+  type: NodePort

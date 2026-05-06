@@ -103,6 +103,13 @@ pipeline {
             steps {
                 withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
                     sh """
+                        kubectl --kubeconfig=${KUBECONFIG} get namespace ${K8S_NAMESPACE} \
+                            || kubectl --kubeconfig=${KUBECONFIG} create namespace ${K8S_NAMESPACE}
+
+                        kubectl --kubeconfig=${KUBECONFIG} apply \
+                            -f DEVOPS/${SERVICE_NAME}/k8s/ \
+                            -n ${K8S_NAMESPACE} || true
+
                         kubectl --kubeconfig=${KUBECONFIG} -n ${K8S_NAMESPACE} \
                             set image deployment/${K8S_DEPLOYMENT} \
                             ${K8S_DEPLOYMENT}=${IMAGE_NAME}:${IMAGE_TAG}

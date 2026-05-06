@@ -167,6 +167,78 @@ data:
         }
       ]
     }
+  ybrainy-ml-service.json: |
+    {
+      "id": null,
+      "uid": "ybrainy-ml",
+      "title": "YBrainy ML Service — Predictions & Models",
+      "tags": ["ybrainy", "ml", "python"],
+      "timezone": "browser",
+      "schemaVersion": 38,
+      "version": 1,
+      "refresh": "10s",
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Total ML Predictions",
+          "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+          "targets": [{"expr": "sum(flask_http_request_total{job='ml-service', status='200'})", "legendFormat": "predictions"}],
+          "options": {"colorMode": "background"},
+          "fieldConfig": {"defaults": {"thresholds": {"steps": [{"color": "green","value": 0}]}}}
+        },
+        {
+          "id": 2,
+          "type": "stat",
+          "title": "Request Rate / min",
+          "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+          "targets": [{"expr": "sum(rate(flask_http_request_total{job='ml-service'}[1m])) * 60", "legendFormat": "req/min"}],
+          "fieldConfig": {"defaults": {"unit": "short"}}
+        },
+        {
+          "id": 3,
+          "type": "stat",
+          "title": "p95 Latency",
+          "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+          "targets": [{"expr": "histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket{job='ml-service'}[5m]))", "legendFormat": "p95"}],
+          "fieldConfig": {"defaults": {"unit": "s", "thresholds": {"steps": [{"color": "green","value": 0},{"color": "orange","value": 0.5},{"color": "red","value": 2}]}}}
+        },
+        {
+          "id": 4,
+          "type": "stat",
+          "title": "ML Service Status",
+          "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+          "targets": [{"expr": "up{job='ml-service'}", "legendFormat": "status"}],
+          "fieldConfig": {"defaults": {"mappings": [{"type": "value","options": {"0": {"text": "DOWN", "color": "red"},"1": {"text": "UP", "color": "green"}}}]}}
+        },
+        {
+          "id": 5,
+          "type": "timeseries",
+          "title": "Predictions per Endpoint",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+          "targets": [
+            {"expr": "rate(flask_http_request_total{job='ml-service', path=~'/predict/conversion'}[1m])","legendFormat": "DSO1 Conversion"},
+            {"expr": "rate(flask_http_request_total{job='ml-service', path=~'/recommend'}[1m])","legendFormat": "DSO2 Recommend"},
+            {"expr": "rate(flask_http_request_total{job='ml-service', path=~'/predict/quality'}[1m])","legendFormat": "DSO3 Quality"},
+            {"expr": "rate(flask_http_request_total{job='ml-service', path=~'/forecast/demand'}[1m])","legendFormat": "DSO4 Forecast"}
+          ],
+          "fieldConfig": {"defaults": {"unit": "reqps"}}
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "ML Latency p95 per Endpoint",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+          "targets": [
+            {"expr": "histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket{job='ml-service', path=~'/predict/conversion'}[5m]))","legendFormat": "DSO1"},
+            {"expr": "histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket{job='ml-service', path=~'/recommend'}[5m]))","legendFormat": "DSO2"},
+            {"expr": "histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket{job='ml-service', path=~'/predict/quality'}[5m]))","legendFormat": "DSO3"},
+            {"expr": "histogram_quantile(0.95, rate(flask_http_request_duration_seconds_bucket{job='ml-service', path=~'/forecast/demand'}[5m]))","legendFormat": "DSO4"}
+          ],
+          "fieldConfig": {"defaults": {"unit": "s"}}
+        }
+      ]
+    }
 ---
 apiVersion: apps/v1
 kind: Deployment
