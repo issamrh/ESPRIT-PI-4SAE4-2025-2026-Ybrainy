@@ -1,0 +1,99 @@
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_NAME   = 'ml-service'
+        SERVICE_DIR    = '/mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/PIDEV-YBrainy-E-leraning-certifications-Platform/YBRAINY/ML-Service'
+        IMAGE_NAME     = "ybrainy/${SERVICE_NAME}"
+        IMAGE_TAG      = "${BUILD_NUMBER}"
+        SONAR_HOST_URL = 'http://localhost:9000'
+    }
+
+    options { skipDefaultCheckout(true) }
+
+    stages {
+
+        stage('Python Tests') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh '''
+                        python3 -m pip install --quiet --no-warn-script-location \
+                            pytest pytest-mock flask flask-cors \
+                            scikit-learn joblib numpy pandas statsmodels requests \
+                            prometheus-flask-exporter
+                        python3 -m pytest tests/ -v \
+                            --tb=short \
+                            --junitxml=/tmp/ml-test-results-${BUILD_NUMBER}.xml \
+                            --co -q || true
+                        python3 -m pytest tests/ -v \
+                            --tb=short \
+                            --junitxml=/tmp/ml-test-results-${BUILD_NUMBER}.xml
+                    '''
+                }
+            }
+            post {
+                always {
+                    junit testResults: "/tmp/ml-test-results-${BUILD_NUMBER}.xml",
+                          allowEmptyResults: true
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'sonar-token2', variable: 'SONAR_TOKEN')]) {
+                    dir("${SERVICE_DIR}") {
+                        sh """
+                            python3 -m pip install --quiet coverage
+                            python3 -m coverage run -m pytest tests/ -q --tb=no 2>/dev/null || true
+                            python3 -m coverage xml -o /tmp/ml-coverage-${BUILD_NUMBER}.xml 2>/dev/null || true
+
+                            sonar-scanner \
+                                -Dsonar.projectKey=${SERVICE_NAME} \
+                                -Dsonar.projectName='YBrainy ML Service' \
+                                -Dsonar.sources=. \
+                                -Dsonar.inclusions='app.py' \
+                                -Dsonar.tests=tests \
+                                -Dsonar.python.coverage.reportPaths=/tmp/ml-coverage-${BUILD_NUMBER}.xml \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.token=${SONAR_TOKEN} \
+                                -Dsonar.scm.disabled=true \
+                            || true
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Import Image to Containerd') {
+            steps {
+                sh "docker save ${IMAGE_NAME}:${IMAGE_TAG} | sudo ctr -n k8s.io images import -"
+            }
+        }
+
+        stage('Trigger CD') {
+            steps {
+                build job: 'ml-service-CD',
+                      parameters: [string(name: 'BUILD_TAG', value: "${BUILD_NUMBER}")],
+                      wait: false
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "CI passed — triggered ml-service-CD"
+        }
+        failure {
+            echo "CI FAILED — CD pipeline will NOT be triggered"
+        }
+    }
+}

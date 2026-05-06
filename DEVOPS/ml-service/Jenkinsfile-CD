@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'BUILD_TAG', defaultValue: 'latest', description: 'Image tag passed from CI pipeline')
+    }
+
+    environment {
+        SERVICE_NAME   = 'ml-service'
+        IMAGE_NAME     = "ybrainy/${SERVICE_NAME}"
+        IMAGE_TAG      = "${params.BUILD_TAG}"
+        K8S_NAMESPACE  = 'ybrainy'
+        K8S_DEPLOYMENT = 'ml-service'
+    }
+
+    options { skipDefaultCheckout(true) }
+
+    stages {
+
+        stage('Import Image to Containerd') {
+            steps {
+                sh "docker save ${IMAGE_NAME}:${IMAGE_TAG} | sudo ctr -n k8s.io images import -"
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh """
+                        until kubectl --kubeconfig=\$KUBECONFIG get nodes 2>/dev/null | grep -q Ready; do
+                            echo 'Waiting for K8s API server...'
+                            sleep 10
+                        done
+
+                        kubectl --kubeconfig=\$KUBECONFIG apply --validate=false \
+                            -f /mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/DEVOPS/${SERVICE_NAME}/k8s/deployment.yaml
+
+                        kubectl --kubeconfig=\$KUBECONFIG -n ${K8S_NAMESPACE} \
+                            set image deployment/${K8S_DEPLOYMENT} \
+                            ${K8S_DEPLOYMENT}=${IMAGE_NAME}:${IMAGE_TAG} 2>/dev/null || true
+
+                        kubectl --kubeconfig=\$KUBECONFIG -n ${K8S_NAMESPACE} \
+                            rollout status deployment/${K8S_DEPLOYMENT} --timeout=120s
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success { echo "CD passed — ${SERVICE_NAME}:${IMAGE_TAG} deployed to Kubernetes" }
+        failure { echo "CD FAILED" }
+    }
+}
