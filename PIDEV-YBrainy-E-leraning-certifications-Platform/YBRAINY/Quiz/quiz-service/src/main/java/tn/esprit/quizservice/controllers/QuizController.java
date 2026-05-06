@@ -154,7 +154,7 @@ public class QuizController {
                     "bestScore", best != null ? best : 0.0
             ));
         } catch (Exception e) {
-            return ResponseEntity.ok(Map.of("bestScore", 0.0));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("bestScore", 0.0));
         }
     }
 

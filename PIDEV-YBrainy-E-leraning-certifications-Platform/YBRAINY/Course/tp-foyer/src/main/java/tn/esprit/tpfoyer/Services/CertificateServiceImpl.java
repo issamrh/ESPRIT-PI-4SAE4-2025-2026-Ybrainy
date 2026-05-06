@@ -61,7 +61,7 @@ public class CertificateServiceImpl implements ICertificateService {
     @Value("${app.file.upload-dir}")
     private String uploadDir;
 
-    @Value("${app.frontend.url:http://localhost:4200}")
+    @Value("${app.frontend.url}")
     private String frontendUrl;
 
     // ── Colors ────────────────────────────────────────────────────────

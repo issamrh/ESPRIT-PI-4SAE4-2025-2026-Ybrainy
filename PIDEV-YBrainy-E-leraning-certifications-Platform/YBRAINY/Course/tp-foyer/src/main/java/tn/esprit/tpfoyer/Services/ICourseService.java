@@ -48,6 +48,8 @@ public interface ICourseService {
      */
     Map<String, Object> togglePublish(Long id, boolean publish, Long requestingUserId, String requestingRole);
 
+    boolean existsById(Long id);
+
     /**
      * Return a count of published+unpublished courses grouped by category name.
      */

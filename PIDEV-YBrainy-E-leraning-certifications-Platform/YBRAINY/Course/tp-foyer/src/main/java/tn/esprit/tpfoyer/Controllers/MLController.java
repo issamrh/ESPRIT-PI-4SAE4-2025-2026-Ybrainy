@@ -1,6 +1,7 @@
 package tn.esprit.tpfoyer.Controllers;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import tn.esprit.tpfoyer.Clients.EnrollmentClient;
@@ -138,7 +139,7 @@ public class MLController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.ok(Map.of(
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
                     "conversionProbability", 0.5,
                     "conversionLabel", "MEDIUM",
                     "percentage", 50.0));
@@ -194,7 +195,7 @@ public class MLController {
             return ResponseEntity.ok(quality);
         } catch (Exception e) {
             System.out.println("[ML Quality] Exception for course " + courseId + ": " + e.getMessage());
-            return ResponseEntity.ok(new MlQualityDTO("UNKNOWN", 0.0, 0.0, false, null, null, null));
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(new MlQualityDTO("UNKNOWN", 0.0, 0.0, false, null, null, null));
         }
     }
 

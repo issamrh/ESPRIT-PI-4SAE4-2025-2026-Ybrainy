@@ -27,7 +27,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -42,7 +41,7 @@ public class CourseController {
     @Value("${app.file.upload-dir}")
     private String uploadDir;
 
-    @Value("${ai.talking-head.base-url:http://localhost:8765}")
+    @Value("${ai.talking-head.base-url}")
     private String talkingHeadBaseUrl;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -170,22 +169,13 @@ public class CourseController {
     // Used by Lesson Service via Feign to verify course exists
     @GetMapping("/{id}/exists")
     public ResponseEntity<Boolean> courseExists(@PathVariable Long id) {
-        try {
-            courseService.getCourseById(id);
-            return ResponseEntity.ok(true);
-        } catch (Exception e) {
-            return ResponseEntity.ok(false);
-        }
+        return ResponseEntity.ok(courseService.existsById(id));
     }
 
     // GET /api/courses/stats/by-category
     @GetMapping("/stats/by-category")
     public ResponseEntity<?> getCourseStatsByCategory() {
-        try {
-            return ResponseEntity.ok(courseService.getCourseStatsByCategory());
-        } catch (Exception e) {
-            return ResponseEntity.ok(new HashMap<>());
-        }
+        return ResponseEntity.ok(courseService.getCourseStatsByCategory());
     }
 
     @GetMapping("/{courseId}/reader-context")

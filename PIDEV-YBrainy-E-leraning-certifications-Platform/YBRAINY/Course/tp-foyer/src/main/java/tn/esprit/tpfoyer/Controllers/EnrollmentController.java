@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 @RestController
@@ -86,10 +85,6 @@ public class EnrollmentController {
     // GET /api/enrollments/monthly-counts
     @GetMapping("/api/enrollments/monthly-counts")
     public ResponseEntity<?> getMonthlyEnrollmentCounts() {
-        try {
-            return ResponseEntity.ok(enrollmentClient.getMonthlyCounts());
-        } catch (Exception e) {
-            return ResponseEntity.ok(new ArrayList<>());
-        }
+        return ResponseEntity.ok(enrollmentClient.getMonthlyCounts());
     }
 }

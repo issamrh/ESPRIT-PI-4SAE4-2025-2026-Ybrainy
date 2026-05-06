@@ -621,6 +621,11 @@ public class CourseServiceImpl implements ICourseService {
     }
 
     @Override
+    public boolean existsById(Long id) {
+        return courseRepository.existsById(id);
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public Map<String, Long> getCourseStatsByCategory() {
         return courseRepository.findAll().stream()
