@@ -199,9 +199,9 @@ class EnrollmentServiceTest {
         List<Map<String, Object>> result = service.getMonthlyEnrollmentCounts();
 
         assertThat(result).hasSize(2);
-        assertThat(result.get(0).get("month")).isEqualTo(5);
-        assertThat(result.get(0).get("year")).isEqualTo(2026);
-        assertThat(result.get(0).get("count")).isEqualTo(12L);
+        assertThat(result.get(0)).containsEntry("month", 5);
+        assertThat(result.get(0)).containsEntry("year", 2026);
+        assertThat(result.get(0)).containsEntry("count", 12L);
     }
 
     // ── markLessonComplete ────────────────────────────────────────────
@@ -433,9 +433,10 @@ class EnrollmentServiceTest {
 
         Map<String, Object> dash = service.getStudentDashboard(10L);
 
-        assertThat(dash.get("totalEnrolled")).isEqualTo(0);
-        assertThat(dash.get("totalCompleted")).isEqualTo(0);
-        assertThat(dash.get("averageProgress")).isEqualTo(0.0);
+        assertThat(dash)
+            .containsEntry("totalEnrolled", 0)
+            .containsEntry("totalCompleted", 0)
+            .containsEntry("averageProgress", 0.0);
     }
 
     @Test
@@ -458,10 +459,11 @@ class EnrollmentServiceTest {
 
         Map<String, Object> dash = service.getStudentDashboard(10L);
 
-        assertThat(dash.get("totalEnrolled")).isEqualTo(2);
-        assertThat(dash.get("totalCompleted")).isEqualTo(1);
-        assertThat(dash.get("totalInProgress")).isEqualTo(1);
-        assertThat(dash.get("totalCertificates")).isEqualTo(1L);
+        assertThat(dash)
+            .containsEntry("totalEnrolled", 2)
+            .containsEntry("totalCompleted", 1)
+            .containsEntry("totalInProgress", 1)
+            .containsEntry("totalCertificates", 1L);
         assertThat((Double) dash.get("averageProgress")).isEqualTo(70.0);
     }
 
@@ -480,9 +482,10 @@ class EnrollmentServiceTest {
 
         Map<String, Object> result = service.getCourseProgress(100L, 10L);
 
-        assertThat(result.get("courseId")).isEqualTo(100L);
-        assertThat(result.get("completionPercentage")).isEqualTo(60.0);
-        assertThat(result.get("currentLessonId")).isEqualTo(3L);
-        assertThat(result.get("enrollmentStatus")).isEqualTo("ACTIVE");
+        assertThat(result)
+            .containsEntry("courseId", 100L)
+            .containsEntry("completionPercentage", 60.0)
+            .containsEntry("currentLessonId", 3L)
+            .containsEntry("enrollmentStatus", "ACTIVE");
     }
 }

@@ -30,6 +30,8 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class QuizServiceImpl implements IQuizService {
 
+    private static final String QUIZ_NOT_FOUND = "Quiz not found";
+
     private final QuizRepository quizRepository;
     private final QuestionRepository questionRepository;
     private final QuestionOptionRepository optionRepository;
@@ -59,7 +61,7 @@ public class QuizServiceImpl implements IQuizService {
     @Override
     public QuizDTO getQuizById(Long courseId, Long quizId) {
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+                .orElseThrow(() -> new IllegalArgumentException(QUIZ_NOT_FOUND));
         return QuizDTO.builder()
                 .id(quiz.getId())
                 .courseId(quiz.getCourseId())
@@ -78,10 +80,10 @@ public class QuizServiceImpl implements IQuizService {
         // Verify course exists via Course Service (Feign)
         try {
             if (!courseClient.courseExists(courseId)) {
-                throw new RuntimeException("Course not found: " + courseId);
+                throw new IllegalArgumentException("Course not found: " + courseId);
             }
         } catch (feign.FeignException e) {
-            throw new RuntimeException("Could not verify course: " + e.getMessage());
+            throw new IllegalStateException("Could not verify course: " + e.getMessage());
         }
         Quiz quiz = Quiz.builder()
                 .courseId(courseId)
@@ -193,10 +195,10 @@ public class QuizServiceImpl implements IQuizService {
         // Verify student is enrolled in the course via Enrollment Service
         try {
             Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+                .orElseThrow(() -> new IllegalArgumentException(QUIZ_NOT_FOUND));
             boolean enrolled = enrollmentClient.isEnrolled(studentId, quiz.getCourseId());
             if (!enrolled) {
-                throw new RuntimeException("Student " + studentId
+                throw new IllegalStateException("Student " + studentId
                     + " is not enrolled in course " + quiz.getCourseId());
             }
         } catch (feign.FeignException e) {
@@ -205,12 +207,12 @@ public class QuizServiceImpl implements IQuizService {
         }
 
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+                .orElseThrow(() -> new IllegalArgumentException(QUIZ_NOT_FOUND));
 
         int attemptsUsed = quizAttemptRepository.countByStudentIdAndQuizId(studentId, quizId);
         int maxAttempts = quiz.getMaxAttempts() != null ? quiz.getMaxAttempts() : 3;
         if (attemptsUsed >= maxAttempts) {
-            throw new RuntimeException("Max attempts reached");
+            throw new IllegalStateException("Max attempts reached");
         }
 
         int correctAnswers = 0;
@@ -328,7 +330,7 @@ public class QuizServiceImpl implements IQuizService {
     @Transactional
     public QuizDTO updateQuiz(Long quizId, QuizRequestDTO dto) {
         Quiz quiz = quizRepository.findById(quizId)
-                .orElseThrow(() -> new RuntimeException("Quiz not found"));
+                .orElseThrow(() -> new IllegalArgumentException(QUIZ_NOT_FOUND));
         quiz.setTitle(dto.getTitle());
         quiz.setDescription(dto.getDescription());
         if (dto.getPassingScore() != null) quiz.setPassingScore(dto.getPassingScore());

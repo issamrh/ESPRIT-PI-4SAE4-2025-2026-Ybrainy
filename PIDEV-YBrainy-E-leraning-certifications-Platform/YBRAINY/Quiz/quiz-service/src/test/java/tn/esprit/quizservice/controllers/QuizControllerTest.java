@@ -243,4 +243,97 @@ class QuizControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.averageScore").value(75.0));
     }
+
+    @Test
+    @DisplayName("PUT /api/quizzes/{quizId}/questions/{questionId} returns 200")
+    void updateQuestion_returns200() throws Exception {
+        QuestionDTO updated = QuestionDTO.builder().id(2L).quizId(1L).questionText("What is IoC?").build();
+        when(quizService.updateQuestion(eq(2L), any(QuestionRequestDTO.class))).thenReturn(updated);
+
+        mockMvc.perform(put("/api/quizzes/1/questions/2")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"questionText\":\"What is IoC?\",\"options\":[{\"optionText\":\"Inversion of Control\",\"isCorrect\":true}]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.questionText").value("What is IoC?"));
+    }
+
+    @Test
+    @DisplayName("PUT /api/quizzes/{quizId}/questions/{questionId} returns 404 when not found")
+    void updateQuestion_notFound_returns404() throws Exception {
+        when(quizService.updateQuestion(eq(99L), any())).thenThrow(new RuntimeException("Question not found"));
+
+        mockMvc.perform(put("/api/quizzes/1/questions/99")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"questionText\":\"X\",\"options\":[{\"optionText\":\"Y\",\"isCorrect\":true}]}"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT /api/quizzes/{quizId}/questions/{questionId} returns 500 on generic error")
+    void updateQuestion_internalError_returns500() throws Exception {
+        when(quizService.updateQuestion(eq(2L), any())).thenThrow(new RuntimeException("Unexpected error"));
+
+        mockMvc.perform(put("/api/quizzes/1/questions/2")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"questionText\":\"X\",\"options\":[{\"optionText\":\"Y\",\"isCorrect\":true}]}"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @DisplayName("POST /api/quizzes/{quizId}/submit returns 500 on unexpected error")
+    void submitQuiz_internalError_returns500() throws Exception {
+        when(quizService.submitQuiz(eq(1L), eq(10L), any()))
+                .thenThrow(new RuntimeException("Internal failure"));
+
+        mockMvc.perform(post("/api/quizzes/1/submit")
+                        .param("studentId", "10")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"answers\":[]}"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @DisplayName("PUT /api/quizzes/{quizId} returns 500 on unexpected error")
+    void updateQuiz_internalError_returns500() throws Exception {
+        when(quizService.updateQuiz(eq(1L), any())).thenThrow(new RuntimeException("DB error"));
+
+        mockMvc.perform(put("/api/quizzes/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"X\",\"maxAttempts\":3,\"passingScore\":70}"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @DisplayName("GET /api/quizzes/{quizId} returns 500 on unexpected error")
+    void getQuizById_internalError_returns500() throws Exception {
+        when(quizService.getQuizById(null, 1L)).thenThrow(new RuntimeException("DB connection failed"));
+
+        mockMvc.perform(get("/api/quizzes/1"))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @DisplayName("GET /api/quizzes/best-score returns 0 when score is null")
+    void getBestScore_nullScore_returns0() throws Exception {
+        when(quizService.getBestScoreForStudentAndCourse(10L, 5L)).thenReturn(null);
+
+        mockMvc.perform(get("/api/quizzes/best-score")
+                        .param("studentId", "10")
+                        .param("courseId", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bestScore").value(0.0));
+    }
+
+    @Test
+    @DisplayName("GET /api/quizzes/best-score returns 404 body when service throws")
+    void getBestScore_exception_returns404Body() throws Exception {
+        when(quizService.getBestScoreForStudentAndCourse(10L, 5L))
+                .thenThrow(new RuntimeException("No attempts"));
+
+        mockMvc.perform(get("/api/quizzes/best-score")
+                        .param("studentId", "10")
+                        .param("courseId", "5"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.bestScore").value(0.0));
+    }
 }

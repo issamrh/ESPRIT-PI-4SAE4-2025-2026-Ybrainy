@@ -43,7 +43,7 @@ public class LessonServiceImpl implements ILessonService {
     public Lesson createLesson(Long courseId, Lesson lesson) {
         // Verify course exists via Feign
         if (!courseClient.courseExists(courseId)) {
-            throw new RuntimeException("Course not found: " + courseId);
+            throw new IllegalArgumentException("Course not found: " + courseId);
         }
         lesson.setCourseId(courseId);
         if (lesson.getOrderIndex() == null) {

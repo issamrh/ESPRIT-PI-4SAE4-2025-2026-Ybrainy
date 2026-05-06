@@ -137,7 +137,8 @@ class LessonServiceTest {
     void createLesson_courseNotFound_throws() {
         when(courseClient.courseExists(999L)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.createLesson(999L, sampleLesson(null, null)))
+        Lesson notFound = sampleLesson(null, null);
+        assertThatThrownBy(() -> service.createLesson(999L, notFound))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("not found");
 
@@ -209,7 +210,7 @@ class LessonServiceTest {
     void countLessonsByCourse_zero() {
         when(lessonRepository.countByCourseId(10L)).thenReturn(0L);
 
-        assertThat(service.countLessonsByCourse(10L)).isEqualTo(0L);
+        assertThat(service.countLessonsByCourse(10L)).isZero();
     }
 
     // ── trackProgress ─────────────────────────────────────────────────
@@ -306,7 +307,7 @@ class LessonServiceTest {
         when(lessonProgressRepository.countByEnrollmentIdAndStatus(1L, ProgressStatus.COMPLETED))
             .thenReturn(0L);
 
-        assertThat(service.countCompletedLessons(1L)).isEqualTo(0L);
+        assertThat(service.countCompletedLessons(1L)).isZero();
     }
 
     // ── getProgressByEnrollment ───────────────────────────────────────

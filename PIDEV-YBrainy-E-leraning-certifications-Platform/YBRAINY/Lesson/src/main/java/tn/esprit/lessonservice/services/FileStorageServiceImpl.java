@@ -49,7 +49,7 @@ public class FileStorageServiceImpl implements IFileStorageService {
                 StandardCopyOption.REPLACE_EXISTING);
             return subDir + "/" + filename;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to store file: " + e.getMessage(), e);
+            throw new IllegalStateException("Failed to store file: " + e.getMessage(), e);
         }
     }
 

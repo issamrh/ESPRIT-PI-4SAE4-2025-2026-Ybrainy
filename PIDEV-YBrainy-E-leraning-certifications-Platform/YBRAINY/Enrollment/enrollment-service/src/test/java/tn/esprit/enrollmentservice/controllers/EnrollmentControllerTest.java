@@ -19,7 +19,6 @@ import tn.esprit.enrollmentservice.services.IEnrollmentService;
 import java.util.List;
 import java.util.Map;
 
-import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -191,5 +190,51 @@ class EnrollmentControllerTest {
         mockMvc.perform(patch("/api/enrollments/1/certificate")
                         .param("certificateId", "cert-abc-123"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("POST /api/enrollments/course/{courseId}/lessons/{lessonId}/time returns 200")
+    void trackTime_returns200() throws Exception {
+        doNothing().when(enrollmentService).trackTimeSpent(5L, 3L, 10L, 120);
+
+        mockMvc.perform(post("/api/enrollments/course/5/lessons/3/time")
+                        .param("studentId", "10")
+                        .param("seconds", "120"))
+                .andExpect(status().isOk());
+
+        verify(enrollmentService).trackTimeSpent(5L, 3L, 10L, 120);
+    }
+
+    @Test
+    @DisplayName("GET /api/enrollments/student/{studentId}/course/{courseId} returns enrollment")
+    void getEnrollment_returns200() throws Exception {
+        when(enrollmentService.getEnrollment(10L, 5L)).thenReturn(sampleEnrollment);
+
+        mockMvc.perform(get("/api/enrollments/student/10/course/5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.studentId").value(10))
+                .andExpect(jsonPath("$.courseId").value(5));
+    }
+
+    @Test
+    @DisplayName("GET /api/enrollments/by-certificate/{certificateId} returns enrollment")
+    void getByCertificate_returns200() throws Exception {
+        when(enrollmentService.getByCertificateId("cert-xyz-999")).thenReturn(sampleEnrollment);
+
+        mockMvc.perform(get("/api/enrollments/by-certificate/cert-xyz-999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1));
+    }
+
+    @Test
+    @DisplayName("PUT /api/enrollments/{enrollmentId}/certificate returns 200")
+    void updateCertificate_returns200() throws Exception {
+        doNothing().when(enrollmentService).updateCertificate(1L, "cert-new-456");
+
+        mockMvc.perform(put("/api/enrollments/1/certificate")
+                        .param("certificateId", "cert-new-456"))
+                .andExpect(status().isOk());
+
+        verify(enrollmentService).updateCertificate(1L, "cert-new-456");
     }
 }

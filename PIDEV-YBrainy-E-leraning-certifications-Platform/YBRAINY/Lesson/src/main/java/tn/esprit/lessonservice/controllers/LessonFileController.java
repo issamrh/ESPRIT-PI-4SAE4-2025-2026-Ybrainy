@@ -15,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/courses/{courseId}/lessons")
@@ -41,7 +40,6 @@ public class LessonFileController {
         String[] youtubeArr = toArray(youtubeUrls);
         List<LessonSequenceItemDTO> sequence = parseSequence(readSequenceJson(sequencePart));
 
-        // Build lesson entity
         Lesson lesson = buildLesson(meta, videos, pdfs, images, youtubeArr, sequence, null);
         Lesson created = lessonService.createLesson(courseId, lesson);
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponseDTO(created));
@@ -51,7 +49,7 @@ public class LessonFileController {
     public ResponseEntity<List<LessonResponseDTO>> getLessons(@PathVariable Long courseId) {
         return ResponseEntity.ok(
             lessonService.getLessonsByCourse(courseId).stream()
-                .map(this::toResponseDTO).collect(Collectors.toList()));
+                .map(this::toResponseDTO).toList());
     }
 
     @GetMapping("/{lessonId}")
@@ -79,7 +77,6 @@ public class LessonFileController {
 
         Lesson existing = lessonService.getLessonByIdAndCourse(lessonId, courseId);
 
-        // Delete removed content files
         List<LessonContent> existingContents =
             Optional.ofNullable(existing.getContents()).orElse(Collections.emptyList());
         Set<Long> keptIds = new HashSet<>();
@@ -109,7 +106,9 @@ public class LessonFileController {
                 .stream()
                 .filter(c -> c.getType() != LessonType.YOUTUBE_EMBED)
                 .forEach(c -> fileStorageService.deleteFile(c.getContentUrl()));
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            // files may already be absent — deletion proceeds regardless
+        }
         lessonService.deleteLesson(courseId, lessonId);
         return ResponseEntity.noContent().build();
     }
@@ -121,42 +120,11 @@ public class LessonFileController {
                                 MultipartFile[] images, String[] youtubeUrls,
                                 List<LessonSequenceItemDTO> sequence,
                                 Lesson existing) {
-        List<LessonContent> contents = new ArrayList<>();
-
+        List<LessonContent> contents;
         if (sequence != null && !sequence.isEmpty()) {
-            Map<Long, LessonContent> existingById = new HashMap<>();
-            if (existing != null && existing.getContents() != null) {
-                existing.getContents().forEach(c -> existingById.put(c.getId(), c));
-            }
-            for (int i = 0; i < sequence.size(); i++) {
-                LessonSequenceItemDTO step = sequence.get(i);
-                if (step.getExistingContentId() != null) {
-                    LessonContent found = existingById.get(step.getExistingContentId());
-                    if (found != null) {
-                        found.setOrderIndex(i);
-                        contents.add(found);
-                    }
-                } else {
-                    contents.add(buildContentFromStep(step, i, videos, pdfs, images, youtubeUrls));
-                }
-            }
+            contents = buildContentsFromSequence(sequence, existing, videos, pdfs, images, youtubeUrls);
         } else {
-            int idx = 0;
-            if (videos != null) for (MultipartFile f : videos)
-                if (f != null && !f.isEmpty())
-                    contents.add(buildContent(LessonType.VIDEO_UPLOAD,
-                        fileStorageService.storeLessonContent(f, LessonType.VIDEO_UPLOAD), idx++));
-            if (pdfs != null) for (MultipartFile f : pdfs)
-                if (f != null && !f.isEmpty())
-                    contents.add(buildContent(LessonType.PDF,
-                        fileStorageService.storeLessonContent(f, LessonType.PDF), idx++));
-            if (images != null) for (MultipartFile f : images)
-                if (f != null && !f.isEmpty())
-                    contents.add(buildContent(LessonType.IMAGE,
-                        fileStorageService.storeLessonContent(f, LessonType.IMAGE), idx++));
-            if (youtubeUrls != null) for (String url : youtubeUrls)
-                if (url != null && !url.isBlank())
-                    contents.add(buildContent(LessonType.YOUTUBE_EMBED, url, idx++));
+            contents = buildContentsFromFiles(videos, pdfs, images, youtubeUrls);
         }
 
         if (contents.isEmpty()) {
@@ -184,26 +152,82 @@ public class LessonFileController {
         return lesson;
     }
 
+    private List<LessonContent> buildContentsFromSequence(
+            List<LessonSequenceItemDTO> sequence, Lesson existing,
+            MultipartFile[] videos, MultipartFile[] pdfs,
+            MultipartFile[] images, String[] youtubeUrls) {
+        Map<Long, LessonContent> existingById = new HashMap<>();
+        if (existing != null && existing.getContents() != null) {
+            existing.getContents().forEach(c -> existingById.put(c.getId(), c));
+        }
+        List<LessonContent> contents = new ArrayList<>();
+        for (int i = 0; i < sequence.size(); i++) {
+            LessonSequenceItemDTO step = sequence.get(i);
+            if (step.getExistingContentId() != null) {
+                LessonContent found = existingById.get(step.getExistingContentId());
+                if (found != null) {
+                    found.setOrderIndex(i);
+                    contents.add(found);
+                }
+            } else {
+                contents.add(buildContentFromStep(step, i, videos, pdfs, images, youtubeUrls));
+            }
+        }
+        return contents;
+    }
+
+    private List<LessonContent> buildContentsFromFiles(
+            MultipartFile[] videos, MultipartFile[] pdfs,
+            MultipartFile[] images, String[] youtubeUrls) {
+        List<LessonContent> contents = new ArrayList<>();
+        int[] idx = {0};
+        addFilesToContents(contents, videos, LessonType.VIDEO_UPLOAD, idx);
+        addFilesToContents(contents, pdfs, LessonType.PDF, idx);
+        addFilesToContents(contents, images, LessonType.IMAGE, idx);
+        for (String url : youtubeUrls) {
+            if (url != null && !url.isBlank()) {
+                contents.add(buildContent(LessonType.YOUTUBE_EMBED, url, idx[0]++));
+            }
+        }
+        return contents;
+    }
+
+    private void addFilesToContents(List<LessonContent> contents, MultipartFile[] files,
+                                     LessonType type, int[] idx) {
+        if (files == null) {
+            return;
+        }
+        for (MultipartFile f : files) {
+            if (f != null && !f.isEmpty()) {
+                contents.add(buildContent(type, fileStorageService.storeLessonContent(f, type), idx[0]++));
+            }
+        }
+    }
+
     private LessonContent buildContentFromStep(LessonSequenceItemDTO step, int i,
             MultipartFile[] videos, MultipartFile[] pdfs,
             MultipartFile[] images, String[] youtubeUrls) {
         LessonType type = step.getType();
         if (type == LessonType.YOUTUBE_EMBED) {
             Integer yIdx = step.getYoutubeIndex();
-            if (yIdx == null || youtubeUrls == null || yIdx >= youtubeUrls.length)
+            if (yIdx == null || youtubeUrls == null || yIdx >= youtubeUrls.length) {
                 throw new IllegalArgumentException("Invalid youtubeIndex at step " + i);
+            }
             return buildContent(type, youtubeUrls[yIdx], i);
         }
         Integer fIdx = step.getFileIndex();
-        if (fIdx == null) throw new IllegalArgumentException("Missing fileIndex at step " + i);
+        if (fIdx == null) {
+            throw new IllegalArgumentException("Missing fileIndex at step " + i);
+        }
         MultipartFile f = switch (type) {
             case VIDEO_UPLOAD -> videos != null && fIdx < videos.length ? videos[fIdx] : null;
             case PDF -> pdfs != null && fIdx < pdfs.length ? pdfs[fIdx] : null;
             case IMAGE -> images != null && fIdx < images.length ? images[fIdx] : null;
             default -> throw new IllegalArgumentException("Unsupported type " + type);
         };
-        if (f == null || f.isEmpty())
+        if (f == null || f.isEmpty()) {
             throw new IllegalArgumentException("Missing file for step " + i);
+        }
         return buildContent(type, fileStorageService.storeLessonContent(f, type), i);
     }
 
@@ -226,7 +250,7 @@ public class LessonFileController {
                     .orderIndex(c.getOrderIndex())
                     .createdAt(c.getCreatedAt())
                     .build())
-                .collect(Collectors.toList());
+                .toList();
         return LessonResponseDTO.builder()
             .id(l.getId())
             .title(l.getTitle())
@@ -243,13 +267,16 @@ public class LessonFileController {
     }
 
     private LessonMetaRequestDTO parseAndValidateMeta(MultipartFile lessonPart) {
-        if (lessonPart == null || lessonPart.isEmpty())
+        if (lessonPart == null || lessonPart.isEmpty()) {
             throw new IllegalArgumentException("Missing required part: lesson");
+        }
         try {
             LessonMetaRequestDTO meta = objectMapper.readValue(
                 lessonPart.getBytes(), LessonMetaRequestDTO.class);
             var violations = validator.validate(meta);
-            if (!violations.isEmpty()) throw new ConstraintViolationException(violations);
+            if (!violations.isEmpty()) {
+                throw new ConstraintViolationException(violations);
+            }
             return meta;
         } catch (ConstraintViolationException e) {
             throw e;
@@ -259,7 +286,9 @@ public class LessonFileController {
     }
 
     private List<LessonSequenceItemDTO> parseSequence(String json) {
-        if (json == null || json.isBlank()) return null;
+        if (json == null || json.isBlank()) {
+            return Collections.emptyList();
+        }
         try {
             return objectMapper.readValue(json,
                 new TypeReference<List<LessonSequenceItemDTO>>() {});
@@ -270,7 +299,9 @@ public class LessonFileController {
 
     private String readSequenceJson(MultipartFile part) {
         try {
-            if (part == null || part.isEmpty()) return null;
+            if (part == null || part.isEmpty()) {
+                return null;
+            }
             return new String(part.getBytes(), StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid sequence part", e);
@@ -278,6 +309,6 @@ public class LessonFileController {
     }
 
     private String[] toArray(List<String> list) {
-        return (list == null || list.isEmpty()) ? null : list.toArray(new String[0]);
+        return (list == null || list.isEmpty()) ? new String[0] : list.toArray(new String[0]);
     }
 }

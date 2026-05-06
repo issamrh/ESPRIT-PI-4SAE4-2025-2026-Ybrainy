@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/courses/lessons")
@@ -33,7 +32,7 @@ public class LessonsQueryController {
         }
 
         List<LessonResponseDTO> all = lessonService.getLessonsByCourse(courseId)
-            .stream().map(this::toResponseDTO).collect(Collectors.toList());
+            .stream().map(this::toResponseDTO).toList();
 
         int start = (int) pageable.getOffset();
         int end = Math.min(start + pageable.getPageSize(), all.size());
@@ -54,7 +53,7 @@ public class LessonsQueryController {
                     .orderIndex(c.getOrderIndex())
                     .createdAt(c.getCreatedAt())
                     .build())
-                .collect(Collectors.toList());
+                .toList();
         return LessonResponseDTO.builder()
             .id(l.getId())
             .title(l.getTitle())

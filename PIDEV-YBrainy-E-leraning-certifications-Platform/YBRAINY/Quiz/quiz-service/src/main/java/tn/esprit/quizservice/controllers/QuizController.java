@@ -22,6 +22,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class QuizController {
 
+    private static final String QUIZ_NOT_FOUND = "Quiz not found";
+
     private final IQuizService quizService;
 
     @GetMapping
@@ -37,11 +39,11 @@ public class QuizController {
     }
 
     @GetMapping("/{quizId}")
-    public ResponseEntity<?> getQuizById(@PathVariable Long quizId) {
+    public ResponseEntity<Object> getQuizById(@PathVariable Long quizId) {
         try {
             return ResponseEntity.ok(quizService.getQuizById(null, quizId));
         } catch (RuntimeException e) {
-            if ("Quiz not found".equals(e.getMessage())) {
+            if (QUIZ_NOT_FOUND.equals(e.getMessage())) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
             }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
@@ -75,13 +77,13 @@ public class QuizController {
     }
 
     @PutMapping("/{quizId}")
-    public ResponseEntity<?> updateQuiz(
+    public ResponseEntity<Object> updateQuiz(
             @PathVariable Long quizId,
             @RequestBody @Valid QuizRequestDTO dto) {
         try {
             return ResponseEntity.ok(quizService.updateQuiz(quizId, dto));
         } catch (RuntimeException e) {
-            if ("Quiz not found".equals(e.getMessage())) {
+            if (QUIZ_NOT_FOUND.equals(e.getMessage())) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
             }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
@@ -89,7 +91,7 @@ public class QuizController {
     }
 
     @PutMapping("/{quizId}/questions/{questionId}")
-    public ResponseEntity<?> updateQuestion(
+    public ResponseEntity<Object> updateQuestion(
             @PathVariable Long quizId,
             @PathVariable Long questionId,
             @RequestBody @Valid QuestionRequestDTO dto) {
@@ -104,7 +106,7 @@ public class QuizController {
     }
 
     @PostMapping("/{quizId}/submit")
-    public ResponseEntity<?> submitQuiz(
+    public ResponseEntity<Object> submitQuiz(
             @PathVariable Long quizId,
             @RequestParam Long studentId,
             @RequestBody QuizSubmissionDTO submission) {
@@ -116,7 +118,7 @@ public class QuizController {
             if ("Max attempts reached".equals(e.getMessage())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
             }
-            if ("Quiz not found".equals(e.getMessage())) {
+            if (QUIZ_NOT_FOUND.equals(e.getMessage())) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
             }
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
@@ -143,7 +145,7 @@ public class QuizController {
     }
 
     @GetMapping("/best-score")
-    public ResponseEntity<?> getBestScore(
+    public ResponseEntity<Object> getBestScore(
             @RequestParam Long studentId,
             @RequestParam Long courseId) {
         try {

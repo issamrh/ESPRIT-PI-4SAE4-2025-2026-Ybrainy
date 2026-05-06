@@ -10,12 +10,14 @@ import java.util.UUID;
 @RequestMapping("/api/quizzes/gaze")
 public class GazeController {
 
+    private static final String ACTIVE_KEY = "active";
+
     @PostMapping("/start")
     public ResponseEntity<Map<String, Object>> startSession(
             @RequestBody(required = false) Map<String, Object> body) {
         return ResponseEntity.ok(Map.of(
                 "sessionId", UUID.randomUUID().toString(),
-                "active", false
+                ACTIVE_KEY, false
         ));
     }
 
@@ -23,7 +25,7 @@ public class GazeController {
     public ResponseEntity<Map<String, Object>> getStatus(@PathVariable String sessionId) {
         return ResponseEntity.ok(Map.of(
                 "user_id", "",
-                "active", false,
+                ACTIVE_KEY, false,
                 "looking_at_screen", false,
                 "current_focus_score", 0.0
         ));
@@ -33,7 +35,7 @@ public class GazeController {
     public ResponseEntity<Map<String, Object>> stopSession(@PathVariable String sessionId) {
         return ResponseEntity.ok(Map.of(
                 "sessionId", sessionId,
-                "active", false,
+                ACTIVE_KEY, false,
                 "stopped", true
         ));
     }

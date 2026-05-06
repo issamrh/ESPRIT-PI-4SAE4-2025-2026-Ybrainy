@@ -247,7 +247,7 @@ class QuizServiceTest {
         QuestionDTO result = service.addQuestion(1L, req);
 
         assertThat(result.getQuestionText()).isEqualTo("What is JVM?");
-        assertThat(result.getOrderIndex()).isEqualTo(0);
+        assertThat(result.getOrderIndex()).isZero();
         verify(optionRepository).saveAll(argThat(opts -> ((List<?>) opts).size() == 2));
     }
 
@@ -517,7 +517,8 @@ class QuizServiceTest {
     void updateQuiz_notFound_throws() {
         when(quizRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.updateQuiz(99L, new QuizRequestDTO()))
+        QuizRequestDTO emptyDto = new QuizRequestDTO();
+        assertThatThrownBy(() -> service.updateQuiz(99L, emptyDto))
             .isInstanceOf(RuntimeException.class)
             .hasMessageContaining("not found");
     }
@@ -551,8 +552,9 @@ class QuizServiceTest {
 
         Map<String, Double> result = service.getStudentAvgScore(10L);
 
-        assertThat(result.get("avgScore")).isEqualTo(50.0);
-        assertThat(result.get("attemptCount")).isEqualTo(0.0);
+        assertThat(result)
+            .containsEntry("avgScore", 50.0)
+            .containsEntry("attemptCount", 0.0);
     }
 
     @Test
@@ -568,8 +570,9 @@ class QuizServiceTest {
 
         Map<String, Double> result = service.getStudentAvgScore(10L);
 
-        assertThat(result.get("avgScore")).isEqualTo(70.0);
-        assertThat(result.get("attemptCount")).isEqualTo(2.0);
+        assertThat(result)
+            .containsEntry("avgScore", 70.0)
+            .containsEntry("attemptCount", 2.0);
     }
 
     // ── deleteQuizzesByCourse ─────────────────────────────────────────

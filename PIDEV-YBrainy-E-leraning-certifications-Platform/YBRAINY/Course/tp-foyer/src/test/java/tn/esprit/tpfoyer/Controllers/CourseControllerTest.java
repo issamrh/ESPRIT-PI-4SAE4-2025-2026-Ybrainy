@@ -196,6 +196,114 @@ class CourseControllerTest {
         mockMvc.perform(get("/api/courses/stats/by-category"))
                 .andExpect(status().isInternalServerError());
     }
-}
 
+    @Test
+    @DisplayName("GET /api/courses/verify/{certificateId} returns verification response")
+    void verifyCertificate_returns200() throws Exception {
+        tn.esprit.tpfoyer.Dto.VerificationResponseDTO resp =
+                tn.esprit.tpfoyer.Dto.VerificationResponseDTO.builder()
+                        .valid(true).certificateId("cert-123").courseTitle("Spring Boot")
+                        .studentName("Alice").build();
+        when(certificateService.verifyCertificate("cert-123")).thenReturn(resp);
+
+        mockMvc.perform(get("/api/courses/verify/cert-123"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.valid").value(true))
+                .andExpect(jsonPath("$.certificateId").value("cert-123"));
+    }
+
+    @Test
+    @DisplayName("GET /api/courses/{courseId}/reader-context with description returns context")
+    void getCourseReaderContext_withDescription_returns200() throws Exception {
+        CourseDetailResponseDTO detail = CourseDetailResponseDTO.builder()
+                .id(1L).title("Spring Boot").description("Learn Spring Boot deeply").build();
+        when(courseService.getCourseById(1L)).thenReturn(detail);
+
+        mockMvc.perform(get("/api/courses/1/reader-context"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sourceType").value("COURSE"))
+                .andExpect(jsonPath("$.title").value("Spring Boot"))
+                .andExpect(jsonPath("$.text").value("Learn Spring Boot deeply"));
+    }
+
+    @Test
+    @DisplayName("GET /api/courses/{courseId}/reader-context with blank description uses title as text")
+    void getCourseReaderContext_blankDescription_usesTitleAsText() throws Exception {
+        CourseDetailResponseDTO detail = CourseDetailResponseDTO.builder()
+                .id(1L).title("Spring Boot").description("").build();
+        when(courseService.getCourseById(1L)).thenReturn(detail);
+
+        mockMvc.perform(get("/api/courses/1/reader-context"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.text").value("Spring Boot"));
+    }
+
+    @Test
+    @DisplayName("GET /api/courses/{courseId}/lessons/{lessonId}/reader-context uses lesson data")
+    void getLessonReaderContext_clientSuccess_returns200() throws Exception {
+        when(lessonClient.getLessonByCourse(1L, 2L))
+                .thenReturn(java.util.Map.of("title", "My Lesson", "content", "Lesson content here"));
+
+        mockMvc.perform(get("/api/courses/1/lessons/2/reader-context"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sourceType").value("LESSON"))
+                .andExpect(jsonPath("$.lessonId").value(2))
+                .andExpect(jsonPath("$.title").value("My Lesson"))
+                .andExpect(jsonPath("$.text").value("Lesson content here"));
+    }
+
+    @Test
+    @DisplayName("GET /api/courses/{courseId}/lessons/{lessonId}/reader-context falls back to course on error")
+    void getLessonReaderContext_clientFails_usesCourseFallback() throws Exception {
+        when(lessonClient.getLessonByCourse(1L, 2L)).thenThrow(new RuntimeException("Feign error"));
+        CourseDetailResponseDTO detail = CourseDetailResponseDTO.builder()
+                .id(1L).title("Spring Boot").description("Course description").build();
+        when(courseService.getCourseById(1L)).thenReturn(detail);
+
+        mockMvc.perform(get("/api/courses/1/lessons/2/reader-context"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sourceType").value("LESSON"))
+                .andExpect(jsonPath("$.title").value("Spring Boot"))
+                .andExpect(jsonPath("$.text").value("Course description"));
+    }
+
+    @Test
+    @DisplayName("GET /api/courses/{courseId}/certificate returns 404 when cert file missing")
+    void downloadCertificate_fileNotFound_returns404() throws Exception {
+        when(certificateService.generateCertificate(1L, 10L)).thenReturn("cert-id");
+
+        mockMvc.perform(get("/api/courses/1/certificate").param("studentId", "10"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /api/courses/{courseId}/certificate returns 404 when service throws not found")
+    void downloadCertificate_serviceThrowsNotFound_returns404() throws Exception {
+        when(certificateService.generateCertificate(1L, 10L))
+                .thenThrow(new RuntimeException("Enrollment not found"));
+
+        mockMvc.perform(get("/api/courses/1/certificate").param("studentId", "10"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("GET /api/courses/{courseId}/certificate returns 403 when not yet completed")
+    void downloadCertificate_notYetCompleted_returns403() throws Exception {
+        when(certificateService.generateCertificate(1L, 10L))
+                .thenThrow(new RuntimeException("Course not yet completed"));
+
+        mockMvc.perform(get("/api/courses/1/certificate").param("studentId", "10"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("GET /api/courses/{courseId}/certificate returns 500 on generic error")
+    void downloadCertificate_genericError_returns500() throws Exception {
+        when(certificateService.generateCertificate(1L, 10L))
+                .thenThrow(new RuntimeException("Unexpected error"));
+
+        mockMvc.perform(get("/api/courses/1/certificate").param("studentId", "10"))
+                .andExpect(status().isInternalServerError());
+    }
+}
 
