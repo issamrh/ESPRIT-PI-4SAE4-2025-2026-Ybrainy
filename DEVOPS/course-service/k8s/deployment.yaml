@@ -28,6 +28,10 @@ spec:
               value: "root"
             - name: SPRING_DATASOURCE_PASSWORD
               value: ""
+            - name: SPRING_RABBITMQ_HOST
+              value: "rabbitmq"
+            - name: EUREKA_CLIENT_ENABLED
+              value: "false"
 ---
 apiVersion: v1
 kind: Service
