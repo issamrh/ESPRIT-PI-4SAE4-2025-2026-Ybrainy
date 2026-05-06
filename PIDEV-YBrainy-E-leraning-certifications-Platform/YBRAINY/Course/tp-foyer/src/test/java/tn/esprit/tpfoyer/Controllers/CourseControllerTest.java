@@ -160,7 +160,7 @@ class CourseControllerTest {
     @Test
     @DisplayName("GET /api/courses/{id}/exists returns true when course found")
     void courseExists_returnsTrue_whenCourseFound() throws Exception {
-        when(courseService.getCourseById(1L)).thenReturn(CourseDetailResponseDTO.builder().id(1L).build());
+        when(courseService.existsById(1L)).thenReturn(true);
 
         mockMvc.perform(get("/api/courses/1/exists"))
                 .andExpect(status().isOk())
@@ -168,9 +168,9 @@ class CourseControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/courses/{id}/exists returns false when service throws")
+    @DisplayName("GET /api/courses/{id}/exists returns false when course not found")
     void courseExists_returnsFalse_whenCourseNotFound() throws Exception {
-        when(courseService.getCourseById(99L)).thenThrow(new RuntimeException("not found"));
+        when(courseService.existsById(99L)).thenReturn(false);
 
         mockMvc.perform(get("/api/courses/99/exists"))
                 .andExpect(status().isOk())
@@ -189,12 +189,13 @@ class CourseControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/courses/stats/by-category returns empty map when service throws")
-    void getStatsByCategory_returnsEmptyMap_onError() throws Exception {
+    @DisplayName("GET /api/courses/stats/by-category returns 500 when service throws")
+    void getStatsByCategory_returns500_onError() throws Exception {
         when(courseService.getCourseStatsByCategory()).thenThrow(new RuntimeException("DB error"));
 
         mockMvc.perform(get("/api/courses/stats/by-category"))
-                .andExpect(status().isOk())
-                .andExpect(content().string("{}"));
+                .andExpect(status().isInternalServerError());
     }
 }
+
+
