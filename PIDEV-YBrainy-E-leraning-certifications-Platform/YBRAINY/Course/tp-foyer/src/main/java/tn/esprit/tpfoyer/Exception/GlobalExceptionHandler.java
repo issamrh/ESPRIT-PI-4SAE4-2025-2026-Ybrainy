@@ -20,6 +20,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String ERROR_KEY = "error";
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException ex) {
@@ -68,20 +69,20 @@ public class GlobalExceptionHandler {
         String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
         String raw = e.getMessage() != null ? e.getMessage() : "Internal server error";
         if (msg.contains("not found") || msg.contains("does not exist")) {
-            return ResponseEntity.status(404).body(Map.of("error", raw));
+            return ResponseEntity.status(404).body(Map.of(ERROR_KEY, raw));
         }
         if (msg.contains("already exists") || msg.contains("duplicate") || msg.contains("already enrolled")) {
-            return ResponseEntity.status(409).body(Map.of("error", raw));
+            return ResponseEntity.status(409).body(Map.of(ERROR_KEY, raw));
         }
-        return ResponseEntity.status(500).body(Map.of("error", raw));
+        return ResponseEntity.status(500).body(Map.of(ERROR_KEY, raw));
     }
 
     @ExceptionHandler(feign.FeignException.class)
     public ResponseEntity<Map<String, String>> handleFeign(feign.FeignException e) {
         if (e.status() == 404) {
-            return ResponseEntity.status(404).body(Map.of("error", "Resource not found"));
+            return ResponseEntity.status(404).body(Map.of(ERROR_KEY, "Resource not found"));
         }
-        return ResponseEntity.status(503).body(Map.of("error", "Upstream service error"));
+        return ResponseEntity.status(503).body(Map.of(ERROR_KEY, "Upstream service error"));
     }
 
     @ExceptionHandler(Exception.class)
@@ -111,7 +112,7 @@ public class GlobalExceptionHandler {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now().toString());
         body.put("status", status.value());
-        body.put("error", status.getReasonPhrase());
+        body.put(ERROR_KEY, status.getReasonPhrase());
         return body;
     }
 }

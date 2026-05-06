@@ -5,13 +5,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.data.domain.*;
-import org.springframework.data.jpa.domain.Specification;
 import tn.esprit.tpfoyer.Dto.CourseRequestDTO;
 import tn.esprit.tpfoyer.Entities.Course;
 import tn.esprit.tpfoyer.Entities.enums.CourseCategory;
 import tn.esprit.tpfoyer.Entities.enums.CourseLevel;
-import tn.esprit.tpfoyer.Exception.ResourceNotFoundException;
 import tn.esprit.tpfoyer.Repositories.CourseRepository;
 import tn.esprit.tpfoyer.Repositories.CourseReviewRepository;
 import tn.esprit.tpfoyer.Clients.EnrollmentClient;
@@ -52,8 +49,7 @@ class CourseServiceTest {
 
         Map<String, Long> result = service.getCourseStatsByCategory();
 
-        assertThat(result).containsKey("PROGRAMMING");
-        assertThat(result.get("PROGRAMMING")).isEqualTo(1L);
+        assertThat(result).containsEntry("PROGRAMMING", 1L);
     }
 
     @Test
@@ -72,7 +68,7 @@ class CourseServiceTest {
 
         Map<String, Object> result = service.togglePublish(1L, true, 5L, "INSTRUCTOR");
 
-        assertThat(result.get("isPublished")).isEqualTo(true);
+        assertThat(result).containsEntry("isPublished", true);
     }
 
     @Test
@@ -94,7 +90,7 @@ class CourseServiceTest {
 
         Map<String, Object> result = service.togglePublish(1L, true, 99L, "ADMIN");
 
-        assertThat(result.get("isPublished")).isEqualTo(true);
+        assertThat(result).containsEntry("isPublished", true);
     }
 
     @Test
@@ -181,8 +177,7 @@ class CourseServiceTest {
 
         Map<String, Long> result = service.getCourseStatsByCategory();
 
-        assertThat(result).containsEntry("PROGRAMMING", 2L);
-        assertThat(result).containsEntry("DESIGN", 1L);
+        assertThat(result).containsEntry("PROGRAMMING", 2L).containsEntry("DESIGN", 1L);
         assertThat(result).doesNotContainKey(null);
     }
 
@@ -215,6 +210,6 @@ class CourseServiceTest {
 
         Map<String, Object> result = service.togglePublish(1L, false, 5L, "INSTRUCTOR");
 
-        assertThat(result.get("isPublished")).isEqualTo(false);
+        assertThat(result).containsEntry("isPublished", false);
     }
 }
