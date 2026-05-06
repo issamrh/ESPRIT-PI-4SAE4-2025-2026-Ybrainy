@@ -3,72 +3,131 @@ pipeline {
 
     environment {
         GIT_CREDENTIALS = 'github-token'
-        DOCKER_USER     = 'jjacem'
-        APP_NAME        = 'event-service'
-        IMAGE_NAME      = "${DOCKER_USER}/${APP_NAME}"
-        SONAR_HOST_URL  = 'http://127.0.0.1:42419'
+        DOCKER_USER = 'jjacem'
+        APP_NAME = 'event-service'
+        IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
+        DOCKER_TAG = "${BUILD_NUMBER}"
+        SONAR_HOST_URL = 'http://127.0.0.1:42419'
     }
 
     stages {
 
+        // ─────────────────────────────
+        // 1. CHECKOUT (OPTIMISÉ)
+        // ─────────────────────────────
         stage('Checkout') {
             steps {
-                echo "Clonage du projet Ybrainy..."
-                git branch: '3la-5atr-houssem',
-                    url: 'https://github.com/issamrh/ESPRIT-PI-4SAE4-2025-2026-Ybrainy.git',
-                    credentialsId: "${GIT_CREDENTIALS}"
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '3la-5atr-houssem']],
+                    extensions: [
+                        [$class: 'CloneOption',
+                            depth: 1,
+                            shallow: true,
+                            timeout: 300,
+                            noTags: true
+                        ],
+                        [$class: 'SparseCheckoutPaths',
+                            sparseCheckoutPaths: [
+                                [$class: 'SparseCheckoutPath', path: 'event-service/']
+                            ]
+                        ]
+                    ],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/issamrh/ESPRIT-PI-4SAE4-2025-2026-Ybrainy.git',
+                        credentialsId: "${GIT_CREDENTIALS}"
+                    ]]
+                ])
             }
         }
 
-        stage('Build & Test') {
+        // ─────────────────────────────
+        // 2. BUILD
+        // ─────────────────────────────
+        stage('Build') {
             steps {
-                bat 'wsl mvn clean verify'
+                dir('event-service') {
+                    bat 'wsl mvn clean package -DskipTests'
+                }
             }
         }
 
-        stage('JaCoCo') {
+        // ─────────────────────────────
+        // 3. TESTS
+        // ─────────────────────────────
+        stage('Tests') {
             steps {
-                bat 'wsl mvn jacoco:report'
+                dir('event-service') {
+                    bat 'wsl mvn test'
+                }
+            }
+            post {
+                always {
+                    junit 'event-service/target/surefire-reports/*.xml'
+                }
             }
         }
 
+        // ─────────────────────────────
+        // 4. SONARQUBE
+        // ─────────────────────────────
         stage('SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    bat """
-                    wsl mvn sonar:sonar ^
-                    -Dsonar.host.url=${SONAR_HOST_URL} ^
-                    -Dsonar.login=${SONAR_TOKEN}
-                    """
+                    dir('event-service') {
+                        bat """
+                        wsl mvn sonar:sonar ^
+                        -Dsonar.host.url=${SONAR_HOST_URL} ^
+                        -Dsonar.login=%SONAR_TOKEN% ^
+                        -Dsonar.projectKey=event-service
+                        """
+                    }
                 }
             }
         }
 
-        stage('Package') {
+        // ─────────────────────────────
+        // 5. DOCKER BUILD & PUSH
+        // ─────────────────────────────
+        stage('Docker Build & Push') {
             steps {
-                bat 'wsl mvn package -DskipTests'
-            }
-        }
+                dir('event-service') {
+                    withCredentials([usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USER_LOGIN',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )]) {
 
-        stage('Docker Build') {
-            steps {
-                bat "wsl docker build -t ${IMAGE_NAME}:latest ."
-            }
-        }
-
-        stage('Docker Push') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER_LOGIN',
-                    passwordVariable: 'DOCKER_PASSWORD'
-                )]) {
-                    bat """
-                    echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
-                    wsl docker push ${IMAGE_NAME}:latest
-                    """
+                        bat """
+                        wsl docker build -t ${IMAGE_NAME}:${DOCKER_TAG} .
+                        wsl docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest
+                        echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
+                        wsl docker push ${IMAGE_NAME}:${DOCKER_TAG}
+                        wsl docker push ${IMAGE_NAME}:latest
+                        """
+                    }
                 }
             }
+        }
+
+        // ─────────────────────────────
+        // 6. SAVE TAG
+        // ─────────────────────────────
+        stage('Save build info for CD') {
+            steps {
+                bat 'echo %DOCKER_TAG% > event-service-tag.txt'
+                archiveArtifacts artifacts: 'event-service-tag.txt'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'CI event-service réussi ✅'
+            build job: 'event-service-CD', wait: false
+        }
+        failure {
+            echo 'CI event-service échoué ❌'
         }
     }
 }
