@@ -1,3 +1,32 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: sonarqube-data-pv
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /var/k8s-data/sonarqube/data
+    type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarqube-data-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: ""
+  volumeName: sonarqube-data-pv
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,6 +48,12 @@ spec:
           command: ['sh', '-c', 'sysctl -w vm.max_map_count=262144']
           securityContext:
             privileged: true
+        - name: fix-permissions
+          image: busybox
+          command: ['sh', '-c', 'chown -R 1000:1000 /opt/sonarqube/data']
+          volumeMounts:
+            - name: sonarqube-data
+              mountPath: /opt/sonarqube/data
       containers:
         - name: sonarqube
           image: sonarqube:10-community
@@ -41,7 +76,8 @@ spec:
               mountPath: /opt/sonarqube/logs
       volumes:
         - name: sonarqube-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: sonarqube-data-pvc
         - name: sonarqube-logs
           emptyDir: {}
 ---
@@ -56,3 +92,5 @@ spec:
   ports:
     - port: 9000
       targetPort: 9000
+      nodePort: 30900
+  type: NodePort
