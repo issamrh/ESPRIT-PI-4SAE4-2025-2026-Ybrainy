@@ -224,6 +224,8 @@ public class InscriptionRestControllers {
         return switch (notification.getType() == null ? "" : notification.getType()) {
             case "EVENT_CREATED" -> "New event published";
             case "WAITLIST_PROMOTION" -> "Waitlist promoted";
+            case "INSCRIPTION_CONFIRMED" -> "Inscription accepted";
+            case "INSCRIPTION_REFUSED" -> "Inscription refused";
             default -> "Admin notification";
         };
     }
@@ -235,9 +237,48 @@ public class InscriptionRestControllers {
 
         return switch (notification.getType() == null ? "" : notification.getType()) {
             case "EVENT_CREATED" -> "A new event is now available for registration.";
-            case "WAITLIST_PROMOTION" -> "A student has been moved from the waitlist to confirmed registration.";
+            case "WAITLIST_PROMOTION" -> buildStudentEventMessage(
+                    notification,
+                    "has been moved from the waitlist to confirmed registration for"
+            );
+            case "INSCRIPTION_CONFIRMED" -> buildStudentEventMessage(
+                    notification,
+                    "was accepted for"
+            );
+            case "INSCRIPTION_REFUSED" -> buildStudentEventMessage(
+                    notification,
+                    "was refused for"
+            );
             default -> "A new notification is available.";
         };
+    }
+
+    private String buildStudentEventMessage(
+            tn.esprit.inscriptionservice.entity.AdminNotification notification,
+            String actionText
+    ) {
+        String studentLabel = "Student #" + notification.getStudentId();
+        String eventLabel = "event #" + notification.getEventId();
+
+        try {
+            var student = userClient.findById(notification.getStudentId()).orElse(null);
+            if (student != null) {
+                studentLabel = buildStudentName(student);
+            }
+        } catch (Exception ignored) {
+            // Keep the fallback label when the user service is unavailable.
+        }
+
+        try {
+            eventLabel = eventClient.findById(notification.getEventId())
+                    .map(EventDto::name)
+                    .filter(name -> name != null && !name.isBlank())
+                    .orElse(eventLabel);
+        } catch (Exception ignored) {
+            // Keep the fallback label when the event service is unavailable.
+        }
+
+        return studentLabel + " " + actionText + " " + eventLabel + ".";
     }
 }
 

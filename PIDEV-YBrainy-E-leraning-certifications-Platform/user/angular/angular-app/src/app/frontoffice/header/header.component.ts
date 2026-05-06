@@ -6,7 +6,6 @@ import {
   getRealmRoles,
   isAuthenticated,
   redirectToAppLogin,
-  logout,
 } from '../../auth/keycloak.service';
 import { CartHistory } from '../models/cart.model';
 import { CartService } from '../services/cart.service';
@@ -182,7 +181,7 @@ export class HeaderComponent implements AfterViewInit, OnDestroy {
   }
 
   async onLogout(): Promise<void> {
-    await logout();
+    this.authService.logout();
   }
 
   removeFromCart(itemId: number, event: Event): void {

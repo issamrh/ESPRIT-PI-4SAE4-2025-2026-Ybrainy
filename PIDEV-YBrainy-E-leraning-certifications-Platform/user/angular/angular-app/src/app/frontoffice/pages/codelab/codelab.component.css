@@ -107,15 +107,30 @@
 }
 
 .codelab-brand-mark {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--primary), #7b4dff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #1d2459, #2f5fff);
   color: white;
-  font-weight: 700;
-  box-shadow: 0 16px 28px rgba(87, 91, 255, 0.32);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.22),
+    inset 0 2px 4px rgba(255, 255, 255, 0.12),
+    0 16px 28px rgba(35, 40, 160, 0.28);
+}
+
+.codelab-brand-mark span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.12rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.08em;
+  color: currentColor;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.18);
 }
 
 .codelab-brand h1,
@@ -166,11 +181,39 @@
 }
 
 .theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 148px;
   padding: 10px 16px;
-  border-radius: 14px;
+  border-radius: 999px;
   background: var(--surface-soft);
   color: var(--text);
   border: 1px solid var(--border);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.theme-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(107, 122, 255, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(123, 139, 255, 0.16);
+  flex: 0 0 34px;
+}
+
+.theme-toggle-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.theme-toggle-label {
+  line-height: 1;
 }
 
 .language-row {
@@ -486,6 +529,10 @@
   transform: translateY(-1px);
 }
 
+.theme-toggle:hover .theme-toggle-icon {
+  background: rgba(107, 122, 255, 0.22);
+}
+
 @media (max-width: 1100px) {
   .codelab-topbar {
     flex-direction: column;
@@ -509,6 +556,10 @@
   .codelab-nav {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .theme-toggle {
+    align-self: flex-end;
   }
 
   .language-row {

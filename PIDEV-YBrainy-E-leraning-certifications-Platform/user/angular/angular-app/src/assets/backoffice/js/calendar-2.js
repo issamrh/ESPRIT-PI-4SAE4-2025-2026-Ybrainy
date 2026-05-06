@@ -55,6 +55,7 @@ document.addEventListener("DOMContentLoaded", function () {
   var eventsCache = [];
   var pendingInscriptionsCache = [];
   var adminNotificationsCache = [];
+  var notificationLoadIssues = [];
   var listContainer = null;
   var overviewStats = null;
   var listScrollArea = null;
@@ -396,17 +397,37 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function loadEvents() {
     try {
-      var response = await Promise.all([
+      var response = await Promise.allSettled([
         requestApi("/all"),
         requestInscriptionApi("/pending"),
         requestInscriptionApi("/admin-notifications")
       ]);
-      eventsCache = response[0];
-      pendingInscriptionsCache = Array.isArray(response[1]) ? response[1] : [];
-      adminNotificationsCache = Array.isArray(response[2]) ? response[2] : [];
+      notificationLoadIssues = [];
+
+      eventsCache = response[0] && response[0].status === "fulfilled" && Array.isArray(response[0].value)
+        ? response[0].value
+        : [];
+      pendingInscriptionsCache = response[1] && response[1].status === "fulfilled" && Array.isArray(response[1].value)
+        ? response[1].value
+        : [];
+      adminNotificationsCache = response[2] && response[2].status === "fulfilled" && Array.isArray(response[2].value)
+        ? response[2].value
+        : [];
+
       if (!Array.isArray(eventsCache)) {
         eventsCache = [];
       }
+
+      if (response[1] && response[1].status === "rejected") {
+        notificationLoadIssues.push("Pending inscription requests could not be loaded.");
+        console.warn("Pending inscriptions could not be loaded.", response[1].reason);
+      }
+
+      if (response[2] && response[2].status === "rejected") {
+        notificationLoadIssues.push("Admin inscription updates could not be loaded.");
+        console.warn("Admin notifications could not be loaded.", response[2].reason);
+      }
+
       renderPendingInscriptionsInBell();
       renderAnalyticsCharts();
       applyEventFiltersAndRender();
@@ -414,6 +435,7 @@ document.addEventListener("DOMContentLoaded", function () {
       eventsCache = [];
       pendingInscriptionsCache = [];
       adminNotificationsCache = [];
+      notificationLoadIssues = ["Event and inscription data could not be loaded."];
       refreshCalendar([]);
       renderPendingInscriptionsInBell();
       renderAnalyticsCharts();
@@ -517,8 +539,9 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!bellNotificationTimeline) return;
     var pendingItems = Array.isArray(pendingInscriptionsCache) ? pendingInscriptionsCache : [];
     var notificationItems = Array.isArray(adminNotificationsCache) ? adminNotificationsCache : [];
+    var issueItems = Array.isArray(notificationLoadIssues) ? notificationLoadIssues : [];
 
-    if (!pendingItems.length && !notificationItems.length) {
+    if (!pendingItems.length && !notificationItems.length && !issueItems.length) {
       bellNotificationTimeline.innerHTML =
         '<li><div class="timeline-panel"><div class="media me-2 media-info">i</div><div class="media-body"><h6 class="mb-1">No notifications</h6><small class="d-block">Waiting for new student requests or waitlist promotions.</small></div></div></li>';
       if (bellNotificationBody) {
@@ -557,14 +580,27 @@ document.addEventListener("DOMContentLoaded", function () {
 
     var adminItems = notificationItems
       .map(function (notification) {
+        var notificationType = String(notification.type || "").toUpperCase();
         var createdTxt = notification.createdAt ? formatDate(notification.createdAt) + " - " + formatTime(notification.createdAt) : "";
+        var toneClass = notificationType === "INSCRIPTION_REFUSED"
+          ? "media-danger"
+          : notificationType === "INSCRIPTION_CONFIRMED"
+            ? "media-success"
+            : "media-primary";
+        var iconClass = notificationType === "INSCRIPTION_REFUSED"
+          ? "fa-times"
+          : notificationType === "INSCRIPTION_CONFIRMED"
+            ? "fa-check"
+            : notificationType === "WAITLIST_PROMOTION"
+              ? "fa-random"
+              : "fa-bell";
         return (
           "<li>" +
           '<div class="timeline-panel">' +
-          '<div class="media me-2 media-primary"><i class="fa fa-random"></i></div>' +
+          '<div class="media me-2 ' + toneClass + '"><i class="fa ' + iconClass + '"></i></div>' +
           '<div class="media-body">' +
-          '<h6 class="mb-1">' + escapeHtml(notification.title || "Admin update") + '</h6>' +
-          '<small class="d-block">' + escapeHtml(notification.message || "") + "</small>" +
+          '<h6 class="mb-1">' + escapeHtml(notification.title || getAdminNotificationTitle(notification)) + '</h6>' +
+          '<small class="d-block">' + escapeHtml(notification.message || getAdminNotificationMessage(notification)) + "</small>" +
           (createdTxt ? '<small class="d-block">' + escapeHtml(createdTxt) + "</small>" : "") +
           '</div>' +
           '</div>' +
@@ -573,10 +609,55 @@ document.addEventListener("DOMContentLoaded", function () {
       })
       .join("");
 
-    bellNotificationTimeline.innerHTML = requestItems + adminItems;
+    var issueMarkup = issueItems
+      .map(function (message) {
+        return (
+          "<li>" +
+          '<div class="timeline-panel">' +
+          '<div class="media me-2 media-warning"><i class="fa fa-exclamation-triangle"></i></div>' +
+          '<div class="media-body">' +
+          '<h6 class="mb-1">Notification sync issue</h6>' +
+          '<small class="d-block">' + escapeHtml(message) + "</small>" +
+          "</div>" +
+          "</div>" +
+          "</li>"
+        );
+      })
+      .join("");
+
+    bellNotificationTimeline.innerHTML = issueMarkup + requestItems + adminItems;
     if (bellNotificationBody) {
       bellNotificationBody.style.height = "380px";
     }
+  }
+
+  function getAdminNotificationTitle(notification) {
+    var notificationType = String(notification && notification.type ? notification.type : "").toUpperCase();
+    if (notificationType === "INSCRIPTION_CONFIRMED") return "Inscription accepted";
+    if (notificationType === "INSCRIPTION_REFUSED") return "Inscription refused";
+    if (notificationType === "WAITLIST_PROMOTION") return "Waitlist promoted";
+    if (notificationType === "EVENT_CREATED") return "New event published";
+    return "Admin update";
+  }
+
+  function getAdminNotificationMessage(notification) {
+    var notificationType = String(notification && notification.type ? notification.type : "").toUpperCase();
+    var studentId = notification && notification.studentId ? String(notification.studentId) : "unknown student";
+    var eventId = notification && notification.eventId ? String(notification.eventId) : "unknown event";
+
+    if (notificationType === "INSCRIPTION_CONFIRMED") {
+      return "Student #" + studentId + " was accepted for event #" + eventId + ".";
+    }
+    if (notificationType === "INSCRIPTION_REFUSED") {
+      return "Student #" + studentId + " was refused for event #" + eventId + ".";
+    }
+    if (notificationType === "WAITLIST_PROMOTION") {
+      return "Student #" + studentId + " moved from the waitlist to confirmed registration for event #" + eventId + ".";
+    }
+    if (notificationType === "EVENT_CREATED") {
+      return "A new event is now available for registration.";
+    }
+    return "A new notification is available.";
   }
 
   function renderEventCards(events) {

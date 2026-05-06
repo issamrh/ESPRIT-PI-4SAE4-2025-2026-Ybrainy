@@ -7,10 +7,10 @@
     <header class="codelab-topbar">
       <div class="codelab-brand">
         <div class="codelab-brand-mark">
-          <span>&gt;_</span>
+          <span>&lt;/&gt;</span>
         </div>
         <div>
-          <h1>CodeLab</h1>
+          <h1>CodeStudio</h1>
           <p>Simulator and coding trainer</p>
         </div>
       </div>
@@ -21,8 +21,28 @@
         <button type="button" [class.active]="activeSection === 'stats'" (click)="selectSection('stats')">Statistiques</button>
       </nav>
 
-      <button type="button" class="theme-toggle" (click)="toggleTheme()">
-        {{ activeTheme === 'dark' ? 'Light' : 'Dark' }}
+      <button
+        type="button"
+        class="theme-toggle"
+        (click)="toggleTheme()"
+        [attr.aria-label]="activeTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+        [attr.title]="activeTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+      >
+        <span class="theme-toggle-icon" aria-hidden="true">
+          <svg *ngIf="activeTheme === 'dark'; else moonIcon" viewBox="0 0 24 24" focusable="false">
+            <path
+              d="M12 3.75a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V4.5a.75.75 0 0 1 .75-.75Zm0 13.5a.75.75 0 0 1 .75.75v1.5a.75.75 0 0 1-1.5 0V18a.75.75 0 0 1 .75-.75Zm8.25-6a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1 0-1.5h1.5Zm-15 0a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1 0-1.5h1.5Zm10.607-5.857a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.06l-1.06-1.06a.75.75 0 0 1 0-1.06Zm-9.9 9.9a.75.75 0 0 1 1.06 0l1.06 1.06a.75.75 0 1 1-1.06 1.06l-1.06-1.06a.75.75 0 0 1 0-1.06Zm11.02 2.12a.75.75 0 0 1 0-1.06l1.06-1.06a.75.75 0 0 1 1.06 1.06l-1.06 1.06a.75.75 0 0 1-1.06 0Zm-9.9-9.9a.75.75 0 0 1 0-1.06l1.06-1.06a.75.75 0 1 1 1.06 1.06l-1.06 1.06a.75.75 0 0 1-1.06 0ZM12 8.25A3.75 3.75 0 1 1 8.25 12 3.75 3.75 0 0 1 12 8.25Z"
+            />
+          </svg>
+          <ng-template #moonIcon>
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path
+                d="M14.53 3.53a.75.75 0 0 1 .84.95 7.5 7.5 0 1 0 9.15 9.15.75.75 0 0 1 .95.84A9 9 0 1 1 14.53 3.53Z"
+              />
+            </svg>
+          </ng-template>
+        </span>
+        <span class="theme-toggle-label">{{ activeTheme === 'dark' ? 'Light mode' : 'Dark mode' }}</span>
       </button>
     </header>
 

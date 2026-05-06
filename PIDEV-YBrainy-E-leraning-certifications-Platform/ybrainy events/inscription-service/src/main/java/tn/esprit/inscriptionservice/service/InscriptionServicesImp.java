@@ -72,6 +72,10 @@ public class InscriptionServicesImp implements IInscriptionServices {
             inscriptionConfirmedPublisher.publish(inscription, "STATUS_UPDATE");
         }
 
+        if (previousStatus != status) {
+            createAdminDecisionNotification(inscription, status);
+        }
+
         trySendDecisionEmail(inscription, status);
         if (previousStatus == InscriptionStatut.CONFIRMEE && status == InscriptionStatut.ANNULEE) {
             promoteFromWaitlist(inscription.getEventId());
@@ -204,6 +208,25 @@ public class InscriptionServicesImp implements IInscriptionServices {
         }
 
         notificationEmailService.sendDecisionEmail(student, event, inscription, status);
+    }
+
+    private void createAdminDecisionNotification(Inscription inscription, InscriptionStatut status) {
+        if (inscription == null || status == null) {
+            return;
+        }
+
+        if (status != InscriptionStatut.CONFIRMEE && status != InscriptionStatut.ANNULEE) {
+            return;
+        }
+
+        AdminNotification notification = new AdminNotification();
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setType(status == InscriptionStatut.CONFIRMEE
+                ? "INSCRIPTION_CONFIRMED"
+                : "INSCRIPTION_REFUSED");
+        notification.setEventId(inscription.getEventId());
+        notification.setStudentId(inscription.getStudentId());
+        adminNotificationRepository.save(notification);
     }
 }
 

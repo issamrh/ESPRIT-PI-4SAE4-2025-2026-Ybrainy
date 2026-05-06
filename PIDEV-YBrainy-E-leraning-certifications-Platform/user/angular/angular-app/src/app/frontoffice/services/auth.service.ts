@@ -25,9 +25,15 @@ export class AuthService {
     private readonly session: UserSessionService,
     private readonly users: UserService
   ) {
-    const initial = this.readStoredUser() ?? this.sessionToAuthUser();
+    const sessionUser = this.sessionToAuthUser();
+    const storedUser = this.readStoredUser();
+    const initial = sessionUser ?? (this.session.isLoggedIn() ? storedUser : null);
     this.userSubject = new BehaviorSubject<AuthUser | null>(initial);
     this.currentUser$ = this.userSubject.asObservable();
+
+    if (sessionUser) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(sessionUser));
+    }
 
     if (this.session.isLoggedIn()) {
       this.refreshCurrentUser();
@@ -39,7 +45,7 @@ export class AuthService {
   }
 
   get currentUserId(): number | null {
-    return this.userSubject.value?.id ?? this.session.get()?.userId ?? null;
+    return this.session.get()?.userId ?? this.userSubject.value?.id ?? null;
   }
 
   isLoggedIn(): boolean {
@@ -48,6 +54,7 @@ export class AuthService {
 
   logout(): void {
     localStorage.removeItem(STORAGE_KEY);
+    this.session.clear();
     this.userSubject.next(null);
     void logout();
   }

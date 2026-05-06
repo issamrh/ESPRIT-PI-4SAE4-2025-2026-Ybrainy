@@ -2,7 +2,8 @@ import { AfterViewInit, Component, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { SafeHtml } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { Subscription, firstValueFrom } from 'rxjs';
+import { redirectToAppLogin } from '../../../auth/keycloak.service';
 import { FrontofficeStaticPageService } from '../../services/frontoffice-static-page.service';
 import { FrontofficeUiInitService } from '../../services/frontoffice-ui-init.service';
 import { AuthService } from '../../services/auth.service';
@@ -70,6 +71,7 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
   private confirmationToastTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingFocusEventId: number | null = null;
   private heroRecommendationTimer: ReturnType<typeof setTimeout> | null = null;
+  private authStateSub: Subscription | null = null;
   private feedbackRecorder: MediaRecorder | null = null;
   private feedbackRecorderStream: MediaStream | null = null;
   private feedbackAudioChunks: Blob[] = [];
@@ -96,12 +98,17 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
 
     this.mainHtml = mainHtml;
     this.uiInit.initAfterDomPaint();
+    this.authStateSub = this.auth.currentUser$.subscribe(() => {
+      void this.handleAuthStateChange();
+    });
     setTimeout(() => {
       void this.renderBackofficeEventsIntoFrontoffice();
     }, 0);
   }
 
   ngOnDestroy(): void {
+    this.authStateSub?.unsubscribe();
+    this.authStateSub = null;
     this.cleanupFns.forEach((fn) => fn());
     this.cleanupFns = [];
 
@@ -166,6 +173,28 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     this.startStatusPolling();
   }
 
+  private async handleAuthStateChange(): Promise<void> {
+    const nextStudentId = this.auth.currentUserId;
+    if (this.selectedStudentId === nextStudentId) return;
+
+    this.selectedStudentId = nextStudentId;
+    this.studentEventStatuses = new Map<number, string>();
+    this.studentFeedbacks = new Map<number, StudentFeedback>();
+    this.recommendedEvents = [];
+    this.statusHydrated = false;
+    this.clearConfirmationTimers();
+    this.closeRegisterConfirmation();
+    this.closeCancelConfirmation();
+    this.closeFeedbackModal();
+
+    const pageRoot = document.querySelector('.fo-static-page') as HTMLElement | null;
+    if (!pageRoot || !this.pageVisible) return;
+
+    await this.loadRegisteredEventIdsForSelectedStudent();
+    await this.loadRecommendedEventForSelectedStudent();
+    this.renderCalendarData(pageRoot);
+  }
+
   private prepareCalendarShell(pageRoot: HTMLElement): void {
     const eventsColumn = pageRoot.querySelector('.cal-events-col') as HTMLElement | null;
     if (eventsColumn) {
@@ -181,41 +210,39 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
       heroUpcomingButton.setAttribute('data-upcoming-focus-trigger', 'true');
     }
 
-    const heroRecommendationButton = pageRoot.querySelector(
+    let heroRecommendationButton = pageRoot.querySelector(
       '[data-show-recommendation-trigger="true"]'
-    ) as HTMLAnchorElement | null;
+    ) as HTMLElement | null;
     if (heroRecommendationButton) {
-      heroRecommendationButton.setAttribute('href', 'javascript:void(0)');
-      heroRecommendationButton.setAttribute('role', 'button');
-      heroRecommendationButton.setAttribute('data-show-recommendation-trigger', 'true');
+      const replacementButton = this.createHeroRecommendationButton();
+      heroRecommendationButton.replaceWith(replacementButton);
+      heroRecommendationButton = replacementButton;
     } else if (heroUpcomingButton?.parentElement) {
-      const injectedRecommendationButton = document.createElement('a');
-      injectedRecommendationButton.className = 'hero-recommend-button';
-      injectedRecommendationButton.setAttribute('href', 'javascript:void(0)');
-      injectedRecommendationButton.setAttribute('role', 'button');
-      injectedRecommendationButton.setAttribute('data-show-recommendation-trigger', 'true');
-      injectedRecommendationButton.textContent = 'Show Recommended Event';
+      const injectedRecommendationButton = this.createHeroRecommendationButton();
       heroUpcomingButton.parentElement.classList.add('hero-events-actions');
       heroUpcomingButton.parentElement.appendChild(injectedRecommendationButton);
+      heroRecommendationButton = injectedRecommendationButton;
     }
 
-    const heroCodelabButton = pageRoot.querySelector(
+    let heroCodelabButton = pageRoot.querySelector(
       '[data-open-codelab-trigger="true"]'
-    ) as HTMLAnchorElement | null;
-    if (!heroCodelabButton && heroUpcomingButton?.parentElement) {
-      const injectedCodeLabButton = document.createElement('a');
-      injectedCodeLabButton.className = 'hero-recommend-button hero-codelab-button';
-      injectedCodeLabButton.setAttribute('href', 'javascript:void(0)');
-      injectedCodeLabButton.setAttribute('role', 'button');
-      injectedCodeLabButton.setAttribute('data-open-codelab-trigger', 'true');
-      injectedCodeLabButton.textContent = 'Open CodeStudio';
+    ) as HTMLElement | null;
+    if (heroCodelabButton) {
+      const replacementCodeLabButton = this.createHeroCodeLabButton();
+      heroCodelabButton.replaceWith(replacementCodeLabButton);
+      heroCodelabButton = replacementCodeLabButton;
+    } else if (heroUpcomingButton?.parentElement) {
+      const injectedCodeLabButton = this.createHeroCodeLabButton();
       heroUpcomingButton.parentElement.classList.add('hero-events-actions');
       heroUpcomingButton.parentElement.appendChild(injectedCodeLabButton);
+      heroCodelabButton = injectedCodeLabButton;
     }
 
     if (heroUpcomingButton?.parentElement) {
       heroUpcomingButton.parentElement.classList.add('hero-events-actions');
     }
+
+    this.normalizeHeroActionButtons(pageRoot);
 
     let heroRecommendationSlot = pageRoot.querySelector('.hero-recommendation-slot') as HTMLElement | null;
     const heroActions =
@@ -292,6 +319,98 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     if (searchInput) searchInput.value = this.searchQuery;
     if (statusSelect) statusSelect.value = this.statusFilter;
     if (sortSelect) sortSelect.value = this.sortOrder;
+  }
+
+  private createHeroRecommendationButton(): HTMLButtonElement {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn hero-recommend-button';
+    button.setAttribute('data-show-recommendation-trigger', 'true');
+    button.innerHTML = `
+      <svg class="btn-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z"
+        ></path>
+      </svg>
+      <div class="txt-wrapper">
+        <div class="txt-1">
+        <span class="btn-letter">I</span>
+        <span class="btn-letter">A</span>
+        <span class="btn-space" aria-hidden="true"></span>
+          <span class="btn-letter">S</span>
+          <span class="btn-letter">u</span>
+          <span class="btn-letter">g</span>
+          <span class="btn-letter">g</span>
+          <span class="btn-letter">e</span>
+          <span class="btn-letter">s</span>
+          <span class="btn-letter">t</span>
+          <span class="btn-space" aria-hidden="true"></span>
+          <span class="btn-letter">E</span>
+          <span class="btn-letter">v</span>
+          <span class="btn-letter">e</span>
+          <span class="btn-letter">n</span>
+          <span class="btn-letter">t</span>
+        </div>
+        <div class="txt-2">
+          
+          <span class="btn-letter">S</span>
+          <span class="btn-letter">u</span>
+          <span class="btn-letter">g</span>
+          <span class="btn-letter">g</span>
+          <span class="btn-letter">e</span>
+          <span class="btn-letter">s</span>
+          <span class="btn-letter">t</span>
+          <span class="btn-space" aria-hidden="true"></span>
+          <span class="btn-letter">E</span>
+          <span class="btn-letter">v</span>
+          <span class="btn-letter">e</span>
+          <span class="btn-letter">n</span>
+          <span class="btn-letter">t</span>
+        </div>
+      </div>
+    `;
+    return button;
+  }
+
+  private createHeroCodeLabButton(): HTMLAnchorElement {
+    const button = document.createElement('a');
+    button.className = 'hero-recommend-button hero-codelab-button';
+    button.setAttribute('href', 'javascript:void(0)');
+    button.setAttribute('role', 'button');
+    button.setAttribute('data-open-codelab-trigger', 'true');
+    button.innerHTML = `
+      <span class="hero-codelab-icon" aria-hidden="true">&lt;/&gt;</span>
+      <span class="hero-codelab-label">Open CodeStudio</span>
+    `;
+    return button;
+  }
+
+  private normalizeHeroActionButtons(pageRoot: HTMLElement): void {
+    const actionButtons = Array.from(
+      pageRoot.querySelectorAll<HTMLElement>('.hero-events-actions a, .hero-events-actions button')
+    );
+
+    actionButtons.forEach((element) => {
+      const label = (element.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+      if (label.includes('code') && label.includes('studio') && !element.querySelector('.hero-codelab-icon')) {
+        const replacement = this.createHeroCodeLabButton();
+        element.replaceWith(replacement);
+        return;
+      }
+
+      const isRecommendationLabel =
+        label.includes('recommended event') ||
+        label.includes('suggest event') ||
+        label.includes('recommend event');
+
+      if (isRecommendationLabel && !element.querySelector('.btn-svg')) {
+        const replacement = this.createHeroRecommendationButton();
+        element.replaceWith(replacement);
+      }
+    });
   }
 
   private bindCalendarInteractions(pageRoot: HTMLElement): void {
@@ -435,7 +554,12 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
 
         event.preventDefault();
         if (button.classList.contains('is-loading')) return;
-        if (!this.selectedStudentId) return;
+        if (!this.selectedStudentId) {
+          if (button.classList.contains('cal-requires-login')) {
+            redirectToAppLogin(window.location.href);
+          }
+          return;
+        }
 
         const idRaw = button.getAttribute('data-event-id');
         const idEvent = Number(idRaw);
@@ -613,9 +737,13 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
             recommendationReason: rec.recommendationReason || (rec as any).reason || ''
           } as RecommendedEvent);
       }
+
+      if (!this.recommendedEvents.length) {
+        this.recommendedEvents = this.buildLocalFallbackRecommendations(2);
+      }
     } catch (error) {
       console.error('Failed to load recommendations for student', error);
-      this.recommendedEvents = [];
+      this.recommendedEvents = this.buildLocalFallbackRecommendations(2);
     } finally {
       this.loadingRecommendations = false;
       if (pageRoot) {
@@ -775,6 +903,77 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
         </div>
       </div>
     `;
+  }
+
+  private buildLocalFallbackRecommendations(limit: number): RecommendedEvent[] {
+    const now = new Date();
+    const preferredTypes = new Set<string>();
+
+    this.studentEventStatuses.forEach((status, eventId) => {
+      const normalizedStatus = String(status || '').toUpperCase();
+      if (!['EN_ATTENTE', 'LISTE_ATTENTE', 'CONFIRMEE'].includes(normalizedStatus)) {
+        return;
+      }
+
+      const event = this.allEvents.find((item) => Number(item.idEvent) === Number(eventId));
+      if (event?.type) {
+        preferredTypes.add(String(event.type).toUpperCase());
+      }
+    });
+
+    this.studentFeedbacks.forEach((feedback, eventId) => {
+      if (Number(feedback?.rating) < 4) return;
+      const event = this.allEvents.find((item) => Number(item.idEvent) === Number(eventId));
+      if (event?.type) {
+        preferredTypes.add(String(event.type).toUpperCase());
+      }
+    });
+
+    const activeStudentEventIds = new Set(
+      Array.from(this.studentEventStatuses.entries())
+        .filter(([, status]) => {
+          const normalizedStatus = String(status || '').toUpperCase();
+          return ['EN_ATTENTE', 'LISTE_ATTENTE', 'CONFIRMEE'].includes(normalizedStatus);
+        })
+        .map(([eventId]) => Number(eventId))
+    );
+
+    const candidates = this.allEvents
+      .filter((event) => {
+        const status = String(event.statut || '').toUpperCase();
+        if (status === 'ANNULE' || status === 'TERMINE') return false;
+        if (activeStudentEventIds.has(Number(event.idEvent))) return false;
+
+        const endDate = this.toDate(event.dateFin || event.dateDebut);
+        return endDate.getTime() >= now.getTime();
+      })
+      .sort((a, b) => this.toDate(a.dateDebut).getTime() - this.toDate(b.dateDebut).getTime());
+
+    const sameTypeCandidates = candidates.filter((event) =>
+      preferredTypes.has(String(event.type || '').toUpperCase())
+    );
+
+    const orderedCandidates = [...sameTypeCandidates];
+    candidates.forEach((event) => {
+      if (!orderedCandidates.some((item) => Number(item.idEvent) === Number(event.idEvent))) {
+        orderedCandidates.push(event);
+      }
+    });
+
+    return orderedCandidates.slice(0, Math.max(0, limit)).map((event, index) => {
+      const matchesType = preferredTypes.has(String(event.type || '').toUpperCase());
+      const reason = matchesType
+        ? `Because you already joined similar ${String(event.type || 'event').toLowerCase()} events.`
+        : preferredTypes.size
+          ? 'A nearby upcoming event that complements your recent activity.'
+          : 'An upcoming event you can discover right now.';
+
+      return {
+        ...event,
+        recommendationScore: matchesType ? 0.78 - index * 0.06 : 0.58 - index * 0.04,
+        recommendationReason: reason
+      };
+    });
   }
 
   private getRecommendationHeadingHtml(): string {
@@ -1453,10 +1652,10 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
             ? `<div class="cal-action-stack"><a href="#" class="cal-join-btn is-hold" style="pointer-events:none; opacity:.85;">On Hold</a><a href="#" class="cal-cancel-btn" data-event-id="${ev.idEvent}">Cancel</a></div>`
             : studentInscriptionStatus === 'LISTE_ATTENTE'
               ? `<div class="cal-action-stack"><a href="#" class="cal-join-btn is-hold" style="pointer-events:none; opacity:.85;">Waitlist</a><a href="#" class="cal-cancel-btn" data-event-id="${ev.idEvent}">Leave Waitlist</a></div>`
-              : studentInscriptionStatus === 'ANNULEE'
+            : studentInscriptionStatus === 'ANNULEE'
                 ? `<a href="#" class="cal-join-btn is-refused${refusedClasses}" style="pointer-events:none; opacity:.75;">Refused</a>`
             : !this.selectedStudentId
-              ? '<a href="#" class="cal-join-btn is-disabled" style="pointer-events:none; opacity:.65;">Select Student</a>'
+              ? '<a href="#" class="cal-join-btn cal-requires-login">Sign in to register</a>'
               : `<a href="#" class="cal-join-btn" data-event-id="${ev.idEvent}">Register</a>`;
 
     const confirmationFxClass =

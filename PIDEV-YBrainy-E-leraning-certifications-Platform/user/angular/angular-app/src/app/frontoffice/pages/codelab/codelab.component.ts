@@ -56,7 +56,7 @@ export class CodeLabComponent implements OnInit {
       accent: '#f7df1e',
       fileName: 'script.js',
       starter:
-        "// Welcome to CodeLab - JavaScript\n" +
+        "// Welcome to CodeStudio - JavaScript\n" +
         "// Try running this example.\n\n" +
         "function fibonacci(n) {\n" +
         "  if (n <= 1) return n;\n" +
@@ -73,7 +73,7 @@ export class CodeLabComponent implements OnInit {
       accent: '#5b9bd5',
       fileName: 'main.py',
       starter:
-        "# Welcome to CodeLab - Python\n" +
+        "# Welcome to CodeStudio - Python\n" +
         "# This trainer view can help you practice syntax.\n\n" +
         "def greet(name):\n" +
         "    return f\"Hello, {name}!\"\n\n" +
@@ -131,7 +131,7 @@ export class CodeLabComponent implements OnInit {
       starter:
         "public class Main {\n" +
         "  public static void main(String[] args) {\n" +
-        "    System.out.println(\"Welcome to CodeLab Java practice\");\n" +
+        "    System.out.println(\"Welcome to CodeStudio Java practice\");\n" +
         "  }\n" +
         "}\n"
     }

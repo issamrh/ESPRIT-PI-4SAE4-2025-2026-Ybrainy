@@ -104,6 +104,9 @@ public class SecurityConfig {
                         .pathMatchers("/api/generate-application").permitAll()
                         // Events
                         .pathMatchers("/Event/**").permitAll()
+                        .pathMatchers("/Inscription/**").permitAll()
+                        .pathMatchers("/Feedback/**").permitAll()
+                        .pathMatchers("/User/**").permitAll()
                         .pathMatchers("/api/recommendations/**").permitAll()
                         .pathMatchers("/api/events/**").permitAll()
                         .pathMatchers("/api/inscriptions/**").permitAll()

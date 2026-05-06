@@ -102,6 +102,7 @@ function clearStoredSessions(): void {
   if (!browserAvailable()) return;
   localStorage.removeItem(AUTH_STORAGE_KEY);
   localStorage.removeItem(USER_SESSION_STORAGE_KEY);
+  localStorage.removeItem('forum_auth_user');
 }
 
 function applyManualSession(session: StoredAuthSession, persist = true): boolean {

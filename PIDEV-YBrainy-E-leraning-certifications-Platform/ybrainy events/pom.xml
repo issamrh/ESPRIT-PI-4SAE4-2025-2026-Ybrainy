@@ -9,7 +9,6 @@
     <modules>
         <module>event-service</module>
         <module>inscription-service</module>
-        <module>user-service</module>
         <module>feedback-service</module>
     </modules>
     <properties>

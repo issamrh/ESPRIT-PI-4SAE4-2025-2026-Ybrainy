@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -112,6 +113,9 @@ class InscriptionServicesImpTest {
 
         verify(inscriptionConfirmedPublisher).publish(any(), eq("STATUS_UPDATE"));
         verify(inscriptionRepository).save(any());
+        var notificationCaptor = forClass(tn.esprit.inscriptionservice.entity.AdminNotification.class);
+        verify(adminNotificationRepository).save(notificationCaptor.capture());
+        assertThat(notificationCaptor.getValue().getType()).isEqualTo("INSCRIPTION_CONFIRMED");
     }
 
     @Test
@@ -133,10 +137,15 @@ class InscriptionServicesImpTest {
         Inscription i = sample(202L, 6L, 60L, InscriptionStatut.EN_ATTENTE);
         when(inscriptionRepository.findById(202L)).thenReturn(Optional.of(i));
         when(inscriptionRepository.save(any())).thenReturn(i);
+        when(userClient.findById(6L)).thenReturn(Optional.of(sampleUser(6L)));
+        when(eventClient.findById(60L)).thenReturn(Optional.of(sampleEvent(60L, 50)));
 
         service.updateStatus(202L, InscriptionStatut.ANNULEE);
 
         verify(inscriptionConfirmedPublisher, never()).publish(any(), any());
+        var notificationCaptor = forClass(tn.esprit.inscriptionservice.entity.AdminNotification.class);
+        verify(adminNotificationRepository).save(notificationCaptor.capture());
+        assertThat(notificationCaptor.getValue().getType()).isEqualTo("INSCRIPTION_REFUSED");
     }
 
     @Test
@@ -231,6 +240,26 @@ class InscriptionServicesImpTest {
                 .thenReturn(pending);
 
         assertThat(service.getPendingInscriptions()).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("getDistinctEventIdsByStudent() delegates to repository")
+    void getDistinctEventIdsByStudent_delegates() {
+        when(inscriptionRepository.findDistinctEventIdsByStudentId(17L)).thenReturn(List.of(170L, 171L));
+
+        assertThat(service.getDistinctEventIdsByStudent(17L)).containsExactly(170L, 171L);
+    }
+
+    @Test
+    @DisplayName("getEventStatusesByStudent() delegates to repository ordering by latest inscription")
+    void getEventStatusesByStudent_delegates() {
+        List<Inscription> expected = List.of(
+                sample(600L, 18L, 180L, InscriptionStatut.CONFIRMEE),
+                sample(601L, 18L, 181L, InscriptionStatut.LISTE_ATTENTE)
+        );
+        when(inscriptionRepository.findByStudentIdOrderByDateInscriptionDesc(18L)).thenReturn(expected);
+
+        assertThat(service.getEventStatusesByStudent(18L)).containsExactlyElementsOf(expected);
     }
 
     @Test

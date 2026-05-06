@@ -26,7 +26,7 @@ public class AiEmbeddingClient {
     @Value("${github.models.endpoint:https://models.github.ai/inference}")
     private String endpoint;
     
-    @Value("${github.models.api-key:}")
+    @Value("${github.models.api-key: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}")
     private String apiKey;
     
     @Value("${github.models.embedding.model:text-embedding-3-large}")

@@ -35,11 +35,17 @@ public class RecommendationService {
         List<Event> allEvents = (List<Event>) eventRepository.findAll();
         List<Long> enrolledEventIds = safeGetEnrolledEventIds(studentId);
 
+        LocalDateTime now = LocalDateTime.now();
         List<Event> candidateEvents = allEvents.stream()
-                .filter(e -> e.getStatut() != EventStatut.ANNULE && e.getStatut() != EventStatut.TERMINE)
-                .filter(e -> e.getDateDebut() != null && e.getDateDebut().isAfter(LocalDateTime.now()))
-                .filter(e -> !enrolledEventIds.contains(e.getIdEvent()))
+                .filter(e -> isPrimaryCandidate(e, enrolledEventIds, now))
                 .collect(Collectors.toList());
+
+        if (candidateEvents.isEmpty()) {
+            candidateEvents = allEvents.stream()
+                    .filter(e -> isRelaxedCandidate(e, enrolledEventIds))
+                    .sorted(Comparator.comparing(this::resolveEventTimelineAnchor))
+                    .collect(Collectors.toList());
+        }
 
         if (candidateEvents.isEmpty()) {
             return Collections.emptyList();
@@ -193,6 +199,42 @@ public class RecommendationService {
             return "Highly rated by other students.";
         }
         return "Recommended based on your profile.";
+    }
+
+    private boolean isPrimaryCandidate(Event event, List<Long> enrolledEventIds, LocalDateTime now) {
+        if (!isEligibleCatalogEvent(event, enrolledEventIds)) {
+            return false;
+        }
+
+        LocalDateTime end = event.getDateFin();
+        LocalDateTime start = event.getDateDebut();
+
+        if (end != null) {
+            return end.isAfter(now);
+        }
+
+        return start != null && start.isAfter(now);
+    }
+
+    private boolean isRelaxedCandidate(Event event, List<Long> enrolledEventIds) {
+        return isEligibleCatalogEvent(event, enrolledEventIds);
+    }
+
+    private boolean isEligibleCatalogEvent(Event event, List<Long> enrolledEventIds) {
+        return event != null
+                && event.getStatut() != EventStatut.ANNULE
+                && event.getStatut() != EventStatut.TERMINE
+                && !enrolledEventIds.contains(event.getIdEvent());
+    }
+
+    private LocalDateTime resolveEventTimelineAnchor(Event event) {
+        if (event.getDateDebut() != null) {
+            return event.getDateDebut();
+        }
+        if (event.getDateFin() != null) {
+            return event.getDateFin();
+        }
+        return LocalDateTime.MAX;
     }
 
     // --- Safe Feign Calls with Fallbacks --- //
