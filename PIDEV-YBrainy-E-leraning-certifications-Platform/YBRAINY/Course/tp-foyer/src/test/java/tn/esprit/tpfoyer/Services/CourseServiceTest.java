@@ -5,14 +5,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
+import tn.esprit.tpfoyer.Dto.CourseRequestDTO;
 import tn.esprit.tpfoyer.Entities.Course;
 import tn.esprit.tpfoyer.Entities.enums.CourseCategory;
+import tn.esprit.tpfoyer.Entities.enums.CourseLevel;
+import tn.esprit.tpfoyer.Exception.ResourceNotFoundException;
 import tn.esprit.tpfoyer.Repositories.CourseRepository;
 import tn.esprit.tpfoyer.Repositories.CourseReviewRepository;
 import tn.esprit.tpfoyer.Clients.EnrollmentClient;
 import tn.esprit.tpfoyer.Clients.LessonClient;
+import java.math.BigDecimal;
 import java.util.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -109,5 +116,105 @@ class CourseServiceTest {
         Map<String, Long> result = service.getCourseStatsByCategory();
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("existsById returns true when course exists")
+    void existsById_returnsTrue() {
+        when(courseRepository.existsById(1L)).thenReturn(true);
+        assertThat(service.existsById(1L)).isTrue();
+    }
+
+    @Test
+    @DisplayName("existsById returns false when course does not exist")
+    void existsById_returnsFalse() {
+        when(courseRepository.existsById(999L)).thenReturn(false);
+        assertThat(service.existsById(999L)).isFalse();
+    }
+
+    @Test
+    @DisplayName("createCourse without thumbnail or certificate saves and returns DTO")
+    void createCourse_basic_savesAndReturnsDTO() {
+        CourseRequestDTO dto = new CourseRequestDTO();
+        dto.setTitle("Java Basics");
+        dto.setDescription("Learn Java");
+        dto.setPrice(BigDecimal.valueOf(29.99));
+        dto.setCategory(CourseCategory.PROGRAMMING);
+        dto.setLevel(CourseLevel.BEGINNER);
+        dto.setInstructorId(10L);
+        dto.setIsPublished(false);
+        dto.setOffersCertificate(false);
+
+        Course saved = new Course();
+        saved.setId(42L);
+        saved.setTitle("Java Basics");
+        saved.setCategory(CourseCategory.PROGRAMMING);
+        when(courseRepository.save(any(Course.class))).thenReturn(saved);
+
+        var result = service.createCourse(dto, null, null);
+
+        assertThat(result).isNotNull();
+        verify(courseRepository).save(any(Course.class));
+    }
+
+    @Test
+    @DisplayName("createCourse with offersCertificate=true but no file throws")
+    void createCourse_certificateRequired_throws() {
+        CourseRequestDTO dto = new CourseRequestDTO();
+        dto.setTitle("Advanced Java");
+        dto.setInstructorId(10L);
+        dto.setOffersCertificate(true);
+
+        assertThatThrownBy(() -> service.createCourse(dto, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Certificate file is required");
+    }
+
+    @Test
+    @DisplayName("getCourseStatsByCategory counts multiple categories")
+    void getCourseStatsByCategory_multipleCourses_correctCounts() {
+        Course c1 = new Course(); c1.setCategory(CourseCategory.PROGRAMMING);
+        Course c2 = new Course(); c2.setCategory(CourseCategory.PROGRAMMING);
+        Course c3 = new Course(); c3.setCategory(CourseCategory.DESIGN);
+        Course c4 = new Course(); // null category — should be excluded
+        when(courseRepository.findAll()).thenReturn(List.of(c1, c2, c3, c4));
+
+        Map<String, Long> result = service.getCourseStatsByCategory();
+
+        assertThat(result).containsEntry("PROGRAMMING", 2L);
+        assertThat(result).containsEntry("DESIGN", 1L);
+        assertThat(result).doesNotContainKey(null);
+    }
+
+    @Test
+    @DisplayName("deleteCourse by admin succeeds regardless of ownership")
+    void deleteCourse_admin_succeeds() {
+        Course c = sampleCourse();
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(c));
+
+        assertThatNoException().isThrownBy(() -> service.deleteCourse(1L, 999L, "ADMIN"));
+        verify(courseRepository).delete(c);
+    }
+
+    @Test
+    @DisplayName("deleteCourse by owner instructor succeeds")
+    void deleteCourse_ownerInstructor_succeeds() {
+        Course c = sampleCourse(); // instructorId = 5L
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(c));
+
+        assertThatNoException().isThrownBy(() -> service.deleteCourse(1L, 5L, "INSTRUCTOR"));
+        verify(courseRepository).delete(c);
+    }
+
+    @Test
+    @DisplayName("togglePublish sets isPublished to false")
+    void togglePublish_setsUnpublished() {
+        Course c = sampleCourse();
+        c.setIsPublished(true);
+        when(courseRepository.findById(1L)).thenReturn(Optional.of(c));
+
+        Map<String, Object> result = service.togglePublish(1L, false, 5L, "INSTRUCTOR");
+
+        assertThat(result.get("isPublished")).isEqualTo(false);
     }
 }
