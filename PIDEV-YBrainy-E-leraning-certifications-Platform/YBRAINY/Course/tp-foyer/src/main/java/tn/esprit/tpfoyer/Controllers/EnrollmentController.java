@@ -85,6 +85,10 @@ public class EnrollmentController {
     // GET /api/enrollments/monthly-counts
     @GetMapping("/api/enrollments/monthly-counts")
     public ResponseEntity<?> getMonthlyEnrollmentCounts() {
-        return ResponseEntity.ok(enrollmentClient.getMonthlyCounts());
+        try {
+            return ResponseEntity.ok(enrollmentClient.getMonthlyCounts());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(java.util.Collections.emptyList());
+        }
     }
 }

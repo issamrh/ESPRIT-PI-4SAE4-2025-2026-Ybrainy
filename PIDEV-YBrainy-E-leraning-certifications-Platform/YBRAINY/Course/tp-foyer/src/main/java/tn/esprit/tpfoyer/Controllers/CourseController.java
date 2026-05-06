@@ -27,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -175,7 +176,11 @@ public class CourseController {
     // GET /api/courses/stats/by-category
     @GetMapping("/stats/by-category")
     public ResponseEntity<?> getCourseStatsByCategory() {
-        return ResponseEntity.ok(courseService.getCourseStatsByCategory());
+        try {
+            return ResponseEntity.ok(courseService.getCourseStatsByCategory());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new HashMap<>());
+        }
     }
 
     @GetMapping("/{courseId}/reader-context")
