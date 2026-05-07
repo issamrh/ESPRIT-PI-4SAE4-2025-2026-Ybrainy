@@ -1,0 +1,584 @@
+================================================================================
+  YBRAINY DEVOPS — EXCELLENCE FEATURE DEMO GUIDE
+  Author: Mohamed Aziz Selmi  |  Branch: 3la-5atr-houssem
+  Date: 2026-05-07
+================================================================================
+
+IMPORTANT: READ THIS SECTION BEFORE STARTING
+================================================================================
+
+INTERFERENCE RISKS — WHY ORDER MATTERS:
+-----------------------------------------
+Feature 4 (Prometheus Alert Demo) requires temporarily scaling course-service
+to 0 replicas. While it is down:
+  - Grafana's "Services Up" panel drops from 4 to 3  (shows RED)
+  - The ServiceDown alert fires and remains active for up to 5 minutes
+  - If you show Grafana AFTER this without waiting, it will look broken
+
+Feature 5 (ArgoCD Self-Heal) scales ml-service to 0 temporarily. While it
+is scaling down and being restored (~60 seconds):
+  - The ML prediction endpoints in the app will return errors
+  - MLflow UI is NOT affected (it is a separate pod)
+
+SAFE DEMO ORDER (strictly follow this):
+  1. SonarQube          — read-only, no state changes
+  2. MLflow             — read-only, no state changes
+  3. Grafana            — read-only, show everything green
+  4. Prometheus Alerts  — triggers ServiceDown alert (course-service down ~2 min)
+  5. ArgoCD Self-Heal   — last, ml-service briefly down ~60 seconds
+
+NEVER swap steps 3 and 4. You cannot show a healthy Grafana dashboard after
+triggering the alert unless you wait 5 full minutes for it to clear.
+
+
+TOOL ACCESS URLS (keep these open in browser tabs before demo starts):
+================================================================================
+
+  Jenkins       http://172.22.108.68:8086          admin / admin
+  SonarQube     http://localhost:9000               admin / admin
+  MLflow        http://172.22.108.68:30500          (no login)
+  Grafana       http://172.22.108.68:30300          admin / ybrainy2026
+  Prometheus    http://172.22.108.68:30090          (no login)
+  AlertManager  http://172.22.108.68:30093          (no login)
+  ArgoCD        http://172.22.108.68:30807          admin / QEU3s65pn4CTqTm6
+
+
+================================================================================
+  PRE-DEMO CHECKLIST — RUN BEFORE THE PRESENTATION
+================================================================================
+
+Open WSL and run each command. All must pass before you start.
+
+[ ] 1. Kubernetes node is Ready
+        wsl -e bash -c "kubectl get nodes"
+        Expected: NAME ... STATUS=Ready
+
+[ ] 2. All application pods running in ybrainy namespace
+        wsl -e bash -c "kubectl get pods -n ybrainy"
+        Expected: course-service, lesson-service, quiz-service,
+                  enrollment-service, ml-service, mlflow-tracking — all Running
+
+[ ] 3. All monitoring pods running
+        wsl -e bash -c "kubectl get pods -n monitoring"
+        Expected: prometheus, grafana, alertmanager — all Running
+
+[ ] 4. All ArgoCD pods running
+        wsl -e bash -c "kubectl get pods -n argocd"
+        Expected: all pods Running
+
+[ ] 5. ArgoCD ml-service app is Synced and Healthy
+        wsl -e bash -c "kubectl get app ml-service -n argocd -o jsonpath='{.status.sync.status} / {.status.health.status}'"
+        Expected: Synced / Healthy
+
+[ ] 6. Git daemon is running (required for ArgoCD git source)
+        wsl -e bash -c "pgrep -a git | grep daemon"
+        Expected: a line showing git-daemon process on port 9418
+
+        IF NOT RUNNING — restart it:
+        wsl -e bash -c "git daemon --base-path=/tmp --export-all --port=9418 --reuseaddr --detach"
+        Then re-sync ArgoCD:
+        wsl -e bash -c "kubectl annotate app ml-service -n argocd argocd.argoproj.io/refresh=hard --overwrite"
+        Wait 30 seconds then re-check step 5.
+
+[ ] 7. MLflow has 4 registered models
+        Open browser: http://172.22.108.68:30500
+        Click "Models" tab in the left sidebar
+        Expected: 4 models listed:
+          - YBrainy-DSO1-ConversionPredictor
+          - YBrainy-DSO2-CourseRecommender
+          - YBrainy-DSO3-QualityPredictor
+          - YBrainy-DSO4-DemandForecaster
+
+[ ] 8. SonarQube frontend project exists
+        Open browser: http://localhost:9000
+        Login: admin / admin
+        Expected: "frontend" project visible in the projects list
+
+[ ] 9. Prometheus alert rules are loaded and healthy
+        Open browser: http://172.22.108.68:30090/#/alerts
+        Expected: 4 rules visible, all state = "inactive" or "0 active"
+
+[ ] 10. All Prometheus targets are UP
+        Open browser: http://172.22.108.68:30090/targets
+        Expected: all targets show State=UP (green)
+
+If any check fails, do NOT start the demo. Fix the issue first using the
+troubleshooting section at the bottom of this guide.
+
+
+================================================================================
+  FEATURE 1: SONARQUBE — FRONTEND CODE QUALITY ANALYSIS
+================================================================================
+
+WHAT THIS DEMONSTRATES:
+  Code quality analysis integrated into the CI pipeline. The Angular frontend
+  (TypeScript/HTML) is scanned by SonarQube on every build. The Jenkins
+  frontend-CI pipeline has a dedicated SonarQube stage that excludes vendor
+  assets and focuses on the application source code.
+
+TALKING POINTS:
+  - SonarQube stage runs automatically in the Jenkins frontend-CI pipeline
+  - Excludes third-party vendor files (assets/frontoffice, node_modules, etc.)
+    to keep analysis focused and fast
+  - Results: code smells, bugs, vulnerabilities, duplications, code coverage
+
+STEP 1 — Show the Jenkins pipeline first
+  1a. Open: http://172.22.108.68:8086
+  1b. Click "frontend-CI" in the job list
+  1c. Click the most recent successful build (green checkmark)
+  1d. Click "Pipeline Steps" or the visual pipeline graph at the top
+  1e. You will see: Install Dependencies → Unit Tests → SonarQube Analysis
+      → Docker Build → Import Image → Trigger CD
+  1f. Click "SonarQube Analysis" stage → it will show the sonar-scanner
+      command that was executed, including the exclusion patterns
+
+STEP 2 — Show the SonarQube dashboard
+  2a. Open: http://localhost:9000
+  2b. Login with admin / admin (if prompted)
+  2c. The Projects page will show the "frontend" project (projectKey=frontend,
+      projectName="YBrainy Frontend (Angular)")
+  2d. Click on "YBrainy Frontend (Angular)"
+  2e. You will see the main project dashboard with:
+      - Overall Code quality gate status (Passed/Failed)
+      - Issues count (bugs, vulnerabilities, code smells)
+      - Lines of code analyzed
+      - Duplications percentage
+      - Code coverage (if tests produced lcov.info)
+
+STEP 3 — Show the activity tab
+  3a. Click "Activity" at the top of the project page
+  3b. This shows a history of all analysis runs
+  3c. Click the most recent analysis to see the detailed breakdown
+
+EXPECTED RESULT:
+  The frontend project exists in SonarQube with a completed analysis of the
+  Angular/TypeScript source code. Vendor files are excluded (assets/frontoffice,
+  assets/login, etc.) — the scanner analyzed approximately 577 files instead
+  of 4323.
+
+NOTHING CHANGES IN THE CLUSTER — safe to move to Feature 2 immediately.
+
+
+================================================================================
+  FEATURE 2: MLFLOW — ML MODEL REGISTRY & EXPERIMENT TRACKING
+================================================================================
+
+WHAT THIS DEMONSTRATES:
+  A fully automated ML model registration pipeline. Jenkins CI (ml-service-CI)
+  trains and registers 4 machine learning models in the MLflow Model Registry.
+  MLflow runs inside Kubernetes with PVC-backed storage so models persist
+  through pod restarts and reboots.
+
+TALKING POINTS:
+  - 4 models registered automatically by Jenkins CI, not manually
+  - Models are stored in Kubernetes-native storage (PersistentVolume)
+  - Artifacts (pkl files, scalers, feature matrices) are uploaded via HTTP
+    proxy (--serve-artifacts flag) — avoids permission issues
+  - Each model has full lineage: which CI build registered it, what parameters,
+    what git commit it came from
+
+STEP 1 — Show MLflow is running in Kubernetes
+  1a. In WSL terminal run:
+      wsl -e bash -c "kubectl get pods -n ybrainy | grep mlflow"
+  1b. Show: mlflow-tracking-XXXXX  Running
+  1c. Run: wsl -e bash -c "kubectl get pvc -n ybrainy | grep mlflow"
+  1d. Show: mlflow-pvc  Bound  — this is the persistent storage
+
+STEP 2 — Open MLflow UI and show the Experiments
+  2a. Open: http://172.22.108.68:30500
+  2b. The left sidebar shows "Experiments"
+  2c. You will see 4 experiments:
+        dso1-model-registry
+        dso2-model-registry
+        dso3-model-registry
+        dso4-model-registry
+  2d. Click "dso1-model-registry"
+  2e. You see the run "ci-build-9" — this is the Jenkins build that registered
+      the model
+  2f. Click on the run name "ci-build-9"
+  2g. Show the run details:
+        - Parameters: build_number=9, model_file=dso1_conversion_model.pkl,
+          description=...
+        - Artifacts section: click "Artifacts" to show the model files
+          (model/MLmodel, model/python_model.pkl, supporting_files/dso1_scaler.pkl)
+        - Source: register_model.py at git commit 82f346b0e
+
+  IMPORTANT — DO NOT navigate to "usage" sub-tab under Overview.
+  The usage tab tracks MLflow Serving requests which we do not use.
+  It will show "Failed to load chart data" — this is expected.
+  Instead, stay on the Run page or navigate to the Artifacts tab.
+
+STEP 3 — Show the Model Registry
+  3a. Click "Models" in the left sidebar
+  3b. All 4 registered models are visible:
+        YBrainy-DSO1-ConversionPredictor  — Version 1
+        YBrainy-DSO2-CourseRecommender    — Version 1
+        YBrainy-DSO3-QualityPredictor     — Version 1
+        YBrainy-DSO4-DemandForecaster     — Version 1
+  3c. Click "YBrainy-DSO1-ConversionPredictor"
+  3d. Show: Version 1, READY status, registered timestamp, source run link
+  3e. Click on "Version 1" to see the model version details and artifact path
+
+STEP 4 — Show persistence (optional, impressive)
+  "This model survived a full machine reboot. Let me prove it."
+  4a. In WSL: wsl -e bash -c "kubectl delete pod -l app=mlflow -n ybrainy"
+  4b. Wait ~10 seconds for the pod to restart
+  4c. Refresh MLflow UI — models are still there because they are stored on PVC
+
+NOTHING CHANGES IN CLUSTER state (except pod restart in optional step 4,
+which automatically recovers). Safe to move to Feature 3.
+
+
+================================================================================
+  FEATURE 3: GRAFANA — OBSERVABILITY DASHBOARDS
+================================================================================
+
+WHAT THIS DEMONSTRATES:
+  End-to-end observability for all YBrainy microservices. Prometheus scrapes
+  metrics from 6 services every 10-15 seconds. Grafana displays real-time
+  dashboards showing service health, HTTP traffic, JVM memory, and ML-specific
+  metrics.
+
+TALKING POINTS:
+  - Prometheus scrapes: course-service, lesson-service, quiz-service,
+    enrollment-service, ml-service, Jenkins
+  - Custom Grafana dashboards deployed as Kubernetes ConfigMaps
+    (infrastructure-as-code — reproducible)
+  - All panels use real metrics from Spring Actuator and Flask Prometheus exporter
+  - Two dashboards: platform-wide view + ML-specific view
+
+  !!!! SHOW GRAFANA BEFORE THE ALERT DEMO (FEATURE 4) !!!!
+  After triggering the alert, Grafana will show course-service as red.
+
+STEP 1 — Open Grafana
+  1a. Open: http://172.22.108.68:30300
+  1b. Login: admin / ybrainy2026
+  1c. Click the hamburger menu (top left) → Dashboards
+  1d. You will see 2 dashboards:
+        "YBrainy Platform — Services Overview"
+        "YBrainy ML Service — Predictions & Models"
+
+STEP 2 — Show the Services Overview dashboard
+  2a. Click "YBrainy Platform — Services Overview"
+  2b. Walk through each panel:
+      [Services Up] — should show 4/4 (all application services up)
+      [Total HTTP Requests/min] — shows cumulative request rate
+      [Error Rate 5xx] — should be near 0
+      [Active HTTP Connections] — shows live connections
+      [HTTP Request Rate per Service] — timeseries, one line per service
+      [JVM Heap Memory Used] — shows memory consumption per service
+      [p95 Response Latency per Service] — shows 95th percentile latency
+      [JVM Threads] — shows thread count per service
+      [Service Health Status] — table showing up/down per service
+
+  2c. Point out: "This is not static — all data is live from Kubernetes"
+
+STEP 3 — Show the ML Service dashboard
+  3a. Go back to Dashboards list
+  3b. Click "YBrainy ML Service — Predictions & Models"
+  3c. Walk through:
+      [Total ML Predictions] — total predictions served since pod start
+      [Request Rate/min] — current prediction request rate
+      [p95 Latency] — 95th percentile prediction latency
+      [ML Service Status] — up/down indicator
+      [Predictions per Endpoint] — timeseries per endpoint (/predict/dso1, etc.)
+      [ML Latency p95 per Endpoint] — latency per model endpoint
+
+STEP 4 — Show Prometheus targets (optional)
+  4a. Open: http://172.22.108.68:30090/targets
+  4b. Show all targets with State=UP
+  4c. Point out that scrape intervals are 10s for services, 15s global
+
+NOTHING CHANGES IN CLUSTER. Move to Feature 4 now.
+
+
+================================================================================
+  FEATURE 4: PROMETHEUS ALERTING — LIVE ALERT DEMO
+================================================================================
+
+WHAT THIS DEMONSTRATES:
+  Four custom Prometheus alert rules monitor YBrainy services. AlertManager
+  routes alerts by severity. When a service goes down, an alert fires within
+  60 seconds. When it recovers, the alert automatically resolves.
+
+TALKING POINTS:
+  - 4 alert rules: ServiceDown (critical), HighMemoryUsage (warning),
+    HighErrorRate (warning), SlowResponseTime (warning)
+  - AlertManager has severity-based routing: critical alerts go to a separate
+    receiver, inhibit rules prevent warning spam during critical incidents
+  - Alert rules are deployed as Kubernetes ConfigMaps (version-controlled)
+
+  !!!! WARNING: DO NOT SKIP THE RESTORE STEP !!!!
+  If you forget to scale course-service back to 1 replica, all demos that
+  depend on course-service will fail. Set a phone timer for 3 minutes.
+
+STEP 1 — Show the alert rules (BEFORE triggering anything)
+  1a. Open: http://172.22.108.68:30090/#/alerts
+  1b. You will see the 4 alert rules, all showing "0 active" with State=inactive
+  1c. Explain each rule:
+      - ServiceDown: fires when any of course/lesson/quiz/enrollment is down
+        for > 1 minute
+      - HighMemoryUsage: fires when JVM heap > 85% for 2 minutes
+      - HighErrorRate: fires when HTTP 5xx rate > 0.1 errors/second (5-min window)
+      - SlowResponseTime: fires when p95 response latency > 2 seconds for 3 minutes
+
+STEP 2 — Show AlertManager configuration
+  2a. Open: http://172.22.108.68:30093
+  2b. Show the Alerts page (currently empty — no active alerts)
+  2c. Click "Status" → "Config" to show the alertmanager.yml configuration
+  2d. Point out: group_by, routes for critical vs warning, inhibit_rules
+
+STEP 3 — Trigger the ServiceDown alert
+  !! Set a phone timer for 3 minutes NOW before running this command !!
+
+  3a. In WSL terminal, run:
+      wsl -e bash -c "kubectl scale deployment course-service -n ybrainy --replicas=0"
+  3b. Confirm: "Scaled down course-service to 0 replicas — simulating a service crash"
+
+STEP 4 — Watch the alert progress (takes ~60 seconds)
+  4a. Keep refreshing Prometheus alerts page: http://172.22.108.68:30090/#/alerts
+  4b. After ~15 seconds: Prometheus detects up=0 for course-service
+  4c. After ~60 seconds: ServiceDown alert state changes from "inactive" to "pending"
+  4d. After ~90 seconds: state changes from "pending" to "firing" (shown in RED)
+  4e. The alert includes labels: alertname=ServiceDown, severity=critical,
+      service=course-service-instance
+
+  While waiting, explain: "Prometheus evaluates these rules every 15 seconds.
+  'For 1 minute' means the condition must be true for 60 continuous seconds
+  before the alert fires. This prevents false alarms from momentary blips."
+
+STEP 5 — Show AlertManager receiving the alert
+  5a. Refresh: http://172.22.108.68:30093
+  5b. The alert appears in AlertManager's Alerts page
+  5c. Show the labels and annotations on the alert
+
+STEP 6 — Restore course-service IMMEDIATELY
+  6a. Run:
+      wsl -e bash -c "kubectl scale deployment course-service -n ybrainy --replicas=1"
+  6b. Confirm restoration:
+      wsl -e bash -c "kubectl get pods -n ybrainy | grep course"
+      Wait until: course-service-XXXXX  1/1  Running
+
+  6c. The alert will remain "firing" for up to 5 minutes while Prometheus
+      evaluates recovery. This is normal. Say:
+      "The alert is still showing as firing — Prometheus uses a resolve timeout
+      of 5 minutes to avoid flapping. It will clear automatically."
+
+  !!!! DO NOT PROCEED TO SHOW GRAFANA AGAIN AFTER THIS STEP !!!!
+  If you need to show Grafana again, wait 5 full minutes for alert to clear.
+
+STEP 7 — (OPTIONAL) Show rule configuration
+  7a. Open: http://172.22.108.68:30090/#/rules
+  7b. Expand "ybrainy-service-alerts"
+  7c. Show the PromQL expressions for each rule
+
+
+================================================================================
+  FEATURE 5: ARGOCD GITOPS + SELF-HEALING (DO THIS LAST)
+================================================================================
+
+WHAT THIS DEMONSTRATES:
+  GitOps continuous delivery with automatic self-healing. The ml-service
+  Kubernetes manifests are tracked in a local git repository. ArgoCD detects
+  any drift between the desired state (in git) and the live cluster state.
+  With selfHeal=true, ArgoCD automatically restores the correct state without
+  human intervention.
+
+TALKING POINTS:
+  - GitOps principle: git is the single source of truth for infrastructure
+  - ArgoCD continuously reconciles the cluster against the git repository
+  - selfHeal=true means unauthorized kubectl changes are automatically reverted
+  - The git source is a local bare repository served via git daemon on port 9418
+    (workaround for monorepo size — full GitHub fetch times out)
+  - This is a production-grade pattern used by teams to prevent configuration
+    drift in Kubernetes clusters
+
+STEP 1 — Verify ArgoCD is synced and healthy
+  1a. Open: http://172.22.108.68:30807
+  1b. Login: admin / QEU3s65pn4CTqTm6
+      (if the login page is slow, try https://172.22.108.68:30808 instead)
+  1c. You will see the ml-service application tile
+  1d. Status should show: SYNCED and HEALTHY (green icons)
+  1e. Click on "ml-service" to open the application graph
+  1f. Show the deployment, replicaset, and pod all connected and green
+  1g. Click "Details" to show:
+        Source: git://172.22.108.68:9418/ml-k8s.git
+        Destination: namespace ybrainy
+        Sync Policy: automated, selfHeal=true
+
+  In terminal confirm:
+  wsl -e bash -c "kubectl get deployment ml-service -n ybrainy"
+  Expected: READY 1/1
+
+STEP 2 — Explain what you are about to do
+  "I will now simulate a configuration error — an operator accidentally
+  scales the ml-service deployment to 0 replicas via kubectl. Normally
+  this would take the ML predictions offline. With ArgoCD self-healing,
+  it will be automatically corrected within 60 seconds."
+
+STEP 3 — Simulate the "operator error"
+  3a. In WSL terminal:
+      wsl -e bash -c "kubectl scale deployment ml-service -n ybrainy --replicas=0"
+  3b. Confirm immediately:
+      wsl -e bash -c "kubectl get deployment ml-service -n ybrainy"
+      Expected: READY 0/1  (it just went to 0)
+
+STEP 4 — Watch ArgoCD detect the drift
+  4a. Refresh the ArgoCD UI (the ml-service app page)
+  4b. Within 30-60 seconds, the status changes from SYNCED to OUT OF SYNC
+  4c. The deployment tile turns yellow/orange
+  4d. ArgoCD is comparing: live replicas=0 vs desired replicas=1 (in git)
+
+STEP 5 — Watch ArgoCD self-heal
+  5a. ArgoCD automatically triggers a sync because selfHeal=true
+  5b. The status briefly shows "Syncing..."
+  5c. ArgoCD applies the git manifest: kubectl apply ... replicas=1
+  5d. The pod is recreated
+  5e. Within 60-90 seconds total: back to SYNCED and HEALTHY
+  5f. In terminal confirm:
+      wsl -e bash -c "kubectl get deployment ml-service -n ybrainy"
+      Expected: READY 1/1 (restored automatically)
+
+STEP 6 — Show the sync history
+  6a. In ArgoCD app page, click "History and Rollback" (clock icon)
+  6b. You will see a new sync entry with timestamp and the reason "selfHeal"
+  6c. This is the audit trail — every change is recorded
+
+EXPECTED RESULT:
+  ml-service was scaled to 0 manually, then automatically restored to 1 by
+  ArgoCD within ~60 seconds — with no human intervention required.
+
+
+================================================================================
+  TROUBLESHOOTING — IF SOMETHING GOES WRONG DURING THE DEMO
+================================================================================
+
+PROBLEM: ArgoCD shows "Unknown" status after startup
+SOLUTION:
+  wsl -e bash -c "pgrep -a git | grep daemon"  (check git daemon)
+  If not running:
+    wsl -e bash -c "git daemon --base-path=/tmp --export-all --port=9418 --reuseaddr --detach"
+    wsl -e bash -c "kubectl annotate app ml-service -n argocd argocd.argoproj.io/refresh=hard --overwrite"
+  Wait 30 seconds then refresh.
+
+PROBLEM: kubectl commands fail with "connection refused" or "no server found"
+SOLUTION: K8s cluster is not running — run the cgroup fix:
+  wsl -e bash -c "sudo bash /mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/DEVOPS/fix-containerd-cgroup.sh"
+  Wait 60 seconds then retry.
+
+PROBLEM: MLflow shows no models
+SOLUTION: Check MLflow pod:
+  wsl -e bash -c "kubectl get pods -n ybrainy | grep mlflow"
+  If CrashLoopBackOff: wsl -e bash -c "kubectl delete pod -l app=mlflow -n ybrainy"
+  If pod recreates and models are gone: PVC may have been deleted. Trigger
+  ml-service-CI pipeline in Jenkins to re-register models.
+
+PROBLEM: course-service is still down after the alert demo
+SOLUTION: Restore immediately:
+  wsl -e bash -c "kubectl scale deployment course-service -n ybrainy --replicas=1"
+  Then verify: wsl -e bash -c "kubectl get pods -n ybrainy | grep course"
+
+PROBLEM: Alert is still firing 10+ minutes after restoring course-service
+SOLUTION: This means Prometheus has not evaluated recovery yet. Wait. Or:
+  Check the service is actually up:
+  wsl -e bash -c "kubectl get pods -n ybrainy | grep course"
+  If not Running: fix the pod first, then wait for alert to clear.
+
+PROBLEM: ArgoCD app stays in OutOfSync after self-heal demo
+SOLUTION: Manually trigger sync:
+  wsl -e bash -c "kubectl annotate app ml-service -n argocd argocd.argoproj.io/refresh=hard --overwrite"
+  Wait 30 seconds. If still OutOfSync, do a manual sync:
+  wsl -e bash -c "kubectl patch app ml-service -n argocd -p '{\"operation\":{\"sync\":{}}}' --type=merge"
+
+PROBLEM: SonarQube shows no "frontend" project
+SOLUTION: The frontend-CI build must complete the SonarQube Analysis stage.
+  Go to Jenkins http://172.22.108.68:8086 → frontend-CI → trigger a new build.
+  Wait for SonarQube Analysis stage to complete (green checkmark).
+  Then check http://localhost:9000 again.
+
+PROBLEM: Grafana shows no data in panels
+SOLUTION: Prometheus might not be scraping. Check:
+  http://172.22.108.68:30090/targets
+  All targets should be State=UP. If any are DOWN, the pod might be crashing —
+  restart it:
+  wsl -e bash -c "kubectl delete pod -l app=<service-name> -n ybrainy"
+
+
+================================================================================
+  FULL SERVICE PORT REFERENCE
+================================================================================
+
+  Application Services (in K8s, namespace: ybrainy):
+    frontend             http://172.22.108.68:30080
+    course-service       http://172.22.108.68:30082
+    quiz-service         http://172.22.108.68:30083
+    lesson-service       http://172.22.108.68:30084
+    enrollment-service   http://172.22.108.68:30085
+    ml-service           http://172.22.108.68:30086
+    mlflow-tracking      http://172.22.108.68:30500
+
+  DevOps / Monitoring (in K8s):
+    prometheus           http://172.22.108.68:30090
+    alertmanager         http://172.22.108.68:30093
+    grafana              http://172.22.108.68:30300
+    argocd (HTTP)        http://172.22.108.68:30807
+    argocd (HTTPS)       https://172.22.108.68:30808
+
+  DevOps / CI (in WSL, not K8s):
+    jenkins              http://172.22.108.68:8086
+    sonarqube            http://localhost:9000  (bound to WSL localhost only)
+
+  Internal (not browser-accessible):
+    git daemon           git://172.22.108.68:9418/ml-k8s.git (ArgoCD source)
+    rabbitmq             internal only (no nodeport)
+    mysql                internal only (no nodeport)
+
+
+================================================================================
+  EXCELLENCE CRITERIA MAPPING
+================================================================================
+
+  This table maps each excellence item to the grille d'évaluation.
+
+  INDIVIDUAL EXCELLENCE (2 points):
+  ┌────────────────────────────────┬─────────────────────────────────────────┐
+  │ Excellence Item                │ Where to show it                        │
+  ├────────────────────────────────┼─────────────────────────────────────────┤
+  │ MLflow Model Registry          │ http://172.22.108.68:30500 → Models tab │
+  │ (4 ML models auto-registered   │ Shows 4 models, registered by Jenkins   │
+  │  by Jenkins CI pipeline)       │ CI build #9 automatically               │
+  ├────────────────────────────────┼─────────────────────────────────────────┤
+  │ Prometheus Alert Rules         │ http://172.22.108.68:30090/#/alerts     │
+  │ (4 rules: ServiceDown,         │ Show rules + live firing demo by        │
+  │  HighMemoryUsage, HighError,   │ scaling course-service to 0             │
+  │  SlowResponseTime)             │                                         │
+  ├────────────────────────────────┼─────────────────────────────────────────┤
+  │ AlertManager severity routing  │ http://172.22.108.68:30093 → Status →  │
+  │ + inhibit rules                │ Config — shows yaml routing config      │
+  ├────────────────────────────────┼─────────────────────────────────────────┤
+  │ ArgoCD GitOps self-healing     │ http://172.22.108.68:30807              │
+  │ (automated sync + selfHeal)    │ Scale ml-service to 0 → watch ArgoCD   │
+  │                                │ auto-restore within 60 seconds          │
+  └────────────────────────────────┴─────────────────────────────────────────┘
+
+  GROUP CRITERIA (directly supported by this work):
+  ┌────────────────────────────────┬─────────────────────────────────────────┐
+  │ Criteria                       │ Where to show it                        │
+  ├────────────────────────────────┼─────────────────────────────────────────┤
+  │ SonarQube /1.5                 │ http://localhost:9000 → frontend project │
+  │ (frontend + backend both       │ Backend: check existing ML-Service       │
+  │  analyzed)                     │ project in SonarQube                    │
+  ├────────────────────────────────┼─────────────────────────────────────────┤
+  │ Grafana + Prometheus /1.5      │ http://172.22.108.68:30300              │
+  │ (real-time dashboards for all  │ 2 dashboards: services overview +       │
+  │  services including ML)        │ ML service specific                     │
+  ├────────────────────────────────┼─────────────────────────────────────────┤
+  │ Orchestration /2.5             │ kubectl get pods -n ybrainy             │
+  │ (K8s: 6 services + mlflow +    │ All 6+ services running in K8s          │
+  │  monitoring stack)             │ Show: deployments, services, pvcs       │
+  └────────────────────────────────┴─────────────────────────────────────────┘
+
+
+================================================================================
+  END OF GUIDE
+================================================================================
