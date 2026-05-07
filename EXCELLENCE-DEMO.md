@@ -166,19 +166,20 @@ Jenkins CD does `kubectl apply` imperatively — it's a one-shot action. Argo CD
    - Click on it → see the Deployment, Service, and ReplicaSet represented as a dependency graph
 
 3. **Show what ArgoCD is watching:**
-   "This Application is watching the directory `DEVOPS/ml-service/k8s/` in the GitHub repository, branch `3la-5atr-houssem`. Whenever I push a change to that directory, ArgoCD detects it within 3 minutes and applies it to the cluster."
+   "This Application watches a lightweight local git repo (best practice: separate manifests repo from application code). Whenever the k8s deployment YAML changes — image tag updated by Jenkins — ArgoCD detects it and applies it to the cluster automatically."
 
 4. **Trigger a manual sync to show the reconciliation:**
-   Click "Sync" → "Synchronize" in the UI
+   Click "Sync" → "Synchronize" in the UI.
    ArgoCD compares Git state with cluster state and confirms they match.
 
 5. **Show self-healing (demonstrate drift detection):**
-   - From terminal: `wsl -u root -e bash -c "KUBECONFIG=/etc/kubernetes/admin.conf kubectl scale deployment ml-service -n ybrainy --replicas=0"`
-   - Wait 10-20 seconds
-   - Show ArgoCD detecting the drift and restoring replicas to 1 (selfHeal: true)
+   ```
+   wsl kubectl scale deployment ml-service -n ybrainy --replicas=0
+   ```
+   Wait 15-20 seconds. ArgoCD detects the drift and restores replicas to 1 automatically (selfHeal: true). Refresh the ArgoCD UI to see it self-correct.
 
 6. **Show the GitOps flow:**
-   "When I push a new image tag to `DEVOPS/ml-service/k8s/deployment.yaml` in Git → ArgoCD auto-applies it. Git becomes the audit log: every deployment is a git commit with author, timestamp, and diff."
+   "Git is the single source of truth. If someone manually changes anything in Kubernetes, ArgoCD reverts it to match Git within minutes. Every deployment is traceable to a git commit — who changed what, when, and why."
 
 ### What the professor sees
 - Professional ArgoCD UI with application health tree
@@ -367,6 +368,12 @@ A: The Maven sonar plugin is built into the Java build lifecycle — it hooks in
 ```powershell
 # From PowerShell as Administrator
 .\START-EVERYTHING.ps1
+```
+
+Then start the git daemon for ArgoCD (if not already running):
+```bash
+# In WSL terminal
+wsl bash -c "ss -tlnp | grep 9418 || (touch /tmp/ml-k8s.git/git-daemon-export-ok && git daemon --base-path=/tmp --export-all --reuseaddr --port=9418 &>/tmp/git-daemon.log &)"
 ```
 
 Then verify these URLs load in browser tabs:
