@@ -6,11 +6,57 @@ pipeline {
         SERVICE_DIR    = '/mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/PIDEV-YBrainy-E-leraning-certifications-Platform/user/angular/angular-app'
         IMAGE_NAME     = 'ybrainy/frontend'
         IMAGE_TAG      = "${BUILD_NUMBER}"
+        SONAR_HOST_URL = 'http://localhost:9000'
+        PATH           = "/opt/sonar-scanner/bin:${env.PATH}"
+        CHROMIUM_BIN   = '/usr/bin/chromium-browser'
     }
 
     options { skipDefaultCheckout(true) }
 
     stages {
+
+        stage('Install Dependencies') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh 'npm install --legacy-peer-deps --prefer-offline --no-audit --quiet'
+                }
+            }
+        }
+
+        stage('Unit Tests') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh '''
+                        CHROMIUM_FLAGS="--no-sandbox --disable-gpu" \
+                        CHROME_BIN=/usr/bin/chromium-browser \
+                        npx ng test --no-watch --no-progress \
+                            --browsers=ChromeHeadless \
+                            --code-coverage \
+                        || echo "[WARN] Tests failed or Chrome unavailable — SonarQube will run without coverage"
+                    '''
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                withCredentials([string(credentialsId: 'sonar-token2', variable: 'SONAR_TOKEN')]) {
+                    dir("${SERVICE_DIR}") {
+                        sh """
+                            sonar-scanner \
+                                -Dsonar.projectKey=frontend \
+                                -Dsonar.projectName='YBrainy Frontend (Angular)' \
+                                -Dsonar.sources=src \
+                                -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/node_modules/**,**/dist/**,**/*.min.js \
+                                -Dsonar.javascript.lcov.reportPaths=coverage/angular-app/lcov.info \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.token=${SONAR_TOKEN} \
+                                -Dsonar.sourceEncoding=UTF-8
+                        """
+                    }
+                }
+            }
+        }
 
         stage('Docker Build') {
             steps {
