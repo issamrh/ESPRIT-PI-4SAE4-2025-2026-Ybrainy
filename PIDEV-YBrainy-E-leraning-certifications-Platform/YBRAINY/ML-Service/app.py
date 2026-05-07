@@ -8,6 +8,7 @@ import os
 import traceback
 import requests
 import time
+import threading
 
 np.random.seed(42)  # set once at module startup — not inside request handlers (thread-safe)
 
@@ -15,6 +16,22 @@ _forecast_cache = {}
 _FORECAST_TTL = 3600  # 1 hour cache
 
 COURSE_SERVICE_URL = os.environ.get('COURSE_SERVICE_URL', 'http://localhost:8082')
+MLFLOW_URI = os.environ.get('MLFLOW_TRACKING_URI', 'http://mlflow-tracking:5000')
+
+
+def _track_prediction(experiment_name: str, params: dict, metrics: dict) -> None:
+    """Fire-and-forget MLflow tracking — never blocks prediction endpoints."""
+    def _do():
+        try:
+            import mlflow
+            mlflow.set_tracking_uri(MLFLOW_URI)
+            mlflow.set_experiment(experiment_name)
+            with mlflow.start_run():
+                mlflow.log_params({k: str(v) for k, v in params.items()})
+                mlflow.log_metrics({k: float(v) for k, v in metrics.items()})
+        except Exception:
+            pass  # MLflow unavailable never breaks predictions
+    threading.Thread(target=_do, daemon=True).start()
 
 app = Flask(__name__)
 CORS(app)
@@ -115,6 +132,11 @@ def predict_conversion():
         X_scaled = dso1_scaler.transform(X)
         proba = dso1_model.predict_proba(X_scaled)[0][1]
         label = 'HIGH' if proba >= 0.7 else 'MEDIUM' if proba >= 0.4 else 'LOW'
+        _track_prediction(
+            'dso1-conversion-predictions',
+            {k: validated[k] for k in required_fields},
+            {'conversion_probability': float(proba), 'label_numeric': 1.0 if label == 'HIGH' else 0.5 if label == 'MEDIUM' else 0.0}
+        )
         return jsonify({
             'conversionProbability': round(float(proba), 4),
             'conversionLabel': label,
@@ -260,6 +282,13 @@ def predict_quality():
         proba = dso3_model.predict_proba(X_scaled)[0]
         label = 'HIGH' if pred == 1 else 'LOW'
         confidence = float(max(proba))
+        _track_prediction(
+            'dso3-quality-predictions',
+            {'num_lectures': num_lectures, 'content_duration': content_duration,
+             'rating': rating, 'cert_encoded': cert_encoded},
+            {'quality_score': float(proba[1]), 'confidence': confidence,
+             'is_high_quality': float(pred == 1)}
+        )
 
         num_lessons_val = float(data.get('numLessons', 10))
         num_lectures_val = float(data.get('numLectures', 10))
@@ -462,6 +491,13 @@ def forecast_demand():
             'categoryForecast': category_forecast
         }
         _forecast_cache[cache_key] = (now, result_dict)
+        _track_prediction(
+            'dso4-demand-forecast',
+            {'steps': steps, 'real_data_points': len(real_monthly),
+             'model': result_dict['modelUsed']},
+            {'predicted_next_period': float(predicted[0]),
+             'trend_percentage': float(abs(trend_pct))}
+        )
         return jsonify(result_dict)
 
     except Exception as e:

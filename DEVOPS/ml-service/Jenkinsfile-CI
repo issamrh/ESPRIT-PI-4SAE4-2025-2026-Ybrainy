@@ -2,11 +2,13 @@ pipeline {
     agent any
 
     environment {
-        SERVICE_NAME   = 'ml-service'
-        SERVICE_DIR    = '/mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/PIDEV-YBrainy-E-leraning-certifications-Platform/YBRAINY/ML-Service'
-        IMAGE_NAME     = "ybrainy/${SERVICE_NAME}"
-        IMAGE_TAG      = "${BUILD_NUMBER}"
-        SONAR_HOST_URL = 'http://localhost:9000'
+        SERVICE_NAME          = 'ml-service'
+        SERVICE_DIR           = '/mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/PIDEV-YBrainy-E-leraning-certifications-Platform/YBRAINY/ML-Service'
+        IMAGE_NAME            = "ybrainy/${SERVICE_NAME}"
+        IMAGE_TAG             = "${BUILD_NUMBER}"
+        SONAR_HOST_URL        = 'http://localhost:9000'
+        MLFLOW_TRACKING_URI   = 'http://172.22.108.68:30500'
+        PATH                  = "/opt/sonar-scanner/bin:${env.PATH}"
     }
 
     options { skipDefaultCheckout(true) }
@@ -20,7 +22,7 @@ pipeline {
                         pip3 install --quiet --break-system-packages \
                             pytest pytest-mock flask flask-cors \
                             scikit-learn joblib numpy pandas statsmodels requests \
-                            prometheus-flask-exporter coverage
+                            prometheus-flask-exporter coverage mlflow
                         python3 -m pytest tests/ -v \
                             --tb=short \
                             --junitxml=/tmp/ml-test-results-${BUILD_NUMBER}.xml
@@ -36,30 +38,40 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
+            environment {
+                SONAR_TOKEN = credentials('sonar-token2')
+            }
             steps {
-                withCredentials([string(credentialsId: 'sonar-token2', variable: 'SONAR_TOKEN')]) {
-                    dir("${SERVICE_DIR}") {
-                        sh """
-                            pip3 install --quiet --break-system-packages coverage
-                            python3 -m coverage run \
-                                -m pytest tests/ -q --tb=no 2>/dev/null || true
-                            python3 -m coverage xml \
-                                -o /tmp/ml-coverage-${BUILD_NUMBER}.xml 2>/dev/null || true
+                dir("${SERVICE_DIR}") {
+                    sh '''
+                        pip3 install --quiet --break-system-packages coverage
+                        python3 -m coverage run -m pytest tests/ -q --tb=no 2>/dev/null || true
+                        python3 -m coverage xml -o /tmp/ml-coverage-${BUILD_NUMBER}.xml 2>/dev/null || true
 
-                            sonar-scanner \
-                                -Dsonar.projectKey=${SERVICE_NAME} \
-                                -Dsonar.projectName='YBrainy ML Service' \
-                                -Dsonar.sources=. \
-                                -Dsonar.inclusions='app.py' \
-                                -Dsonar.tests=tests \
-                                -Dsonar.python.coverage.reportPaths=/tmp/ml-coverage-${BUILD_NUMBER}.xml \
-                                -Dsonar.host.url=${SONAR_HOST_URL} \
-                                -Dsonar.token=${SONAR_TOKEN} \
-                                -Dsonar.scm.disabled=true \
-                            || true
-                            rm -f /tmp/ml-coverage-${BUILD_NUMBER}.xml || true
-                        """
-                    }
+                        /opt/sonar-scanner/bin/sonar-scanner \
+                            -Dsonar.projectKey=ml-service \
+                            -Dsonar.projectName="YBrainy ML Service" \
+                            -Dsonar.sources=. \
+                            -Dsonar.inclusions=app.py \
+                            -Dsonar.tests=tests \
+                            -Dsonar.python.coverage.reportPaths=/tmp/ml-coverage-${BUILD_NUMBER}.xml \
+                            -Dsonar.host.url=${SONAR_HOST_URL} \
+                            -Dsonar.token=${SONAR_TOKEN} \
+                            -Dsonar.scm.disabled=true \
+                        || true
+                        rm -f /tmp/ml-coverage-${BUILD_NUMBER}.xml || true
+                    '''
+                }
+            }
+        }
+
+        stage('Register Models in MLflow') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh '''
+                        pip3 install --quiet --break-system-packages mlflow scikit-learn joblib numpy
+                        python3 register_model.py || true
+                    '''
                 }
             }
         }
@@ -88,11 +100,7 @@ pipeline {
     }
 
     post {
-        success {
-            echo "CI passed — triggered ml-service-CD"
-        }
-        failure {
-            echo "CI FAILED — CD pipeline will NOT be triggered"
-        }
+        success { echo "CI passed — triggered ml-service-CD" }
+        failure { echo "CI FAILED — CD pipeline will NOT be triggered" }
     }
 }

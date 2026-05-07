@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ml-service
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/issamrh/ESPRIT-PI-4SAE4-2025-2026-Ybrainy.git
+    targetRevision: 3la-5atr-houssem
+    path: DEVOPS/ml-service/k8s
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ybrainy
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

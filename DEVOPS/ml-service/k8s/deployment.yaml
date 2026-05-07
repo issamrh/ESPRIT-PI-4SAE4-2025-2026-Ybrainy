@@ -50,6 +50,8 @@ spec:
           env:
             - name: COURSE_SERVICE_URL
               value: "http://course-service.ybrainy.svc.cluster.local:8082"
+            - name: MLFLOW_TRACKING_URI
+              value: "http://mlflow-tracking.ybrainy.svc.cluster.local:5000"
 ---
 apiVersion: v1
 kind: Service
