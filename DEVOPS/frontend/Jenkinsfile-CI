@@ -46,8 +46,8 @@ pipeline {
                             sonar-scanner \
                                 -Dsonar.projectKey=frontend \
                                 -Dsonar.projectName='YBrainy Frontend (Angular)' \
-                                -Dsonar.sources=src \
-                                -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts,**/node_modules/**,**/dist/**,**/*.min.js,**/assets/frontoffice/**,**/assets/login/**,**/*.mp4,**/*.pdf,**/*.gif,**/*.png,**/*.jpg \
+                                -Dsonar.sources=src/app,src/environments \
+                                -Dsonar.exclusions=**/*.spec.ts,**/*.test.ts \
                                 -Dsonar.javascript.lcov.reportPaths=coverage/angular-app/lcov.info \
                                 -Dsonar.host.url=${SONAR_HOST_URL} \
                                 -Dsonar.token=${SONAR_TOKEN} \
