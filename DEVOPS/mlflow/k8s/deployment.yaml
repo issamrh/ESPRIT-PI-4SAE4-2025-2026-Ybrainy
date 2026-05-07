@@ -51,8 +51,9 @@ spec:
           args:
             - "--backend-store-uri"
             - "sqlite:////data/mlflow.db"
-            - "--default-artifact-root"
+            - "--artifacts-destination"
             - "/data/artifacts"
+            - "--serve-artifacts"
             - "--host"
             - "0.0.0.0"
             - "--port"

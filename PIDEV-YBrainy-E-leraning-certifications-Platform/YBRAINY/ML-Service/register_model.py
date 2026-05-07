@@ -7,6 +7,7 @@ import sys
 import joblib
 import mlflow
 import mlflow.sklearn
+from mlflow.tracking import MlflowClient
 
 MLFLOW_URI = os.environ.get('MLFLOW_TRACKING_URI', 'http://172.22.108.68:30500')
 MODELS_DIR = os.path.join(os.path.dirname(__file__), 'models')
@@ -54,9 +55,24 @@ MODEL_SPECS = [
     },
 ]
 
+
+def _get_or_create_experiment(client: MlflowClient, name: str) -> str:
+    """Return experiment ID, ensuring artifact_location uses the HTTP proxy."""
+    exp = client.get_experiment_by_name(name)
+    if exp is not None:
+        if not exp.artifact_location.startswith('mlflow-artifacts'):
+            # Stale experiment pointing at local filesystem — delete and recreate
+            client.delete_experiment(exp.experiment_id)
+            exp = None
+    if exp is None:
+        return client.create_experiment(name, artifact_location='mlflow-artifacts:/')
+    return exp.experiment_id
+
+
 def main():
     print(f"Connecting to MLflow at {MLFLOW_URI}")
     mlflow.set_tracking_uri(MLFLOW_URI)
+    client = MlflowClient()
 
     success_count = 0
     for spec in MODEL_SPECS:
@@ -68,7 +84,8 @@ def main():
         print(f"[REGISTER] {spec['name']} (build #{BUILD_NUMBER})")
         try:
             model = joblib.load(model_path)
-            mlflow.set_experiment(spec['experiment'])
+            exp_id = _get_or_create_experiment(client, spec['experiment'])
+            mlflow.set_experiment(experiment_id=exp_id)
 
             with mlflow.start_run(run_name=f"ci-build-{BUILD_NUMBER}") as run:
                 mlflow.log_param('build_number', BUILD_NUMBER)
