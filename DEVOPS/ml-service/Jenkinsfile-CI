@@ -17,15 +17,12 @@ pipeline {
             steps {
                 dir("${SERVICE_DIR}") {
                     sh '''
-                        python3 -m pip install --quiet --no-warn-script-location \
+                        python3 -m venv /tmp/ml-venv-${BUILD_NUMBER} --clear
+                        /tmp/ml-venv-${BUILD_NUMBER}/bin/pip install --quiet \
                             pytest pytest-mock flask flask-cors \
                             scikit-learn joblib numpy pandas statsmodels requests \
-                            prometheus-flask-exporter
-                        python3 -m pytest tests/ -v \
-                            --tb=short \
-                            --junitxml=/tmp/ml-test-results-${BUILD_NUMBER}.xml \
-                            --co -q || true
-                        python3 -m pytest tests/ -v \
+                            prometheus-flask-exporter coverage
+                        /tmp/ml-venv-${BUILD_NUMBER}/bin/pytest tests/ -v \
                             --tb=short \
                             --junitxml=/tmp/ml-test-results-${BUILD_NUMBER}.xml
                     '''
@@ -35,6 +32,7 @@ pipeline {
                 always {
                     junit testResults: "/tmp/ml-test-results-${BUILD_NUMBER}.xml",
                           allowEmptyResults: true
+                    sh "rm -rf /tmp/ml-venv-${BUILD_NUMBER} || true"
                 }
             }
         }
@@ -44,9 +42,15 @@ pipeline {
                 withCredentials([string(credentialsId: 'sonar-token2', variable: 'SONAR_TOKEN')]) {
                     dir("${SERVICE_DIR}") {
                         sh """
-                            python3 -m pip install --quiet coverage
-                            python3 -m coverage run -m pytest tests/ -q --tb=no 2>/dev/null || true
-                            python3 -m coverage xml -o /tmp/ml-coverage-${BUILD_NUMBER}.xml 2>/dev/null || true
+                            python3 -m venv /tmp/ml-sonar-venv-${BUILD_NUMBER} --clear
+                            /tmp/ml-sonar-venv-${BUILD_NUMBER}/bin/pip install --quiet \
+                                coverage pytest pytest-mock flask flask-cors \
+                                scikit-learn joblib numpy pandas statsmodels requests \
+                                prometheus-flask-exporter
+                            /tmp/ml-sonar-venv-${BUILD_NUMBER}/bin/coverage run \
+                                -m pytest tests/ -q --tb=no 2>/dev/null || true
+                            /tmp/ml-sonar-venv-${BUILD_NUMBER}/bin/coverage xml \
+                                -o /tmp/ml-coverage-${BUILD_NUMBER}.xml 2>/dev/null || true
 
                             sonar-scanner \
                                 -Dsonar.projectKey=${SERVICE_NAME} \
@@ -59,6 +63,7 @@ pipeline {
                                 -Dsonar.token=${SONAR_TOKEN} \
                                 -Dsonar.scm.disabled=true \
                             || true
+                            rm -rf /tmp/ml-sonar-venv-${BUILD_NUMBER} /tmp/ml-coverage-${BUILD_NUMBER}.xml || true
                         """
                     }
                 }
