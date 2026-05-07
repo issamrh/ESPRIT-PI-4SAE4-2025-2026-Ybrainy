@@ -1,0 +1,42 @@
+pipeline {
+    agent any
+
+    environment {
+        SERVICE_NAME   = 'frontend'
+        SERVICE_DIR    = '/mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/PIDEV-YBrainy-E-leraning-certifications-Platform/user/angular/angular-app'
+        IMAGE_NAME     = 'ybrainy/frontend'
+        IMAGE_TAG      = "${BUILD_NUMBER}"
+    }
+
+    options { skipDefaultCheckout(true) }
+
+    stages {
+
+        stage('Docker Build') {
+            steps {
+                dir("${SERVICE_DIR}") {
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} -t ${IMAGE_NAME}:latest ."
+                }
+            }
+        }
+
+        stage('Import Image to Containerd') {
+            steps {
+                sh "docker save ${IMAGE_NAME}:${IMAGE_TAG} | sudo ctr -n k8s.io images import -"
+            }
+        }
+
+        stage('Trigger CD') {
+            steps {
+                build job: 'frontend-CD',
+                      parameters: [string(name: 'BUILD_TAG', value: "${BUILD_NUMBER}")],
+                      wait: false
+            }
+        }
+    }
+
+    post {
+        success { echo "CI passed — triggered frontend-CD" }
+        failure { echo "CI FAILED — CD pipeline will NOT be triggered" }
+    }
+}

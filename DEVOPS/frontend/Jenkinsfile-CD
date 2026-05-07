@@ -1,0 +1,51 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'BUILD_TAG', defaultValue: 'latest', description: 'Image tag passed from CI pipeline')
+    }
+
+    environment {
+        SERVICE_NAME   = 'frontend'
+        IMAGE_NAME     = 'ybrainy/frontend'
+        IMAGE_TAG      = "${params.BUILD_TAG}"
+        K8S_NAMESPACE  = 'ybrainy'
+        K8S_DEPLOYMENT = 'frontend'
+    }
+
+    options { skipDefaultCheckout(true) }
+
+    stages {
+
+        stage('Import Image to Containerd') {
+            steps {
+                sh "docker save ${IMAGE_NAME}:${IMAGE_TAG} | sudo ctr -n k8s.io images import -"
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh """
+                        until kubectl --kubeconfig=\$KUBECONFIG get nodes 2>/dev/null | grep -q Ready; do
+                            echo 'Waiting for K8s API server...'
+                            sleep 10
+                        done
+
+                        sed 's|image: ybrainy/frontend:latest|image: ${IMAGE_NAME}:${IMAGE_TAG}|' \
+                            /mnt/c/Users/azizs/Downloads/ESPRIT-PI-4SAE4-2025-2026-Ybrainy/DEVOPS/frontend/k8s/deployment.yaml \
+                            | kubectl --kubeconfig=\$KUBECONFIG apply --validate=false -f -
+
+                        kubectl --kubeconfig=\$KUBECONFIG -n ${K8S_NAMESPACE} \
+                            rollout status deployment/${K8S_DEPLOYMENT} --timeout=180s
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success { echo "CD passed — frontend:${IMAGE_TAG} deployed to Kubernetes" }
+        failure { echo "CD FAILED" }
+    }
+}
