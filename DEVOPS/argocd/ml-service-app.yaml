@@ -8,8 +8,8 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/issamrh/ESPRIT-PI-4SAE4-2025-2026-Ybrainy.git
-    targetRevision: ed39cffaeca0e8e63fc5ca5c7b1e4162a189df6f
+    repoURL: git://172.22.108.68:9418/ml-k8s.git
+    targetRevision: master
     path: DEVOPS/ml-service/k8s
   destination:
     server: https://kubernetes.default.svc
