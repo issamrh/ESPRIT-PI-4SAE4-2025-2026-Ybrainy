@@ -20,7 +20,7 @@ pipeline {
             steps {
                 checkout([
                     $class: 'GitSCM',
-                    branches: [[name: '3la-5atr-houssem']],
+                    branches: [[name: 'integration-final']],
                     extensions: [
                         [$class: 'CloneOption',
                             depth: 1,
