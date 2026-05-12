@@ -47,6 +47,9 @@ public class Feedback {
     @Column(length = 1000)
     String comment;
 
+    @Column(length = 24)
+    String sentimentLabel;
+
     /** Timestamp when the feedback was submitted */
     @Column(nullable = false)
     LocalDateTime dateCreation;

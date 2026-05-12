@@ -1,3 +1,8 @@
+def toWslPath(String windowsPath) {
+    def normalized = windowsPath.replace('\\', '/')
+    return "/mnt/${normalized[0].toLowerCase()}${normalized.substring(2)}"
+}
+
 pipeline {
     agent any
 
@@ -39,16 +44,18 @@ pipeline {
 
         stage('Build') {
             steps {
-                dir('ybrainy events') {
-                    bat 'wsl mvn -pl event-service -am clean package -DskipTests'
+                script {
+                    def repoDir = "${toWslPath(env.WORKSPACE)}/ybrainy events"
+                    bat """wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl event-service -am clean package -DskipTests" """
                 }
             }
         }
 
         stage('Tests') {
             steps {
-                dir('ybrainy events') {
-                    bat 'wsl mvn -pl event-service test'
+                script {
+                    def repoDir = "${toWslPath(env.WORKSPACE)}/ybrainy events"
+                    bat """wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl event-service test" """
                 }
             }
             post {
@@ -61,12 +68,10 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    dir('ybrainy events') {
+                    script {
+                        def repoDir = "${toWslPath(env.WORKSPACE)}/ybrainy events"
                         bat """
-                        wsl mvn -pl event-service -am sonar:sonar ^
-                        -Dsonar.host.url=${SONAR_HOST_URL} ^
-                        -Dsonar.login=%SONAR_TOKEN% ^
-                        -Dsonar.projectKey=event-service
+                        wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl event-service -am sonar:sonar -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=%SONAR_TOKEN% -Dsonar.projectKey=event-service"
                         """
                     }
                 }
@@ -75,15 +80,15 @@ pipeline {
 
         stage('Docker Build & Push') {
             steps {
-                dir('ybrainy events') {
-                    withCredentials([usernamePassword(
-                        credentialsId: 'dockerhub-creds',
-                        usernameVariable: 'DOCKER_USER_LOGIN',
-                        passwordVariable: 'DOCKER_PASSWORD'
-                    )]) {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER_LOGIN',
+                    passwordVariable: 'DOCKER_PASSWORD'
+                )]) {
+                    script {
+                        def repoDir = "${toWslPath(env.WORKSPACE)}/ybrainy events"
                         bat """
-                        wsl docker build -f event-service/Dockerfile -t ${IMAGE_NAME}:${DOCKER_TAG} .
-                        wsl docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest
+                        wsl bash -lc "cd '${repoDir}' && docker build -f event-service/Dockerfile -t ${IMAGE_NAME}:${DOCKER_TAG} . && docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest"
                         echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
                         wsl docker push ${IMAGE_NAME}:${DOCKER_TAG}
                         wsl docker push ${IMAGE_NAME}:latest

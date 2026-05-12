@@ -16,7 +16,12 @@ import tn.esprit.eventservice.entity.EventType;
 import tn.esprit.eventservice.repository.EventRepository;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,7 +36,6 @@ public class RecommendationService {
     private final AiEmbeddingClient aiEmbeddingClient;
 
     public List<RecommendedEventDto> getRecommendationsForStudent(long studentId, int limit) {
-        // 1. Gather Candidate Events
         List<Event> allEvents = (List<Event>) eventRepository.findAll();
         List<Long> enrolledEventIds = safeGetEnrolledEventIds(studentId);
 
@@ -51,13 +55,11 @@ public class RecommendationService {
             return Collections.emptyList();
         }
 
-        // 2. Gather Student History
         List<FeedbackDto> studentFeedbacks = safeGetStudentFeedbacks(studentId);
-        
+
         Set<EventType> preferredTypes = new HashSet<>();
         List<String> positiveHistoryDescriptions = new ArrayList<>();
 
-        // Add history from inscriptions
         for (long eventId : enrolledEventIds) {
             eventRepository.findById(eventId).ifPresent(e -> {
                 preferredTypes.add(e.getType());
@@ -67,59 +69,44 @@ public class RecommendationService {
             });
         }
 
-        // Add history from feedbacks
-        for (FeedbackDto f : studentFeedbacks) {
-            if (f.getRating() >= 4) {
-                eventRepository.findById(f.getEventId()).ifPresent(e -> {
+        for (FeedbackDto feedback : studentFeedbacks) {
+            if (feedback.getRating() >= 4) {
+                eventRepository.findById(feedback.getEventId()).ifPresent(e -> {
                     preferredTypes.add(e.getType());
-                    if (e.getDescription() != null && !e.getDescription().isBlank()) {
-                        if(!positiveHistoryDescriptions.contains(e.getDescription())){
-                             positiveHistoryDescriptions.add(e.getDescription());
-                        }
+                    if (e.getDescription() != null
+                            && !e.getDescription().isBlank()
+                            && !positiveHistoryDescriptions.contains(e.getDescription())) {
+                        positiveHistoryDescriptions.add(e.getDescription());
                     }
                 });
             }
         }
 
-        // 3. Fallback: Cold Start Check
         boolean isColdStart = preferredTypes.isEmpty() && positiveHistoryDescriptions.isEmpty();
         if (isColdStart) {
             return fallbackTopRatedEvents(candidateEvents, limit);
         }
 
-        // 4. Compute AI Profile Embedding (Average of all positive history embeddings)
         List<Double> profileEmbedding = computeProfileEmbedding(positiveHistoryDescriptions);
-
-        // 5. Score Candidates
         List<RecommendedEventDto> scoredCandidates = new ArrayList<>();
-        
+
         for (Event candidate : candidateEvents) {
-            // Signal 1: Collab / Rule-based (0.0 to 1.0)
             double collabScore = preferredTypes.contains(candidate.getType()) ? 1.0 : 0.0;
 
-            // Signal 2: Content-based (Average Rating -> 0.0 to 1.0)
             EventStatsDto stats = safeGetStats(candidate.getIdEvent());
             double contentScore = 0.0;
             if (stats != null && stats.getAverageRating() > 0) {
-                contentScore = stats.getAverageRating() / 5.0; 
+                contentScore = stats.getAverageRating() / 5.0;
             }
 
-            // Signal 3: AI Semantic Similarity (0.0 to 1.0)
             double aiScore = 0.0;
             if (profileEmbedding != null && !profileEmbedding.isEmpty() && candidate.getDescription() != null) {
                 List<Double> candidateEmbedding = aiEmbeddingClient.getEmbeddingSync(candidate.getDescription());
                 aiScore = aiEmbeddingClient.computeCosineSimilarity(profileEmbedding, candidateEmbedding);
-                // Clamp to [0,1] just in case
                 aiScore = Math.max(0.0, Math.min(1.0, aiScore));
             }
 
-            // Weights
-            double WEIGH_COLLAB = 0.3;
-            double WEIGH_CONTENT = 0.3;
-            double WEIGH_AI = 0.4;
-
-            double finalScore = (collabScore * WEIGH_COLLAB) + (contentScore * WEIGH_CONTENT) + (aiScore * WEIGH_AI);
-
+            double finalScore = (collabScore * 0.3) + (contentScore * 0.3) + (aiScore * 0.4);
             String reason = generateReason(collabScore, contentScore, aiScore, candidate.getType());
 
             scoredCandidates.add(RecommendedEventDto.builder()
@@ -134,7 +121,6 @@ public class RecommendationService {
                     .build());
         }
 
-        // 6. Sort and Return
         scoredCandidates.sort((a, b) -> Double.compare(b.getRecommendationScore(), a.getRecommendationScore()));
         return scoredCandidates.stream().limit(limit).collect(Collectors.toList());
     }
@@ -144,7 +130,7 @@ public class RecommendationService {
         for (Event candidate : candidateEvents) {
             EventStatsDto stats = safeGetStats(candidate.getIdEvent());
             double score = (stats != null && stats.getAverageRating() > 0) ? (stats.getAverageRating() / 5.0) : 0.0;
-            
+
             scored.add(RecommendedEventDto.builder()
                     .idEvent(candidate.getIdEvent())
                     .name(candidate.getName())
@@ -161,33 +147,37 @@ public class RecommendationService {
     }
 
     private List<Double> computeProfileEmbedding(List<String> descriptions) {
-        if (descriptions == null || descriptions.isEmpty()) return null;
-        
+        if (descriptions == null || descriptions.isEmpty()) {
+            return null;
+        }
+
         List<List<Double>> allEmbeddings = new ArrayList<>();
-        // Take max 5 descriptions to avoid rate limits / long delays
         int limit = Math.min(5, descriptions.size());
         for (int i = 0; i < limit; i++) {
-            List<Double> emb = aiEmbeddingClient.getEmbeddingSync(descriptions.get(i));
-            if (emb != null && !emb.isEmpty()) {
-                allEmbeddings.add(emb);
+            List<Double> embedding = aiEmbeddingClient.getEmbeddingSync(descriptions.get(i));
+            if (embedding != null && !embedding.isEmpty()) {
+                allEmbeddings.add(embedding);
             }
         }
-        
-        if (allEmbeddings.isEmpty()) return null;
 
-        // Average the embeddings
+        if (allEmbeddings.isEmpty()) {
+            return null;
+        }
+
         int dimension = allEmbeddings.get(0).size();
-        List<Double> avg = new ArrayList<>(Collections.nCopies(dimension, 0.0));
-        
-        for (List<Double> emb : allEmbeddings) {
+        List<Double> average = new ArrayList<>(Collections.nCopies(dimension, 0.0));
+
+        for (List<Double> embedding : allEmbeddings) {
             for (int i = 0; i < dimension; i++) {
-                avg.set(i, avg.get(i) + emb.get(i));
+                average.set(i, average.get(i) + embedding.get(i));
             }
         }
+
         for (int i = 0; i < dimension; i++) {
-            avg.set(i, avg.get(i) / allEmbeddings.size());
+            average.set(i, average.get(i) / allEmbeddings.size());
         }
-        return avg;
+
+        return average;
     }
 
     private String generateReason(double collabScore, double contentScore, double aiScore, EventType type) {
@@ -237,8 +227,6 @@ public class RecommendationService {
         return LocalDateTime.MAX;
     }
 
-    // --- Safe Feign Calls with Fallbacks --- //
-
     private List<Long> safeGetEnrolledEventIds(long studentId) {
         try {
             List<Long> ids = inscriptionClient.getRegisteredEventIdsByStudent(studentId);
@@ -261,7 +249,7 @@ public class RecommendationService {
 
     private EventStatsDto safeGetStats(long eventId) {
         try {
-             return feedbackClient.getStatsByEvent(eventId);
+            return feedbackClient.getStatsByEvent(eventId);
         } catch (Exception e) {
             logger.debug("Feedback stats not found or service unreachable for event {}", eventId);
             return null;

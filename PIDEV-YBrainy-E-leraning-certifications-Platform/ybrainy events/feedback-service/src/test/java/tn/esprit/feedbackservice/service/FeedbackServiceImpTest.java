@@ -34,8 +34,8 @@ class FeedbackServiceImpTest {
     @Test
     @DisplayName("submitFeedback() saves published feedback when event is finished and inscription is confirmed")
     void submitFeedback_success() {
-        FeedbackRequestDto dto = new FeedbackRequestDto(7L, 70L, 5, "Very useful event");
-        Feedback saved = feedback(100L, 7L, 70L, 5, "Very useful event", FeedbackStatut.PUBLIE);
+        FeedbackRequestDto dto = new FeedbackRequestDto(7L, 70L, 5, "Very useful event", "positive");
+        Feedback saved = feedback(100L, 7L, 70L, 5, "Very useful event", "positive", FeedbackStatut.PUBLIE);
 
         when(eventClient.findById(70L)).thenReturn(Optional.of(finishedEvent(70L)));
         when(inscriptionClient.hasConfirmedInscription(7L, 70L)).thenReturn(true);
@@ -46,13 +46,14 @@ class FeedbackServiceImpTest {
 
         assertThat(result.getIdFeedback()).isEqualTo(100L);
         assertThat(result.getStatut()).isEqualTo(FeedbackStatut.PUBLIE);
+        assertThat(result.getSentimentLabel()).isEqualTo("positive");
         verify(feedbackRepository).save(any());
     }
 
     @Test
     @DisplayName("submitFeedback() rejects feedback when event is not finished")
     void submitFeedback_eventNotFinished_throws() {
-        FeedbackRequestDto dto = new FeedbackRequestDto(8L, 80L, 4, "Soon");
+        FeedbackRequestDto dto = new FeedbackRequestDto(8L, 80L, 4, "Soon", null);
         EventDto notFinished = new EventDto(80L, "Hackathon", "PUBLIE");
 
         when(eventClient.findById(80L)).thenReturn(Optional.of(notFinished));
@@ -65,7 +66,7 @@ class FeedbackServiceImpTest {
     @Test
     @DisplayName("submitFeedback() rejects feedback when inscription is not confirmed")
     void submitFeedback_notConfirmed_throws() {
-        FeedbackRequestDto dto = new FeedbackRequestDto(9L, 90L, 4, "Denied");
+        FeedbackRequestDto dto = new FeedbackRequestDto(9L, 90L, 4, "Denied", null);
 
         when(eventClient.findById(90L)).thenReturn(Optional.of(finishedEvent(90L)));
         when(inscriptionClient.hasConfirmedInscription(9L, 90L)).thenReturn(false);
@@ -78,8 +79,8 @@ class FeedbackServiceImpTest {
     @Test
     @DisplayName("updateFeedback() rejects updates from another student")
     void updateFeedback_wrongStudent_throws() {
-        Feedback existing = feedback(101L, 10L, 100L, 3, "Old", FeedbackStatut.PUBLIE);
-        FeedbackRequestDto dto = new FeedbackRequestDto(11L, 100L, 5, "New");
+        Feedback existing = feedback(101L, 10L, 100L, 3, "Old", "neutral", FeedbackStatut.PUBLIE);
+        FeedbackRequestDto dto = new FeedbackRequestDto(11L, 100L, 5, "New", "positive");
 
         when(feedbackRepository.findById(101L)).thenReturn(Optional.of(existing));
 
@@ -89,11 +90,41 @@ class FeedbackServiceImpTest {
     }
 
     @Test
+    @DisplayName("updateFeedback() updates sentimentLabel when provided")
+    void updateFeedback_updatesSentimentLabel() {
+        Feedback existing = feedback(104L, 15L, 150L, 4, "Old", "neutral", FeedbackStatut.PUBLIE);
+        FeedbackRequestDto dto = new FeedbackRequestDto(15L, 150L, 5, "New comment", "positive");
+
+        when(feedbackRepository.findById(104L)).thenReturn(Optional.of(existing));
+        when(feedbackRepository.save(any(Feedback.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Feedback updated = service.updateFeedback(104L, dto);
+
+        assertThat(updated.getRating()).isEqualTo(5);
+        assertThat(updated.getComment()).isEqualTo("New comment");
+        assertThat(updated.getSentimentLabel()).isEqualTo("positive");
+    }
+
+    @Test
+    @DisplayName("submitFeedback() rejects invalid sentimentLabel")
+    void submitFeedback_invalidSentimentLabel_throws() {
+        FeedbackRequestDto dto = new FeedbackRequestDto(16L, 160L, 4, "Confusing event", "excited");
+
+        when(eventClient.findById(160L)).thenReturn(Optional.of(finishedEvent(160L)));
+        when(inscriptionClient.hasConfirmedInscription(16L, 160L)).thenReturn(true);
+        when(feedbackRepository.existsByStudentIdAndEventId(16L, 160L)).thenReturn(false);
+
+        assertThatThrownBy(() -> service.submitFeedback(dto))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("sentimentLabel must be one of");
+    }
+
+    @Test
     @DisplayName("getFeedbacksByStudent() delegates to repository in descending creation order")
     void getFeedbacksByStudent_delegates() {
         List<Feedback> expected = List.of(
-                feedback(102L, 12L, 120L, 5, "Recent", FeedbackStatut.PUBLIE),
-                feedback(103L, 12L, 121L, 4, "Older", FeedbackStatut.PUBLIE)
+                feedback(102L, 12L, 120L, 5, "Recent", "positive", FeedbackStatut.PUBLIE),
+                feedback(103L, 12L, 121L, 4, "Older", "neutral", FeedbackStatut.PUBLIE)
         );
 
         when(feedbackRepository.findByStudentIdOrderByDateCreationDesc(12L)).thenReturn(expected);
@@ -121,13 +152,14 @@ class FeedbackServiceImpTest {
         return new EventDto(id, "Finished event", "TERMINE");
     }
 
-    private Feedback feedback(long id, long studentId, long eventId, int rating, String comment, FeedbackStatut statut) {
+    private Feedback feedback(long id, long studentId, long eventId, int rating, String comment, String sentimentLabel, FeedbackStatut statut) {
         Feedback feedback = new Feedback();
         feedback.setIdFeedback(id);
         feedback.setStudentId(studentId);
         feedback.setEventId(eventId);
         feedback.setRating(rating);
         feedback.setComment(comment);
+        feedback.setSentimentLabel(sentimentLabel);
         feedback.setDateCreation(LocalDateTime.now());
         feedback.setStatut(statut);
         return feedback;

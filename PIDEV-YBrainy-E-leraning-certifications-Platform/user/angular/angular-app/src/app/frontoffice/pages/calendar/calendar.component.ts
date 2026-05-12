@@ -17,6 +17,8 @@ import { AuthService } from '../../services/auth.service';
 })
 export class CalendarComponent implements AfterViewInit, OnDestroy {
   private static readonly statusSnapshotStorageKey = 'frontoffice-calendar-student-statuses';
+  private static readonly heroRecommendationLoaderMs = 5000;
+  private static readonly feedbackSentimentDebounceMs = 900;
   mainHtml: SafeHtml | null = null;
   pageVisible = false;
   confirmRegisterOpen = false;
@@ -36,6 +38,10 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
   feedbackRating = 5;
   feedbackComment = '';
   feedbackError = '';
+  feedbackSentimentLabel = '';
+  feedbackSentimentSummary = '';
+  feedbackSentimentScores: Record<string, number> = {};
+  feedbackSentimentLoading = false;
   feedbackTargetEventName = '';
   feedbackSpeechStatus = '';
   private feedbackTargetEventId: number | null = null;
@@ -47,14 +53,18 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
   private readonly inscriptionBaseUrl = '/Inscription';
   private readonly feedbackBaseUrl = '/Feedback';
   private readonly recommendationBaseUrl = '/api/recommendations';
+  private readonly pythonRecommendationBaseUrl = '/api/recommendations/python';
+  private readonly pythonSentimentBaseUrl = '/api/sentiment/python';
   private allEvents: FrontofficeEvent[] = [];
   private selectedStudentId: number | null = null;
   private studentEventStatuses = new Map<number, string>();
   private studentFeedbacks = new Map<number, StudentFeedback>();
   private recommendedEvents: RecommendedEvent[] = [];
+  private aiRecommendedEvents: RecommendedEvent[] = [];
   private loadingRecommendations = false;
   private heroRecommendationOpen = false;
   private heroRecommendationLoading = false;
+  private heroRecommendationSource: 'classic' | 'python' = 'classic';
   private activeFilter: FrontofficeFilter = 'ALL';
   private statusFilter: FrontofficeStatusFilter = 'ALL';
   private searchQuery = '';
@@ -77,6 +87,9 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
   private feedbackAudioChunks: Blob[] = [];
   private feedbackRecorderMimeType = 'audio/webm';
   private shouldTranscribeFeedbackRecording = true;
+  private feedbackSentimentDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private feedbackSentimentRequestSeq = 0;
+  private feedbackSentimentLastAnalyzedComment = '';
 
   constructor(
     private staticPage: FrontofficeStaticPageService,
@@ -123,6 +136,7 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     this.abortFeedbackSpeech();
     this.closeFeedbackModal();
     this.clearHeroRecommendationTimer();
+    this.clearFeedbackSentimentDebounce();
   }
 
   private async renderBackofficeEventsIntoFrontoffice(): Promise<void> {
@@ -181,6 +195,7 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     this.studentEventStatuses = new Map<number, string>();
     this.studentFeedbacks = new Map<number, StudentFeedback>();
     this.recommendedEvents = [];
+    this.aiRecommendedEvents = [];
     this.statusHydrated = false;
     this.clearConfirmationTimers();
     this.closeRegisterConfirmation();
@@ -240,6 +255,16 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
 
     if (heroUpcomingButton?.parentElement) {
       heroUpcomingButton.parentElement.classList.add('hero-events-actions');
+    }
+
+    let heroPythonRecommendationButton = pageRoot.querySelector(
+      '[data-show-python-recommendation-trigger="true"]'
+    ) as HTMLElement | null;
+    if (!heroPythonRecommendationButton && heroUpcomingButton?.parentElement) {
+      const injectedPythonRecommendationButton = this.createHeroPythonRecommendationButton();
+      heroUpcomingButton.parentElement.classList.add('hero-events-actions');
+      heroUpcomingButton.parentElement.appendChild(injectedPythonRecommendationButton);
+      heroPythonRecommendationButton = injectedPythonRecommendationButton;
     }
 
     this.normalizeHeroActionButtons(pageRoot);
@@ -368,6 +393,58 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
           <span class="btn-letter">e</span>
           <span class="btn-letter">n</span>
           <span class="btn-letter">t</span>
+        </div>
+      </div>
+    `;
+    return button;
+  }
+
+  private createHeroPythonRecommendationButton(): HTMLButtonElement {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn hero-recommend-button hero-python-recommend-button';
+    button.setAttribute('data-show-python-recommendation-trigger', 'true');
+    button.innerHTML = `
+      <svg class="btn-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 3L14.25 8.25L19.5 10.5L14.25 12.75L12 18L9.75 12.75L4.5 10.5L9.75 8.25L12 3ZM18 14.25L19.125 16.875L21.75 18L19.125 19.125L18 21.75L16.875 19.125L14.25 18L16.875 16.875L18 14.25ZM6 14.25L6.75 16.5L9 17.25L6.75 18L6 20.25L5.25 18L3 17.25L5.25 16.5L6 14.25Z"
+        ></path>
+      </svg>
+      <div class="txt-wrapper">
+        <div class="txt-1">
+          <span class="btn-letter">P</span>
+          <span class="btn-letter">y</span>
+          <span class="btn-letter">t</span>
+          <span class="btn-letter">h</span>
+          <span class="btn-letter">o</span>
+          <span class="btn-letter">n</span>
+          <span class="btn-space" aria-hidden="true"></span>
+          <span class="btn-letter">M</span>
+          <span class="btn-letter">L</span>
+          <span class="btn-space" aria-hidden="true"></span>
+          <span class="btn-letter">S</span>
+          <span class="btn-letter">u</span>
+          <span class="btn-letter">g</span>
+          <span class="btn-letter">g</span>
+          <span class="btn-letter">e</span>
+          <span class="btn-letter">s</span>
+          <span class="btn-letter">t</span>
+        </div>
+        <div class="txt-2">
+          <span class="btn-letter">M</span>
+          <span class="btn-letter">L</span>
+          <span class="btn-space" aria-hidden="true"></span>
+          <span class="btn-letter">R</span>
+          <span class="btn-letter">e</span>
+          <span class="btn-letter">c</span>
+          <span class="btn-letter">o</span>
+          <span class="btn-letter">m</span>
+          <span class="btn-letter">m</span>
+          <span class="btn-letter">e</span>
+          <span class="btn-letter">n</span>
+          <span class="btn-letter">d</span>
         </div>
       </div>
     `;
@@ -507,10 +584,24 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     if (heroRecommendationButton) {
       const onHeroRecommendation = (event: Event) => {
         event.preventDefault();
-        this.openInlineRecommendationCard(pageRoot);
+        void this.openInlineRecommendationCard(pageRoot);
       };
       heroRecommendationButton.addEventListener('click', onHeroRecommendation);
       this.cleanupFns.push(() => heroRecommendationButton.removeEventListener('click', onHeroRecommendation));
+    }
+
+    const heroPythonRecommendationButton = pageRoot.querySelector(
+      '[data-show-python-recommendation-trigger="true"]'
+    ) as HTMLAnchorElement | null;
+    if (heroPythonRecommendationButton) {
+      const onHeroPythonRecommendation = (event: Event) => {
+        event.preventDefault();
+        void this.openInlinePythonRecommendationCard(pageRoot);
+      };
+      heroPythonRecommendationButton.addEventListener('click', onHeroPythonRecommendation);
+      this.cleanupFns.push(() =>
+        heroPythonRecommendationButton.removeEventListener('click', onHeroPythonRecommendation)
+      );
     }
 
     const heroCodelabButton = pageRoot.querySelector(
@@ -753,6 +844,42 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  private async loadPythonRecommendedEventForSelectedStudent(): Promise<void> {
+    if (!this.selectedStudentId) {
+      this.aiRecommendedEvents = [];
+      return;
+    }
+
+    try {
+      const response = await firstValueFrom(
+        this.http.get<RecommendationApiEvent[]>(
+          `${this.pythonRecommendationBaseUrl}/${this.selectedStudentId}`
+        )
+      );
+
+      const recommendationList = Array.isArray(response) ? response : [];
+      this.aiRecommendedEvents = [];
+
+      for (const rec of recommendationList) {
+        const matchingEvent = this.allEvents.find((event) => Number(event.idEvent) === Number(rec.idEvent));
+        this.aiRecommendedEvents.push({
+          ...(matchingEvent || rec),
+          location: rec.location || matchingEvent?.location || '',
+          dateDebut: rec.dateDebut || matchingEvent?.dateDebut || '',
+          dateFin: rec.dateFin || matchingEvent?.dateFin || '',
+          name: rec.name || matchingEvent?.name || '',
+          type: rec.type || matchingEvent?.type || '',
+          description: rec.description || matchingEvent?.description || '',
+          recommendationScore: Number(rec.recommendationScore ?? (rec as any).hybridScore ?? 0),
+          recommendationReason: rec.recommendationReason || (rec as any).reason || ''
+        } as RecommendedEvent);
+      }
+    } catch (error) {
+      console.error('Failed to load Python recommendations for student', error);
+      this.aiRecommendedEvents = [];
+    }
+  }
+
   private renderRecommendation(pageRoot: HTMLElement): void {
     const recommendationSlot = pageRoot.querySelector('.cal-recommendation-slot') as HTMLElement | null;
     if (!recommendationSlot) return;
@@ -988,6 +1115,36 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
       </h2>
     `;
   }
+  private getAiRecommendationHeadingHtml(): string {
+    return `
+      <h2 style="display: inline-flex; align-items: center; gap: 10px; font-size: 1.5rem; font-weight: 700; margin-bottom: 16px; color: #17203f;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 12px; background: linear-gradient(135deg, rgba(35, 40, 160, 0.12), rgba(57, 159, 255, 0.18)); color: #2328a0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 3L14.6 9.4L21 12L14.6 14.6L12 21L9.4 14.6L3 12L9.4 9.4L12 3Z" fill="currentColor"></path>
+          </svg>
+        </span>
+        <span>AI Suggested Event</span>
+      </h2>
+    `;
+  }
+
+  private getActiveHeroRecommendations(): RecommendedEvent[] {
+    return this.heroRecommendationSource === 'python' ? this.aiRecommendedEvents : this.recommendedEvents;
+  }
+
+  private getHeroRecommendationKicker(): string {
+    return this.heroRecommendationSource === 'python' ? 'Python ML Suggested Event' : 'AI Suggested Event';
+  }
+
+  private waitForHeroRecommendationLoader(): Promise<void> {
+    return new Promise((resolve) => {
+      this.heroRecommendationTimer = window.setTimeout(() => {
+        this.heroRecommendationTimer = null;
+        resolve();
+      }, CalendarComponent.heroRecommendationLoaderMs);
+    });
+  }
+
   private renderHeroRecommendation(pageRoot: HTMLElement): void {
     const heroRecommendationSlot = pageRoot.querySelector('.hero-recommendation-slot') as HTMLElement | null;
     if (!heroRecommendationSlot) return;
@@ -1103,19 +1260,20 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    if (!this.recommendedEvents || this.recommendedEvents.length === 0) {
+    const activeHeroRecommendations = this.getActiveHeroRecommendations();
+    if (!activeHeroRecommendations || activeHeroRecommendations.length === 0) {
       heroRecommendationSlot.innerHTML = `
         <section class="hero-recommendation-card is-empty">
-          <span class="hero-recommendation-kicker">Recommended For You</span>
-          <h3>No recommendation yet</h3>
-          <p>Attend more events or leave feedback to personalize your feed.</p>
+          <span class="hero-recommendation-kicker">${this.escapeHtml(this.getHeroRecommendationKicker())}</span>
+          <h3>No suggestion yet</h3>
+          <p>Try again after joining or reviewing more events.</p>
         </section>
       `;
       heroRecommendationSlot.classList.add('is-visible');
       return;
     }
 
-    const recommended = this.recommendedEvents[0];
+    const recommended = activeHeroRecommendations[0];
     const score = Math.max(0, Math.min(100, Math.round((recommended.recommendationScore || 0) * 100)));
     const type = this.getTypeKey(recommended as unknown as FrontofficeEvent);
     const eventDate = this.toDate(recommended.dateDebut).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -1129,7 +1287,7 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
       <section class="hero-recommendation-card type-${type.toLowerCase()} is-visible-card">
         ${heroRecommendationImageHtml}
         <div class="hero-recommendation-copy">
-          <span class="hero-recommendation-kicker">Recommended For You</span>
+          <span class="hero-recommendation-kicker">${this.escapeHtml(this.getHeroRecommendationKicker())}</span>
           <h3>${this.escapeHtml(recommended.name)}</h3>
           <p><i>${this.escapeHtml(recommended.recommendationReason || '')}</i></p>
           <div class="hero-recommendation-meta">
@@ -1564,14 +1722,16 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private openInlineRecommendationCard(pageRoot: HTMLElement): void {
-    if (this.heroRecommendationOpen) {
+  private async openInlineRecommendationCard(pageRoot: HTMLElement): Promise<void> {
+    const isSameSourceOpen = this.heroRecommendationOpen && this.heroRecommendationSource === 'classic';
+    if (isSameSourceOpen) {
       this.heroRecommendationOpen = false;
       this.clearHeroRecommendationTimer();
       this.renderHeroRecommendation(pageRoot);
       return;
     }
 
+    this.heroRecommendationSource = 'classic';
     this.heroRecommendationOpen = true;
     this.clearHeroRecommendationTimer();
     this.heroRecommendationLoading = true;
@@ -1580,22 +1740,55 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     const heroRecommendationSlot = pageRoot.querySelector('.hero-recommendation-slot') as HTMLElement | null;
     heroRecommendationSlot?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-    this.heroRecommendationTimer = window.setTimeout(() => {
-      this.heroRecommendationLoading = false;
-      this.renderHeroRecommendation(pageRoot);
+    await this.waitForHeroRecommendationLoader();
+    this.heroRecommendationLoading = false;
+    this.renderHeroRecommendation(pageRoot);
 
-      const heroRecommendationCard = heroRecommendationSlot?.querySelector('.hero-recommendation-card') as HTMLElement | null;
-      if (this.heroRecommendationOpen && heroRecommendationCard) {
+    const heroRecommendationCard = heroRecommendationSlot?.querySelector('.hero-recommendation-card') as HTMLElement | null;
+    if (this.heroRecommendationOpen && heroRecommendationCard) {
+      heroRecommendationCard.classList.remove('is-recommendation-spotlight');
+      void heroRecommendationCard.offsetWidth;
+      heroRecommendationCard.classList.add('is-recommendation-spotlight');
+      window.setTimeout(() => {
         heroRecommendationCard.classList.remove('is-recommendation-spotlight');
-        void heroRecommendationCard.offsetWidth;
-        heroRecommendationCard.classList.add('is-recommendation-spotlight');
-        window.setTimeout(() => {
-          heroRecommendationCard.classList.remove('is-recommendation-spotlight');
-        }, 2200);
-      }
+      }, 2200);
+    }
+  }
 
-      this.heroRecommendationTimer = null;
-    }, 5000);
+  private async openInlinePythonRecommendationCard(pageRoot: HTMLElement): Promise<void> {
+    const isSameSourceOpen = this.heroRecommendationOpen && this.heroRecommendationSource === 'python';
+    if (isSameSourceOpen) {
+      this.heroRecommendationOpen = false;
+      this.clearHeroRecommendationTimer();
+      this.renderHeroRecommendation(pageRoot);
+      return;
+    }
+
+    this.heroRecommendationSource = 'python';
+    this.heroRecommendationOpen = true;
+    this.clearHeroRecommendationTimer();
+    this.heroRecommendationLoading = true;
+    this.renderHeroRecommendation(pageRoot);
+
+    const heroRecommendationSlot = pageRoot.querySelector('.hero-recommendation-slot') as HTMLElement | null;
+    heroRecommendationSlot?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    await Promise.all([
+      this.waitForHeroRecommendationLoader(),
+      this.loadPythonRecommendedEventForSelectedStudent()
+    ]);
+    this.heroRecommendationLoading = false;
+    this.renderHeroRecommendation(pageRoot);
+
+    const heroRecommendationCard = heroRecommendationSlot?.querySelector('.hero-recommendation-card') as HTMLElement | null;
+    if (this.heroRecommendationOpen && heroRecommendationCard) {
+      heroRecommendationCard.classList.remove('is-recommendation-spotlight');
+      void heroRecommendationCard.offsetWidth;
+      heroRecommendationCard.classList.add('is-recommendation-spotlight');
+      window.setTimeout(() => {
+        heroRecommendationCard.classList.remove('is-recommendation-spotlight');
+      }, 2200);
+    }
   }
 
   private clearHeroRecommendationTimer(): void {
@@ -1755,12 +1948,17 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     this.feedbackError = '';
     this.feedbackSubmitting = false;
     this.feedbackSpeechStatus = '';
+    this.clearFeedbackSentimentDebounce();
+    this.resetFeedbackSentiment();
+    this.feedbackSentimentLabel = existingFeedback?.sentimentLabel ?? '';
+    this.feedbackSentimentSummary = this.buildFeedbackSentimentSummary(this.feedbackSentimentLabel);
     this.feedbackModalOpen = true;
   }
 
   closeFeedbackModal(): void {
-    if (this.feedbackSubmitting || this.feedbackTranscribing) return;
+    if (this.feedbackSubmitting || this.feedbackTranscribing || this.feedbackSentimentLoading) return;
     this.abortFeedbackSpeech();
+    this.clearFeedbackSentimentDebounce();
     this.feedbackModalOpen = false;
     this.feedbackTargetEventId = null;
     this.feedbackTargetEventName = '';
@@ -1768,10 +1966,19 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
     this.feedbackComment = '';
     this.feedbackError = '';
     this.feedbackSpeechStatus = '';
+    this.resetFeedbackSentiment();
   }
 
   setFeedbackRating(rating: number): void {
     this.feedbackRating = rating;
+    this.clearFeedbackSentimentDebounce();
+    this.resetFeedbackSentiment();
+  }
+
+  onFeedbackCommentInput(value: string): void {
+    this.feedbackComment = value;
+    this.resetFeedbackSentiment();
+    this.scheduleFeedbackSentimentAnalysis();
   }
 
   canUseFeedbackSpeech(): boolean {
@@ -1923,6 +2130,7 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
       const mergedComment = `${this.feedbackComment.trimEnd()}${spacer}${transcript}`.trim();
       this.feedbackComment = mergedComment.slice(0, 1000);
       this.feedbackSpeechStatus = 'Transcript added to your comment.';
+      this.resetFeedbackSentiment();
 
       if (mergedComment.length > 1000) {
         this.feedbackError = 'Part of the transcript was trimmed to keep the comment under 1000 characters.';
@@ -1939,7 +2147,7 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
   }
 
   async submitFeedback(): Promise<void> {
-    if (this.feedbackSubmitting || this.feedbackRecording || this.feedbackTranscribing || !this.selectedStudentId || !this.feedbackTargetEventId) return;
+    if (this.feedbackSubmitting || this.feedbackRecording || this.feedbackTranscribing || this.feedbackSentimentLoading || !this.selectedStudentId || !this.feedbackTargetEventId) return;
 
     const trimmedComment = this.feedbackComment.trim();
     if (this.feedbackRating < 1 || this.feedbackRating > 5) {
@@ -1958,7 +2166,8 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
       studentId: this.selectedStudentId,
       eventId: this.feedbackTargetEventId,
       rating: this.feedbackRating,
-      comment: trimmedComment
+      comment: trimmedComment,
+      sentimentLabel: this.feedbackSentimentLabel || null
     };
 
     try {
@@ -1991,6 +2200,97 @@ export class CalendarComponent implements AfterViewInit, OnDestroy {
         : error?.error?.message || error?.message || 'Feedback could not be saved.';
     } finally {
       this.feedbackSubmitting = false;
+    }
+  }
+
+  async analyzeFeedbackSentiment(): Promise<void> {
+    if (this.feedbackSubmitting || this.feedbackRecording || this.feedbackTranscribing || this.feedbackSentimentLoading) return;
+
+    const trimmedComment = this.feedbackComment.trim();
+    if (!trimmedComment) {
+      this.feedbackError = 'Please write a comment before analyzing sentiment.';
+      this.resetFeedbackSentiment();
+      return;
+    }
+
+    this.feedbackError = '';
+    this.feedbackSentimentLoading = true;
+    const requestSeq = ++this.feedbackSentimentRequestSeq;
+
+    try {
+      const response = await firstValueFrom(
+        this.http.post<SentimentPredictionResponse>(`${this.pythonSentimentBaseUrl}/predict`, {
+          comment: trimmedComment
+        })
+      );
+      if (requestSeq !== this.feedbackSentimentRequestSeq) {
+        return;
+      }
+
+      this.feedbackSentimentLabel = String(response?.label || '').toLowerCase();
+      this.feedbackSentimentScores = response?.scores || {};
+      this.feedbackSentimentSummary = this.buildFeedbackSentimentSummary(this.feedbackSentimentLabel);
+      this.feedbackSentimentLastAnalyzedComment = trimmedComment;
+    } catch (error: any) {
+      console.error('Failed to analyze feedback sentiment', error);
+      this.feedbackError = typeof error?.error === 'string'
+        ? error.error
+        : error?.error?.message || error?.message || 'Sentiment analysis could not be completed.';
+      this.resetFeedbackSentiment();
+    } finally {
+      if (requestSeq === this.feedbackSentimentRequestSeq) {
+        this.feedbackSentimentLoading = false;
+      }
+    }
+  }
+
+  getFeedbackSentimentEntries(): Array<{ key: string; value: number }> {
+    return Object.entries(this.feedbackSentimentScores)
+      .sort((left, right) => right[1] - left[1])
+      .map(([key, value]) => ({ key, value }));
+  }
+
+  private resetFeedbackSentiment(): void {
+    this.feedbackSentimentLabel = '';
+    this.feedbackSentimentSummary = '';
+    this.feedbackSentimentScores = {};
+    this.feedbackSentimentLoading = false;
+    this.feedbackSentimentLastAnalyzedComment = '';
+  }
+
+  private scheduleFeedbackSentimentAnalysis(): void {
+    this.clearFeedbackSentimentDebounce();
+
+    const trimmedComment = this.feedbackComment.trim();
+    if (!trimmedComment || this.feedbackSubmitting || this.feedbackRecording || this.feedbackTranscribing) {
+      return;
+    }
+
+    this.feedbackSentimentDebounceTimer = window.setTimeout(() => {
+      this.feedbackSentimentDebounceTimer = null;
+      if (this.feedbackComment.trim() === trimmedComment && trimmedComment !== this.feedbackSentimentLastAnalyzedComment) {
+        void this.analyzeFeedbackSentiment();
+      }
+    }, CalendarComponent.feedbackSentimentDebounceMs);
+  }
+
+  private clearFeedbackSentimentDebounce(): void {
+    if (this.feedbackSentimentDebounceTimer) {
+      clearTimeout(this.feedbackSentimentDebounceTimer);
+      this.feedbackSentimentDebounceTimer = null;
+    }
+  }
+
+  private buildFeedbackSentimentSummary(label: string): string {
+    switch (label) {
+      case 'positive':
+        return 'Your comment sounds positive overall.';
+      case 'negative':
+        return 'Your comment sounds negative overall.';
+      case 'neutral':
+        return 'Your comment sounds neutral or mixed.';
+      default:
+        return '';
     }
   }
 
@@ -2268,12 +2568,19 @@ interface StudentFeedback {
   eventId: number;
   rating: number;
   comment: string;
+  sentimentLabel?: string;
   dateCreation: string;
   statut: string;
 }
 
 interface SpeechTranscriptionResponse {
   text: string;
+}
+
+interface SentimentPredictionResponse {
+  comment: string;
+  label: string;
+  scores: Record<string, number>;
 }
 
 type EventTypeKey = 'WEBINAIRE' | 'FORMATION' | 'ATELIER' | 'HACKATHON';

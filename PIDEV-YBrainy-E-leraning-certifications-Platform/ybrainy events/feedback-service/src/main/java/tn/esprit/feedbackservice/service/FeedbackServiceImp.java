@@ -73,6 +73,7 @@ public class FeedbackServiceImp implements IFeedbackService {
         feedback.setEventId(dto.eventId());
         feedback.setRating(dto.rating());
         feedback.setComment(dto.comment());
+        feedback.setSentimentLabel(normalizeSentimentLabel(dto.sentimentLabel()));
         feedback.setDateCreation(LocalDateTime.now());
         feedback.setStatut(FeedbackStatut.PUBLIE);
 
@@ -100,6 +101,7 @@ public class FeedbackServiceImp implements IFeedbackService {
 
         existing.setRating(dto.rating());
         existing.setComment(dto.comment());
+        existing.setSentimentLabel(normalizeSentimentLabel(dto.sentimentLabel()));
         return feedbackRepository.save(existing);
     }
 
@@ -204,5 +206,24 @@ public class FeedbackServiceImp implements IFeedbackService {
                     HttpStatus.BAD_REQUEST, "Comment must not exceed 1000 characters."
             );
         }
+    }
+
+    private String normalizeSentimentLabel(String sentimentLabel) {
+        if (sentimentLabel == null) {
+            return null;
+        }
+
+        String normalized = sentimentLabel.trim().toLowerCase();
+        if (normalized.isBlank()) {
+            return null;
+        }
+
+        return switch (normalized) {
+            case "positive", "neutral", "negative" -> normalized;
+            default -> throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "sentimentLabel must be one of: positive, neutral, negative."
+            );
+        };
     }
 }

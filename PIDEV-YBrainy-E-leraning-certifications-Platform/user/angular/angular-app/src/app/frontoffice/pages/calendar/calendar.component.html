@@ -126,9 +126,26 @@
       </div>
     </div>
 
-    <label class="feedback-comment-label" for="feedbackComment">Comment</label>
+    <div class="feedback-comment-heading">
+      <label class="feedback-comment-label" for="feedbackComment">Comment</label>
+      <span
+        class="feedback-inline-sentiment-badge"
+        *ngIf="feedbackSentimentLabel"
+        [ngClass]="feedbackSentimentLabel">
+        {{ feedbackSentimentLabel | titlecase }}
+      </span>
+    </div>
     <div class="feedback-comment-toolbar">
       <span class="feedback-speech-status" *ngIf="feedbackSpeechStatus">{{ feedbackSpeechStatus }}</span>
+      <div class="feedback-toolbar-actions">
+        <button
+          type="button"
+          class="feedback-sentiment-btn"
+          (click)="analyzeFeedbackSentiment()"
+          [disabled]="feedbackSubmitting || feedbackTranscribing || feedbackRecording || feedbackSentimentLoading">
+          {{ feedbackSentimentLoading ? 'Analyzing...' : 'Analyze Sentiment' }}
+        </button>
+      </div>
       <button
         type="button"
         class="feedback-speech-btn"
@@ -149,21 +166,33 @@
       id="feedbackComment"
       class="feedback-comment"
       [value]="feedbackComment"
-      (input)="feedbackComment = $any($event.target).value"
+      (input)="onFeedbackCommentInput($any($event.target).value)"
       maxlength="1000"
       rows="6"
       placeholder="Share what stood out, what was useful, and how the event could improve."
       [disabled]="feedbackSubmitting || feedbackTranscribing"></textarea>
+    <div class="feedback-sentiment-panel" *ngIf="feedbackSentimentLabel">
+      <div class="feedback-sentiment-header">
+        <span class="feedback-sentiment-chip" [ngClass]="feedbackSentimentLabel">{{ feedbackSentimentLabel | titlecase }}</span>
+        <span class="feedback-sentiment-summary">{{ feedbackSentimentSummary }}</span>
+      </div>
+      <div class="feedback-sentiment-scores">
+        <div class="feedback-sentiment-score" *ngFor="let entry of getFeedbackSentimentEntries()">
+          <span>{{ entry.key | titlecase }}</span>
+          <strong>{{ entry.value | number:'1.2-2' }}</strong>
+        </div>
+      </div>
+    </div>
     <div class="feedback-meta-row">
       <span>{{ feedbackComment.length }}/1000</span>
       <span *ngIf="feedbackError" class="feedback-error">{{ feedbackError }}</span>
     </div>
 
     <div class="register-confirm-actions feedback-actions">
-      <button type="button" class="register-confirm-back" (click)="closeFeedbackModal()" [disabled]="feedbackSubmitting || feedbackTranscribing">
+      <button type="button" class="register-confirm-back" (click)="closeFeedbackModal()" [disabled]="feedbackSubmitting || feedbackTranscribing || feedbackSentimentLoading">
         Back
       </button>
-      <button type="button" class="register-confirm-yes feedback-submit" (click)="submitFeedback()" [disabled]="feedbackSubmitting || feedbackRecording || feedbackTranscribing">
+      <button type="button" class="register-confirm-yes feedback-submit" (click)="submitFeedback()" [disabled]="feedbackSubmitting || feedbackRecording || feedbackTranscribing || feedbackSentimentLoading">
         {{ feedbackSubmitting ? 'Saving...' : 'Submit Feedback' }}
       </button>
     </div>

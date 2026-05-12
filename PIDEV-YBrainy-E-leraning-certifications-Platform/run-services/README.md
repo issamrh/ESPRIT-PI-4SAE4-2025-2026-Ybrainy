@@ -71,6 +71,7 @@ Module defaults:
 - Payment: gateway `8091`, cart `8954`, payment `8095`, finance `8995`, scraper `8093`, Angular `4201`
 - Courses: course `8172`, quiz `8173`, ML `5000`, gaze `5001`, talking-head `8765`, gateway `8170`
 - Events: event `9001`, inscription `9002`, user `9003`, feedback `9004`
+- Events ML: FastAPI inference service `9010`
 
 Some modules share default ports. If a port is busy, pass another one:
 
