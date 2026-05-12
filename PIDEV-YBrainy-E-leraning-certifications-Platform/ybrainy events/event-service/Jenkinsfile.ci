@@ -39,25 +39,17 @@ pipeline {
 
         stage('Build') {
             steps {
-                script {
-                    def workspacePath = env.WORKSPACE.replace('\\', '/')
-                    def repoDir = "/mnt/${workspacePath.substring(0, 1).toLowerCase()}${workspacePath.substring(2)}"
-                    bat """wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl event-service -am clean package -DskipTests" """
-                }
+                bat """pushd "${env.WORKSPACE}\\ybrainy events" && wsl bash -lc "mvn -f pom.xml -pl event-service -am clean package -DskipTests" """
             }
         }
 
         stage('Tests') {
             steps {
-                script {
-                    def workspacePath = env.WORKSPACE.replace('\\', '/')
-                    def repoDir = "/mnt/${workspacePath.substring(0, 1).toLowerCase()}${workspacePath.substring(2)}"
-                    bat """wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl event-service test" """
-                }
+                bat """pushd "${env.WORKSPACE}\\ybrainy events" && wsl bash -lc "mvn -f pom.xml -pl event-service test" """
             }
             post {
                 always {
-                    junit 'event-service/target/surefire-reports/*.xml'
+                    junit allowEmptyResults: true, testResults: 'ybrainy events/event-service/target/surefire-reports/*.xml'
                 }
             }
         }
@@ -65,13 +57,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    script {
-                        def workspacePath = env.WORKSPACE.replace('\\', '/')
-                        def repoDir = "/mnt/${workspacePath.substring(0, 1).toLowerCase()}${workspacePath.substring(2)}"
-                        bat """
-                        wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl event-service -am sonar:sonar -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=%SONAR_TOKEN% -Dsonar.projectKey=event-service"
-                        """
-                    }
+                    bat """pushd "${env.WORKSPACE}\\ybrainy events" && wsl bash -lc "mvn -f pom.xml -pl event-service -am sonar:sonar -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=%SONAR_TOKEN% -Dsonar.projectKey=event-service" """
                 }
             }
         }
@@ -83,16 +69,12 @@ pipeline {
                     usernameVariable: 'DOCKER_USER_LOGIN',
                     passwordVariable: 'DOCKER_PASSWORD'
                 )]) {
-                    script {
-                        def workspacePath = env.WORKSPACE.replace('\\', '/')
-                        def repoDir = "/mnt/${workspacePath.substring(0, 1).toLowerCase()}${workspacePath.substring(2)}"
-                        bat """
-                        wsl bash -lc "cd '${repoDir}' && docker build -f event-service/Dockerfile -t ${IMAGE_NAME}:${DOCKER_TAG} . && docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest"
-                        echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
-                        wsl docker push ${IMAGE_NAME}:${DOCKER_TAG}
-                        wsl docker push ${IMAGE_NAME}:latest
-                        """
-                    }
+                    bat """
+                    pushd "${env.WORKSPACE}\\ybrainy events" && wsl bash -lc "docker build -f event-service/Dockerfile -t ${IMAGE_NAME}:${DOCKER_TAG} . && docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest"
+                    echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
+                    wsl docker push ${IMAGE_NAME}:${DOCKER_TAG}
+                    wsl docker push ${IMAGE_NAME}:latest
+                    """
                 }
             }
         }
