@@ -1,10 +1,10 @@
-def toWslPath(String windowsPath) {
-    def normalized = windowsPath.replace('\\', '/')
-    return "/mnt/${normalized[0].toLowerCase()}${normalized.substring(2)}"
-}
-
 pipeline {
     agent any
+
+    tools {
+        maven 'M2_HOME'
+        jdk   'JAVA_Home'
+    }
 
     environment {
         GIT_CREDENTIALS = 'ybrainy-token'
@@ -17,6 +17,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout([
@@ -43,37 +44,59 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Maven Clean') {
             steps {
-                script {
-                    def repoDir = "${toWslPath(env.WORKSPACE)}/ybrainy events"
-                    bat """wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl event-service -am clean package -DskipTests" """
+                dir("${env.WORKSPACE}/ybrainy events/event-service") {
+                    bat 'wsl mvn clean'
                 }
             }
         }
 
-        stage('Tests') {
+        stage('Build') {
             steps {
-                script {
-                    def repoDir = "${toWslPath(env.WORKSPACE)}/ybrainy events"
-                    bat """wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl event-service test" """
+                dir("${env.WORKSPACE}/ybrainy events/event-service") {
+                    bat 'wsl mvn package -DskipTests'
                 }
             }
-            post {
-                always {
-                    junit 'ybrainy events/event-service/target/surefire-reports/*.xml'
+        }
+
+        stage('Unit Tests + JaCoCo Coverage') {
+            steps {
+                dir("${env.WORKSPACE}/ybrainy events/event-service") {
+                    bat 'wsl mvn verify'
+                    junit allowEmptyResults: true,
+                          testResults: 'target/surefire-reports/*.xml'
+                    jacoco execPattern:      'target/jacoco.exec',
+                           classPattern:     'target/classes',
+                           sourcePattern:    'src/main/java',
+                           inclusionPattern: '**/*.class'
                 }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
-                withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
-                    script {
-                        def repoDir = "${toWslPath(env.WORKSPACE)}/ybrainy events"
-                        bat """
-                        wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl event-service -am sonar:sonar -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=%SONAR_TOKEN% -Dsonar.projectKey=event-service"
-                        """
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    withSonarQubeEnv('SonarQube') {
+                        dir("${env.WORKSPACE}/ybrainy events/event-service") {
+                            bat """
+                            wsl mvn sonar:sonar ^
+                              -Dsonar.host.url=${SONAR_HOST_URL} ^
+                              -Dsonar.login=%SONAR_AUTH_TOKEN% ^
+                              -Dsonar.projectKey=${SONAR_PROJECT} ^
+                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                            """
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
+                    timeout(time: 3, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: false
                     }
                 }
             }
@@ -86,10 +109,9 @@ pipeline {
                     usernameVariable: 'DOCKER_USER_LOGIN',
                     passwordVariable: 'DOCKER_PASSWORD'
                 )]) {
-                    script {
-                        def repoDir = "${toWslPath(env.WORKSPACE)}/ybrainy events"
+                    dir("${env.WORKSPACE}/ybrainy events/event-service") {
                         bat """
-                        wsl bash -lc "cd '${repoDir}' && docker build -f event-service/Dockerfile -t ${IMAGE_NAME}:${DOCKER_TAG} . && docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest"
+                        wsl docker build -t ${IMAGE_NAME}:${DOCKER_TAG} . && wsl docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest
                         echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
                         wsl docker push ${IMAGE_NAME}:${DOCKER_TAG}
                         wsl docker push ${IMAGE_NAME}:latest
@@ -105,15 +127,18 @@ pipeline {
                 archiveArtifacts artifacts: 'event-service-tag.txt'
             }
         }
+
     }
 
     post {
         success {
-            echo 'CI event-service reussi'
+            echo '========================================'
+            echo 'CI SUCCESS — event-service'
+            echo '========================================'
             build job: 'event-service-CD', wait: false
         }
         failure {
-            echo 'CI event-service echoue'
+            echo 'CI FAILED  — event-service — check Console Output'
         }
     }
 }
