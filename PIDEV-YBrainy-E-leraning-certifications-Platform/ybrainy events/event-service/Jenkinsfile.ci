@@ -34,7 +34,7 @@ pipeline {
 
         stage('Maven Clean') {
             steps {
-                dir('ybrainy events/event-service') {   // Relative path from workspace
+                dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/event-service') {
                     bat 'wsl mvn clean -DskipTests'
                 }
             }
@@ -42,7 +42,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                dir('ybrainy events/event-service') {
+                dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/event-service') {
                     bat 'wsl mvn package -DskipTests'
                 }
             }
@@ -50,7 +50,7 @@ pipeline {
 
         stage('Unit Tests + JaCoCo Coverage') {
             steps {
-                dir('ybrainy events/event-service') {
+                dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/event-service') {
                     bat 'wsl mvn verify'
                     junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
                     jacoco execPattern: 'target/jacoco.exec',
@@ -64,7 +64,7 @@ pipeline {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     withSonarQubeEnv('SonarQube') {
-                        dir('ybrainy events/event-service') {
+                        dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/event-service') {
                             bat """
                                 wsl mvn sonar:sonar ^
                                   -Dsonar.host.url=${SONAR_HOST_URL} ^
@@ -95,7 +95,7 @@ pipeline {
                     usernameVariable: 'DOCKER_USER_LOGIN',
                     passwordVariable: 'DOCKER_PASSWORD'
                 )]) {
-                    dir('ybrainy events/event-service') {
+                    dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/event-service') {
                         bat """
                             wsl docker build -t ${IMAGE_NAME}:${DOCKER_TAG} .
                             wsl docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest
