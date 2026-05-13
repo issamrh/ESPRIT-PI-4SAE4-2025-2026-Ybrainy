@@ -9,7 +9,7 @@ pipeline {
     environment {
         GIT_CREDENTIALS = 'github-token'
         DOCKER_USER = 'jjacem'
-        APP_NAME = 'event-service'
+        APP_NAME = 'inscription-service'
         IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
         DOCKER_TAG = "${BUILD_NUMBER}"
         SONAR_HOST_URL = 'http://127.0.0.1:42419'
@@ -46,7 +46,7 @@ pipeline {
             steps {
                 script {
                     def repoDir = "${toWslPath(env.WORKSPACE)}/ybrainy events"
-                    bat """wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl event-service -am clean package -DskipTests" """
+                    bat """wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl inscription-service -am clean package -DskipTests" """
                 }
             }
         }
@@ -55,12 +55,12 @@ pipeline {
             steps {
                 script {
                     def repoDir = "${toWslPath(env.WORKSPACE)}/ybrainy events"
-                    bat """wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl event-service test" """
+                    bat """wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl inscription-service test" """
                 }
             }
             post {
                 always {
-                    junit 'ybrainy events/event-service/target/surefire-reports/*.xml'
+                    junit 'ybrainy events/inscription-service/target/surefire-reports/*.xml'
                 }
             }
         }
@@ -71,7 +71,7 @@ pipeline {
                     script {
                         def repoDir = "${toWslPath(env.WORKSPACE)}/ybrainy events"
                         bat """
-                        wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl event-service -am sonar:sonar -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=%SONAR_TOKEN% -Dsonar.projectKey=event-service"
+                        wsl bash -lc "cd '${repoDir}' && mvn -f pom.xml -pl inscription-service -am sonar:sonar -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.login=%SONAR_TOKEN% -Dsonar.projectKey=inscription-service"
                         """
                     }
                 }
@@ -88,7 +88,7 @@ pipeline {
                     script {
                         def repoDir = "${toWslPath(env.WORKSPACE)}/ybrainy events"
                         bat """
-                        wsl bash -lc "cd '${repoDir}' && docker build -f event-service/Dockerfile -t ${IMAGE_NAME}:${DOCKER_TAG} . && docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest"
+                        wsl bash -lc "cd '${repoDir}' && docker build -f inscription-service/Dockerfile -t ${IMAGE_NAME}:${DOCKER_TAG} . && docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest"
                         echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
                         wsl docker push ${IMAGE_NAME}:${DOCKER_TAG}
                         wsl docker push ${IMAGE_NAME}:latest
@@ -100,19 +100,19 @@ pipeline {
 
         stage('Save build info for CD') {
             steps {
-                bat 'echo %DOCKER_TAG% > event-service-tag.txt'
-                archiveArtifacts artifacts: 'event-service-tag.txt'
+                bat 'echo %DOCKER_TAG% > inscription-service-tag.txt'
+                archiveArtifacts artifacts: 'inscription-service-tag.txt'
             }
         }
     }
 
     post {
         success {
-            echo 'CI event-service reussi'
-            build job: 'event-service-CD', wait: false
+            echo 'CI inscription-service reussi'
+            build job: 'inscription-service-CD', wait: false
         }
         failure {
-            echo 'CI event-service echoue'
+            echo 'CI inscription-service echoue'
         }
     }
 }

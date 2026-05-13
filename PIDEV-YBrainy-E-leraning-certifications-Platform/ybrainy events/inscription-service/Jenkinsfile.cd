@@ -1,0 +1,52 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_CREDENTIALS = 'github-token'
+        DOCKER_USER = 'jjacem'
+        APP_NAME = 'inscription-service'
+        IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: 'integration-final']],
+                    extensions: [
+                        [$class: 'CloneOption',
+                            depth: 1,
+                            shallow: true,
+                            timeout: 300,
+                            noTags: true
+                        ],
+                        [$class: 'SparseCheckoutPaths',
+                            sparseCheckoutPaths: [
+                                [$class: 'SparseCheckoutPath', path: 'ybrainy events/inscription-service/']
+                            ]
+                        ]
+                    ],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/issamrh/ESPRIT-PI-4SAE4-2025-2026-Ybrainy.git',
+                        credentialsId: "${GIT_CREDENTIALS}"
+                    ]]
+                ])
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                echo 'Deploiement de inscription-service...'
+                dir('ybrainy events/inscription-service') {
+                    bat 'wsl kubectl apply -f k8s/namespace.yaml'
+                    bat 'wsl kubectl apply -f k8s/configmap.yaml -n devops'
+                    bat 'wsl kubectl apply -f k8s/service.yaml -n devops'
+                    bat 'wsl kubectl apply -f k8s/deployment.yaml -n devops'
+                    bat 'wsl kubectl set image deployment/inscription-service inscription-service=${IMAGE_NAME}:latest -n devops'
+                    bat 'wsl kubectl get pods -n devops'
+                }
+            }
+        }
+    }
+}
