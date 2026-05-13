@@ -29,11 +29,6 @@ pipeline {
                             shallow: true,
                             timeout: 300,
                             noTags: true
-                        ],
-                        [$class: 'SparseCheckoutPaths',
-                            sparseCheckoutPaths: [
-                                [$class: 'SparseCheckoutPath', path: 'ybrainy events/']
-                            ]
                         ]
                     ],
                     userRemoteConfigs: [[
