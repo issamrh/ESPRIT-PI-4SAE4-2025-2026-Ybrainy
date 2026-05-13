@@ -99,13 +99,11 @@ pipeline {
                     usernameVariable: 'DOCKER_USER_LOGIN',
                     passwordVariable: 'DOCKER_PASSWORD'
                 )]) {
-                    dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/event-service') {
+                    dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events') {
                         bat """
-                            wsl docker build -t ${IMAGE_NAME}:${DOCKER_TAG} .
+                            wsl docker build -f event-service/Dockerfile -t ${IMAGE_NAME}:${DOCKER_TAG} .
                             wsl docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest
-                            
                             echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
-                            
                             wsl docker push ${IMAGE_NAME}:${DOCKER_TAG}
                             wsl docker push ${IMAGE_NAME}:latest
                         """
