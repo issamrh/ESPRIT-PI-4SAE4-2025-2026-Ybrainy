@@ -13,7 +13,7 @@ pipeline {
         IMAGE_NAME      = "${DOCKER_USER}/${APP_NAME}"
         DOCKER_TAG      = "${BUILD_NUMBER}"
         SONAR_PROJECT   = 'event-service'
-        SONAR_HOST_URL  = 'http://127.0.0.1:42419'
+        SONAR_HOST_URL  = 'http://localhost:9000'
     }
 
     stages {
