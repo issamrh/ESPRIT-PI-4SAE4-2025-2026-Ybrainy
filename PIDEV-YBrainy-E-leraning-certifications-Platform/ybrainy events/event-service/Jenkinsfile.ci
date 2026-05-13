@@ -1,39 +1,31 @@
 pipeline {
     agent any
-
+    
     tools {
         maven 'M2_HOME'
-        jdk   'JAVA_Home'
+        jdk 'JAVA_Home'
     }
-
+    
     environment {
         GIT_CREDENTIALS = 'ybrainy-token'
-        DOCKER_USER     = 'hos77'
-        APP_NAME        = 'event-service'
-        IMAGE_NAME      = "${DOCKER_USER}/${APP_NAME}"
-        DOCKER_TAG      = "${BUILD_NUMBER}"
-        SONAR_PROJECT   = 'event-service'
-        SONAR_HOST_URL  = 'http://localhost:9000'
+        DOCKER_USER      = 'hos77'
+        APP_NAME         = 'event-service'
+        IMAGE_NAME       = "${DOCKER_USER}/${APP_NAME}"
+        DOCKER_TAG       = "${BUILD_NUMBER}"
+        SONAR_PROJECT    = 'event-service'
+        SONAR_HOST_URL   = 'http://localhost:9000'
     }
 
     stages {
-
         stage('Checkout') {
             steps {
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: 'integration-final']],
-                    extensions: [
-                        [$class: 'CloneOption',
-                            depth: 1,
-                            shallow: true,
-                            timeout: 300,
-                            noTags: true
-                        ]
-                    ],
+                    extensions: [[$class: 'CloneOption', depth: 1, shallow: true, timeout: 300]],
                     userRemoteConfigs: [[
                         url: 'https://github.com/issamrh/ESPRIT-PI-4SAE4-2025-2026-Ybrainy.git',
-                        credentialsId: "${GIT_CREDENTIALS}"
+                        credentialsId: GIT_CREDENTIALS
                     ]]
                 ])
             }
@@ -41,15 +33,15 @@ pipeline {
 
         stage('Maven Clean') {
             steps {
-                dir("${env.WORKSPACE}/ybrainy events/event-service") {
-                    bat 'wsl mvn clean'
+                dir('ybrainy events/event-service') {   // Relative path from workspace
+                    bat 'wsl mvn clean -DskipTests'
                 }
             }
         }
 
         stage('Build') {
             steps {
-                dir("${env.WORKSPACE}/ybrainy events/event-service") {
+                dir('ybrainy events/event-service') {
                     bat 'wsl mvn package -DskipTests'
                 }
             }
@@ -57,14 +49,12 @@ pipeline {
 
         stage('Unit Tests + JaCoCo Coverage') {
             steps {
-                dir("${env.WORKSPACE}/ybrainy events/event-service") {
+                dir('ybrainy events/event-service') {
                     bat 'wsl mvn verify'
-                    junit allowEmptyResults: true,
-                          testResults: 'target/surefire-reports/*.xml'
-                    jacoco execPattern:      'target/jacoco.exec',
-                           classPattern:     'target/classes',
-                           sourcePattern:    'src/main/java',
-                           inclusionPattern: '*/.class'
+                    junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
+                    jacoco execPattern: 'target/jacoco.exec',
+                           classPattern: 'target/classes',
+                           sourcePattern: 'src/main/java'
                 }
             }
         }
@@ -73,13 +63,13 @@ pipeline {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     withSonarQubeEnv('SonarQube') {
-                        dir("${env.WORKSPACE}/ybrainy events/event-service") {
+                        dir('ybrainy events/event-service') {
                             bat """
-                            wsl mvn sonar:sonar ^
-                              -Dsonar.host.url=${SONAR_HOST_URL} ^
-                              -Dsonar.login=%SONAR_AUTH_TOKEN% ^
-                              -Dsonar.projectKey=${SONAR_PROJECT} ^
-                              -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+                                wsl mvn sonar:sonar ^
+                                  -Dsonar.host.url=${SONAR_HOST_URL} ^
+                                  -Dsonar.login=%SONAR_AUTH_TOKEN% ^
+                                  -Dsonar.projectKey=${SONAR_PROJECT} ^
+                                  -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
                             """
                         }
                     }
@@ -104,12 +94,15 @@ pipeline {
                     usernameVariable: 'DOCKER_USER_LOGIN',
                     passwordVariable: 'DOCKER_PASSWORD'
                 )]) {
-                    dir("${env.WORKSPACE}/ybrainy events/event-service") {
+                    dir('ybrainy events/event-service') {
                         bat """
-                        wsl docker build -t ${IMAGE_NAME}:${DOCKER_TAG} . && wsl docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest
-                        echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
-                        wsl docker push ${IMAGE_NAME}:${DOCKER_TAG}
-                        wsl docker push ${IMAGE_NAME}:latest
+                            wsl docker build -t ${IMAGE_NAME}:${DOCKER_TAG} .
+                            wsl docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest
+                            
+                            echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
+                            
+                            wsl docker push ${IMAGE_NAME}:${DOCKER_TAG}
+                            wsl docker push ${IMAGE_NAME}:latest
                         """
                     }
                 }
@@ -119,10 +112,9 @@ pipeline {
         stage('Save build info for CD') {
             steps {
                 bat 'echo %DOCKER_TAG% > event-service-tag.txt'
-                archiveArtifacts artifacts: 'event-service-tag.txt'
+                archiveArtifacts artifacts: 'event-service-tag.txt', allowEmptyArchive: true
             }
         }
-
     }
 
     post {
@@ -133,7 +125,7 @@ pipeline {
             build job: 'event-service-CD', wait: false
         }
         failure {
-            echo 'CI FAILED  — event-service — check Console Output'
+            echo 'CI FAILED — event-service — check Console Output'
         }
     }
 }
