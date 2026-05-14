@@ -4,9 +4,9 @@ metadata:
   name: feedback-service-config
 data:
   SERVER_PORT: "9004"
-  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql.devops.svc.cluster.local:3306/feedback_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC"
-  YBRAINY_EUREKA_URL: "http://eureka-service.devops.svc.cluster.local:8761/eureka/"
-  SPRING_RABBITMQ_HOST: "rabbitmq.devops.svc.cluster.local"
+  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql.ybrainy.svc.cluster.local:3306/feedback_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC"
+  YBRAINY_EUREKA_URL: "http://eureka-server.ybrainy.svc.cluster.local:8761/eureka/"
+  SPRING_RABBITMQ_HOST: "rabbitmq.ybrainy.svc.cluster.local"
   SPRING_RABBITMQ_PORT: "5672"
   SPRING_RABBITMQ_USERNAME: "guest"
-  ZIPKIN_URL: "http://zipkin.devops.svc.cluster.local:9411"
+  ZIPKIN_URL: "http://zipkin.ybrainy.svc.cluster.local:9411"
