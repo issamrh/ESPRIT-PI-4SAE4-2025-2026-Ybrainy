@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: inscription-service
-          image: __IMAGE__
+          image: hos77/inscription-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 9002
