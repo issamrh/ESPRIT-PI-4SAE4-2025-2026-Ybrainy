@@ -2,48 +2,76 @@ pipeline {
     agent any
 
     environment {
-        GIT_CREDENTIALS = 'github-token'
-        DOCKER_USER = 'jjacem'
-        APP_NAME = 'event-service'
-        IMAGE_NAME = "${DOCKER_USER}/${APP_NAME}"
+        GIT_CREDENTIALS = 'ybrainy-token'
+        DOCKER_USER     = 'hos77'
+        APP_NAME        = 'event-service'
+        IMAGE_NAME      = "${DOCKER_USER}/${APP_NAME}"
+        K8S_NAMESPACE   = 'devops'
     }
 
     stages {
+
         stage('Checkout') {
             steps {
+                deleteDir()
+
                 checkout([
                     $class: 'GitSCM',
                     branches: [[name: 'integration-final']],
-                    extensions: [
-                        [$class: 'CloneOption',
-                            depth: 1,
-                            shallow: true,
-                            timeout: 300,
-                            noTags: true
-                        ],
-                        [$class: 'SparseCheckoutPaths',
-                            sparseCheckoutPaths: [
-                                [$class: 'SparseCheckoutPath', path: 'ybrainy events/event-service/']
-                            ]
-                        ]
-                    ],
+                    extensions: [[$class: 'CloneOption', depth: 1, shallow: true, timeout: 300]],
                     userRemoteConfigs: [[
                         url: 'https://github.com/issamrh/ESPRIT-PI-4SAE4-2025-2026-Ybrainy.git',
-                        credentialsId: "${GIT_CREDENTIALS}"
+                        credentialsId: GIT_CREDENTIALS
                     ]]
                 ])
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Read Docker Tag') {
             steps {
-                echo 'Deploiement de event-service...'
-                dir('ybrainy events/event-service') {
-                    bat 'wsl kubectl apply -f k8s/event -n devops'
-                    bat 'wsl kubectl set image deployment/event-service event-service=${IMAGE_NAME}:latest -n devops'
-                    bat 'wsl kubectl get pods -n devops'
+                copyArtifacts(
+                    projectName: 'event-service-CI',
+                    selector: lastSuccessful()
+                )
+
+                script {
+                    env.DOCKER_TAG = readFile('event-service-tag.txt').trim()
+
+                    echo "Docker Tag: ${DOCKER_TAG}"
                 }
             }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+
+                dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events') {
+
+                    bat """
+                        wsl kubectl apply -f event-service/k8s/event -n ${K8S_NAMESPACE}
+
+                        wsl kubectl set image deployment/event-service ^
+                        event-service=${IMAGE_NAME}:${DOCKER_TAG} ^
+                        -n ${K8S_NAMESPACE}
+
+                        wsl kubectl rollout status deployment/event-service -n ${K8S_NAMESPACE}
+
+                        wsl kubectl get pods -n ${K8S_NAMESPACE}
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '========================================'
+            echo 'CD SUCCESS — event-service deployed'
+            echo '========================================'
+        }
+
+        failure {
+            echo 'CD FAILED — check Console Output'
         }
     }
 }
