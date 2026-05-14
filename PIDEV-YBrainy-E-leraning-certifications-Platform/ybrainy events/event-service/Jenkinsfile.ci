@@ -125,7 +125,9 @@ pipeline {
             echo '========================================'
             echo 'CI SUCCESS — event-service'
             echo '========================================'
-            build job: 'event-service-CD', wait: false
+            build job: 'event-service-CD',
+                  parameters: [string(name: 'DOCKER_TAG', value: "${env.BUILD_NUMBER}")],
+                  wait: false
         }
         failure {
             echo 'CI FAILED — event-service — check Console Output'
