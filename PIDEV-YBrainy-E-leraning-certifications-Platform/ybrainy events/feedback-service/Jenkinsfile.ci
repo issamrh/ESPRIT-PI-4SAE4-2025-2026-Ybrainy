@@ -9,10 +9,10 @@ pipeline {
     environment {
         GIT_CREDENTIALS = 'ybrainy-token'
         DOCKER_USER     = 'hos77'
-        APP_NAME        = 'inscription-service'
+        APP_NAME        = 'feedback-service'
         IMAGE_NAME      = "${DOCKER_USER}/${APP_NAME}"
         DOCKER_TAG      = "${BUILD_NUMBER}"
-        SONAR_PROJECT   = 'inscription-service'
+        SONAR_PROJECT   = 'feedback-service'
         SONAR_HOST_URL  = 'http://localhost:9000'
     }
 
@@ -35,7 +35,7 @@ pipeline {
 
         stage('Maven Clean') {
             steps {
-                dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/inscription-service') {
+                dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/feedback-service') {
                     bat 'wsl mvn clean -DskipTests'
                 }
             }
@@ -43,7 +43,7 @@ pipeline {
 
         stage('Build') {
             steps {
-                dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/inscription-service') {
+                dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/feedback-service') {
                     bat 'wsl mvn package -DskipTests'
                 }
             }
@@ -51,7 +51,7 @@ pipeline {
 
         stage('Unit Tests + JaCoCo Coverage') {
             steps {
-                dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/inscription-service') {
+                dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/feedback-service') {
                     bat 'wsl mvn verify'
                     junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
                     jacoco execPattern:   'target/jacoco.exec',
@@ -65,7 +65,7 @@ pipeline {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'UNSTABLE') {
                     withSonarQubeEnv('SonarQube') {
-                        dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/inscription-service') {
+                        dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/feedback-service') {
                             bat """
                                 wsl mvn sonar:sonar ^
                                   -Dsonar.host.url=${SONAR_HOST_URL} ^
@@ -102,7 +102,7 @@ pipeline {
                 )]) {
                     dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events') {
                         bat """
-                            wsl docker build -f inscription-service/Dockerfile -t ${IMAGE_NAME}:${DOCKER_TAG} .
+                            wsl docker build -f feedback-service/Dockerfile -t ${IMAGE_NAME}:${DOCKER_TAG} .
                             wsl docker tag ${IMAGE_NAME}:${DOCKER_TAG} ${IMAGE_NAME}:latest
                             echo %DOCKER_PASSWORD% | wsl docker login -u %DOCKER_USER_LOGIN% --password-stdin
                             wsl docker push ${IMAGE_NAME}:${DOCKER_TAG}
@@ -115,8 +115,8 @@ pipeline {
 
         stage('Save build info for CD') {
             steps {
-                bat 'echo %DOCKER_TAG% > inscription-service-tag.txt'
-                archiveArtifacts artifacts: 'inscription-service-tag.txt', allowEmptyArchive: true
+                bat 'echo %DOCKER_TAG% > feedback-service-tag.txt'
+                archiveArtifacts artifacts: 'feedback-service-tag.txt', allowEmptyArchive: true
             }
         }
     }
@@ -124,14 +124,14 @@ pipeline {
     post {
         success {
             echo '========================================'
-            echo 'CI SUCCESS — inscription-service'
+            echo 'CI SUCCESS — feedback-service'
             echo '========================================'
-            build job: 'inscription-service-CD',
+            build job: 'feedback-service-CD',
                   parameters: [string(name: 'DOCKER_TAG', value: "${env.BUILD_NUMBER}")],
                   wait: false
         }
         failure {
-            echo 'CI FAILED — inscription-service — check Console Output'
+            echo 'CI FAILED — feedback-service — check Console Output'
         }
     }
 }

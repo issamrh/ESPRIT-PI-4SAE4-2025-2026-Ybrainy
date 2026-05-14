@@ -8,7 +8,7 @@ pipeline {
     environment {
         GIT_CREDENTIALS = 'ybrainy-token'
         DOCKER_USER     = 'hos77'
-        APP_NAME        = 'inscription-service'
+        APP_NAME        = 'feedback-service'
         IMAGE_NAME      = "${DOCKER_USER}/${APP_NAME}"
         K8S_NAMESPACE   = 'devops'
     }
@@ -35,13 +35,13 @@ pipeline {
                 echo "Deploying image ${IMAGE_NAME}:${params.DOCKER_TAG}"
                 dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events') {
                     bat """
-                        wsl kubectl apply -f inscription-service/k8s -n ${K8S_NAMESPACE}
+                        wsl kubectl apply -f feedback-service/k8s -n ${K8S_NAMESPACE}
 
-                        wsl kubectl set image deployment/inscription-service ^
-                        inscription-service=${IMAGE_NAME}:${params.DOCKER_TAG} ^
+                        wsl kubectl set image deployment/feedback-service ^
+                        feedback-service=${IMAGE_NAME}:${params.DOCKER_TAG} ^
                         -n ${K8S_NAMESPACE}
 
-                        wsl kubectl rollout status deployment/inscription-service -n ${K8S_NAMESPACE}
+                        wsl kubectl rollout status deployment/feedback-service -n ${K8S_NAMESPACE}
 
                         wsl kubectl get pods -n ${K8S_NAMESPACE}
                     """
@@ -53,7 +53,7 @@ pipeline {
     post {
         success {
             echo '========================================'
-            echo "CD SUCCESS — inscription-service:${params.DOCKER_TAG} deployed"
+            echo "CD SUCCESS — feedback-service:${params.DOCKER_TAG} deployed"
             echo '========================================'
         }
         failure {
