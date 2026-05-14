@@ -35,7 +35,7 @@ pipeline {
                 echo "Deploying image ${IMAGE_NAME}:${params.DOCKER_TAG}"
                 dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events') {
                     bat """
-                        wsl kubectl apply -f event-service/k8s/event -n ${K8S_NAMESPACE}
+                        wsl kubectl apply -f event-service/k8s -n ${K8S_NAMESPACE}
 
                         wsl kubectl set image deployment/event-service ^
                         event-service=${IMAGE_NAME}:${params.DOCKER_TAG} ^
