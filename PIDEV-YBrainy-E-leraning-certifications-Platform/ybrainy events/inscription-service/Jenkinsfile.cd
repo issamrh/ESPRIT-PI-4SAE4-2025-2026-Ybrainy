@@ -15,21 +15,6 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
-            steps {
-                deleteDir()
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: 'integration-final']],
-                    extensions: [[$class: 'CloneOption', depth: 1, shallow: true, timeout: 300]],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/issamrh/ESPRIT-PI-4SAE4-2025-2026-Ybrainy.git',
-                        credentialsId: GIT_CREDENTIALS
-                    ]]
-                ])
-            }
-        }
-
         stage('Deploy to Kubernetes') {
             steps {
                 echo "Deploying image ${IMAGE_NAME}:${params.DOCKER_TAG}"

@@ -12,6 +12,7 @@
     </parent>
 
     <groupId>com.esprit</groupId>
+    
     <artifactId>comment-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>comment-service</name>
