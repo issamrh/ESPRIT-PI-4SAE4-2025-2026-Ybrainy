@@ -48,6 +48,20 @@ pipeline {
                 }
             }
         }
+
+        stage('Update Monitoring') {
+            steps {
+                dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events') {
+                    bat """
+                        wsl kubectl apply -f monitoring/prometheus-config.yaml
+                        wsl kubectl apply -f monitoring/grafana-dashboard-provider.yaml
+                        wsl kubectl apply -f monitoring/grafana-events-dashboard.yaml
+                        wsl kubectl rollout restart deployment/prometheus -n monitoring
+                        wsl kubectl rollout restart deployment/grafana -n monitoring
+                    """
+                }
+            }
+        }
     }
 
     post {

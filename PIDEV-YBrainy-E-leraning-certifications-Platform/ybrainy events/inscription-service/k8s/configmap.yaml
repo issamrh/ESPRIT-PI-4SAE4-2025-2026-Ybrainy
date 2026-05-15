@@ -10,4 +10,7 @@ data:
   SPRING_RABBITMQ_PORT: "5672"
   SPRING_RABBITMQ_USERNAME: "guest"
   ZIPKIN_URL: "http://zipkin.ybrainy.svc.cluster.local:9411"
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,prometheus,metrics"
+  MANAGEMENT_ENDPOINT_PROMETHEUS_ENABLED: "true"
+  MANAGEMENT_METRICS_TAGS_APPLICATION: "inscription-service"
   YBRAINY_LOGO_PATH: "/app/assets/logos.svg"
