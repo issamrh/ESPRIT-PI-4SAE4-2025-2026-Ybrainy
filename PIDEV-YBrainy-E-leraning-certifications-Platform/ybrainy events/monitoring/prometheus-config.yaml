@@ -15,6 +15,31 @@ data:
         static_configs:
           - targets: ['localhost:9090']
 
+      - job_name: 'thread-service'
+        metrics_path: /actuator/prometheus
+        static_configs:
+          - targets: ['thread-service.ybrainy.svc.cluster.local:8181']
+
+      - job_name: 'post-service'
+        metrics_path: /actuator/prometheus
+        static_configs:
+          - targets: ['post-service.ybrainy.svc.cluster.local:8182']
+
+      - job_name: 'comment-service'
+        metrics_path: /actuator/prometheus
+        static_configs:
+          - targets: ['comment-service.ybrainy.svc.cluster.local:8183']
+
+      - job_name: 'category-service'
+        metrics_path: /actuator/prometheus
+        static_configs:
+          - targets: ['category-service.ybrainy.svc.cluster.local:8180']
+
+      - job_name: 'messaging-service'
+        metrics_path: /actuator/prometheus
+        static_configs:
+          - targets: ['messaging-service.ybrainy.svc.cluster.local:8184']
+
       - job_name: 'event-service'
         metrics_path: /actuator/prometheus
         static_configs:
