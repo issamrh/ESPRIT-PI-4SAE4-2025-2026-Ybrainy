@@ -34,7 +34,7 @@ pipeline {
             }
         }
 
-        stage('Update Monitoring') {
+        stage('Monitoring') {
             steps {
                 dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events') {
                     bat """

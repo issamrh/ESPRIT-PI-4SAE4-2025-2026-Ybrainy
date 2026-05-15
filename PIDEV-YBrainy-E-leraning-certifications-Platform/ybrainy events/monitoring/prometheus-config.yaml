@@ -54,3 +54,8 @@ data:
         metrics_path: /actuator/prometheus
         static_configs:
           - targets: ['feedback-service.ybrainy.svc.cluster.local:9004']
+
+      - job_name: 'jenkins'
+        metrics_path: /prometheus
+        static_configs:
+          - targets: ['host.docker.internal:8080']
