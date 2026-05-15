@@ -53,6 +53,7 @@ pipeline {
             steps {
                 dir('PIDEV-YBrainy-E-leraning-certifications-Platform/ybrainy events/feedback-service') {
                     bat 'wsl mvn verify'
+                    bat 'wsl cp /tmp/feedback-service-jacoco.exec target/jacoco.exec'
                     junit allowEmptyResults: true, testResults: 'target/surefire-reports/*.xml'
                     jacoco execPattern:   'target/jacoco.exec',
                            classPattern:  'target/classes',
