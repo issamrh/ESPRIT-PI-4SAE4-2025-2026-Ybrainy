@@ -10,7 +10,7 @@ pipeline {
         DOCKER_USER     = 'hos77'
         APP_NAME        = 'feedback-service'
         IMAGE_NAME      = "${DOCKER_USER}/${APP_NAME}"
-        K8S_NAMESPACE   = 'devops'
+        K8S_NAMESPACE   = 'ybrainy'
     }
 
     stages {
@@ -41,7 +41,7 @@ pipeline {
                         feedback-service=${IMAGE_NAME}:${params.DOCKER_TAG} ^
                         -n ${K8S_NAMESPACE}
 
-                        wsl kubectl rollout status deployment/feedback-service -n ${K8S_NAMESPACE}
+                        wsl kubectl rollout status deployment/feedback-service -n ${K8S_NAMESPACE} --timeout=5m
 
                         wsl kubectl get pods -n ${K8S_NAMESPACE}
                     """
