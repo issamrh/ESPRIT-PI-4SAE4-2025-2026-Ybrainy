@@ -4,7 +4,7 @@ metadata:
   name: event-service-config
 data:
   SERVER_PORT: "9001"
-  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql.ybrainy.svc.cluster.local:3306/event_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC"
+  SPRING_DATASOURCE_URL: "jdbc:mysql://mysql.ybrainy.svc.cluster.local:3306/event_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
   YBRAINY_EUREKA_URL: "http://eureka-server.ybrainy.svc.cluster.local:8761/eureka/"
   SPRING_RABBITMQ_HOST: "rabbitmq.ybrainy.svc.cluster.local"
   ZIPKIN_URL: "http://zipkin.ybrainy.svc.cluster.local:9411"
