@@ -1,0 +1,10 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: ybrainy-events
+  namespace: flux-system
+spec:
+  interval: 1m
+  ref:
+    branch: integration-final
+  url: https://github.com/issamrh/ESPRIT-PI-4SAE4-2025-2026-Ybrainy.git

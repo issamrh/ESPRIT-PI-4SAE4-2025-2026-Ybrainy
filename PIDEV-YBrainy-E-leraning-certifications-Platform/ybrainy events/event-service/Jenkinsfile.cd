@@ -6,16 +6,15 @@ pipeline {
     }
 
     environment {
-        GIT_CREDENTIALS = 'ybrainy-token'
-        DOCKER_USER     = 'hos77'
-        APP_NAME        = 'event-service'
-        IMAGE_NAME      = "${DOCKER_USER}/${APP_NAME}"
-        K8S_NAMESPACE   = 'ybrainy'
+        GIT_CREDENTIALS    = 'ybrainy-token'
+        DOCKER_USER        = 'hos77'
+        APP_NAME           = 'event-service'
+        IMAGE_NAME         = "${DOCKER_USER}/${APP_NAME}"
+        K8S_NAMESPACE      = 'ybrainy'
+        NOTIFICATION_EMAIL = 'jacemjouili@gmail.com'
     }
 
     stages {
-
-
         stage('Deploy to Kubernetes') {
             steps {
                 echo "Deploying image ${IMAGE_NAME}:${params.DOCKER_TAG}"
@@ -57,11 +56,22 @@ pipeline {
     post {
         success {
             echo '========================================'
-            echo "CD SUCCESS — event-service:${params.DOCKER_TAG} deployed to ${K8S_NAMESPACE}"
+            echo "CD SUCCESS - event-service:${params.DOCKER_TAG} deployed to ${K8S_NAMESPACE}"
             echo '========================================'
         }
         failure {
-            echo 'CD FAILED — check Console Output'
+            echo 'CD FAILED - check Console Output'
+            emailext(
+                subject: "FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: """event-service CD failed.
+
+Build URL: ${env.BUILD_URL}
+Image tag: ${params.DOCKER_TAG}
+
+Please review the deployment logs in Jenkins.
+""",
+                to: "${env.NOTIFICATION_EMAIL}"
+            )
         }
     }
 }

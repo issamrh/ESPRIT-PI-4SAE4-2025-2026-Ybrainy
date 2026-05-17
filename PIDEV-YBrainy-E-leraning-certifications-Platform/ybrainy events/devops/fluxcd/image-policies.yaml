@@ -1,0 +1,35 @@
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: event-service
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: event-service
+  policy:
+    numerical:
+      order: asc
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: feedback-service
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: feedback-service
+  policy:
+    numerical:
+      order: asc
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: inscription-service
+  namespace: flux-system
+spec:
+  imageRepositoryRef:
+    name: inscription-service
+  policy:
+    numerical:
+      order: asc

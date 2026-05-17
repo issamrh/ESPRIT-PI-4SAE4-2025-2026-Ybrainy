@@ -1,0 +1,15 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: ybrainy-monitoring
+  namespace: flux-system
+spec:
+  dependsOn:
+    - name: ybrainy-services
+  interval: 10m
+  path: "./ybrainy events/devops/fluxcd/releases/monitoring"
+  prune: true
+  sourceRef:
+    kind: GitRepository
+    name: ybrainy-events
+  wait: true
