@@ -14,7 +14,7 @@ pipeline {
         DOCKER_TAG         = "${BUILD_NUMBER}"
         SONAR_PROJECT      = 'feedback-service'
         SONAR_HOST_URL     = 'http://localhost:9000'
-        NOTIFICATION_EMAIL = 'devops@ybrainy.local'
+        NOTIFICATION_EMAIL = 'jacemjouili@gmail.com'
     }
 
     stages {
