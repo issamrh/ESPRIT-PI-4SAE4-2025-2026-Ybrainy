@@ -1,4 +1,4 @@
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
   name: event-service
@@ -6,11 +6,14 @@ metadata:
 spec:
   imageRepositoryRef:
     name: event-service
+  filterTags:
+    pattern: '^[0-9]+$'
+    extract: '$0'
   policy:
     numerical:
       order: asc
 ---
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
   name: feedback-service
@@ -18,11 +21,14 @@ metadata:
 spec:
   imageRepositoryRef:
     name: feedback-service
+  filterTags:
+    pattern: '^[0-9]+$'
+    extract: '$0'
   policy:
     numerical:
       order: asc
 ---
-apiVersion: image.toolkit.fluxcd.io/v1beta2
+apiVersion: image.toolkit.fluxcd.io/v1
 kind: ImagePolicy
 metadata:
   name: inscription-service
@@ -30,6 +36,9 @@ metadata:
 spec:
   imageRepositoryRef:
     name: inscription-service
+  filterTags:
+    pattern: '^[0-9]+$'
+    extract: '$0'
   policy:
     numerical:
       order: asc
